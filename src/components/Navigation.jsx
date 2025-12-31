@@ -17,14 +17,16 @@ function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+ 
   const navItems = [
     { name: 'Home', path: '/' },
+    { name: 'Claim Address', path: '/register' },
+    { name: 'Top Up', path: '/subscribe' },
     { name: 'Why QMail', path: '/email-crisis' },
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Technology', path: '/technology' }, 
     { name: 'Strategy', path: '/strategy' },     
     { name: 'FAQs', path: '/faq' },
-    { name: 'About', path: '/about' }
   ]
 
   const menuVariants = {
@@ -102,7 +104,7 @@ function Navigation() {
             </motion.div>
           ))}
 
-          {/* Updated Influencers Button with Responsive Tooltip */}
+          {/* Partner Portal Button (Desktop) */}
           <div className="relative">
             <Link to="/button">
               <motion.button
@@ -113,18 +115,16 @@ function Navigation() {
                 whileTap={{ scale: 0.95 }}
               >
                 <motion.div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-500" initial={{ x: '100%' }} whileHover={{ x: 0 }} transition={{ duration: 0.3 }} />
-                <span className="relative z-10">Influencers</span>
+                <span className="relative z-10">Partner Portal</span>
               </motion.button>
             </Link>
 
-            {/* Responsive Tooltip component */}
             <AnimatePresence>
               {showTooltip && (
                 <motion.div
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  // CHANGED: Removed left-1/2 -translate-x-1/2, Added right-0 and max-w responsive constraints
                   className="absolute top-full mt-3 right-0 w-64 max-w-[85vw] md:max-w-xs p-4 bg-gray-900 border border-blue-500/30 rounded-2xl shadow-2xl backdrop-blur-xl z-[60]"
                 >
                   <div className="flex gap-3 text-left">
@@ -138,7 +138,6 @@ function Navigation() {
                       </p>
                     </div>
                   </div>
-                  {/* Tooltip Arrow - CHANGED: moved to the right to align with button */}
                   <div className="absolute -top-1.5 right-8 w-3 h-3 bg-gray-900 border-t border-l border-blue-500/30 rotate-45" />
                 </motion.div>
               )}
@@ -166,13 +165,16 @@ function Navigation() {
                   </Link>
                 </motion.div>
               ))}
+              
+              {/* Partner Portal Button for Mobile */}
               <motion.div variants={itemVariants} className="pt-4">
                 <Link to="/button" onClick={() => setIsOpen(false)}>
                   <button className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full text-white font-semibold text-base">
-                    Influencers
+                    Partner Portal
                   </button>
                 </Link>
               </motion.div>
+
             </div>
           </motion.div>
         )}

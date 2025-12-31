@@ -17,6 +17,8 @@ const Strategy = lazy(() => import('./pages/SalesStrategy.jsx'))
 const VerifiedAccess = lazy(() => import('./pages/VerifiedAccess.jsx'))
 const FunnelSuccess = lazy(() => import('./pages/FunnelSuccess.jsx'))
 const AdminLinkGen = lazy(() => import('./pages/AdminLinkGen.jsx'))
+const RegisterAddress = lazy(() => import('./pages/RegisterAddress.jsx'))
+const Subscribe = lazy(() => import('./pages/Subscribe.jsx'))
 
 // Helper component to handle conditional Navigation
 const MainLayout = ({ children }) => {
@@ -63,6 +65,9 @@ function App() {
               {/* Sales Funnel & Onboarding */}
               <Route path="/access" element={<VerifiedAccess />} />
               <Route path="/success" element={<FunnelSuccess />} />
+              
+              <Route path="/register" element={<RegisterAddress />} />
+              <Route path="/subscribe" element={<Subscribe />} />
               
               {/* Internal Tools */}
               <Route path="/button" element={<AdminLinkGen />} />

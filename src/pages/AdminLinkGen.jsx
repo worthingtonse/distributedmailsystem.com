@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, ExternalLink, ShieldCheck, UserPlus, Code, Palette } from 'lucide-react';
+import { Copy, Check, ExternalLink, ShieldCheck, UserPlus, Code, Palette, AtSign } from 'lucide-react';
 
 const AdminLinkGen = () => {
   const [name, setName] = useState('');
+  const [qmail, setQmail] = useState(''); // State for QMail Address
   const [cost, setCost] = useState('10');
-  const [bgColor, setBgColor] = useState('#0a0a1a'); // Default dark
-  const [btnColor, setBtnColor] = useState('#3b82f6'); // Default blue
+  const [bgColor, setBgColor] = useState('#0a0a1a'); 
+  const [btnColor, setBtnColor] = useState('#3b82f6'); 
   const [copied, setCopied] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [showEmbed, setShowEmbed] = useState(false);
   
-  // const baseUrl = window.location.origin + "/access";
   const baseUrl = (import.meta.env.VITE_BASE_URL || window.location.origin) + "/access";
-  // Encode colors for the URL (removing # for cleaner params)
-  const generatedUrl = `${baseUrl}?recipient=${encodeURIComponent(name)}&cost=${cost}&bg=${bgColor.replace('#', '')}&btn=${btnColor.replace('#', '')}`;
+  
+  //  Include 'addr' in the generated URL
+  const generatedUrl = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}&bg=${bgColor.replace('#', '')}&btn=${btnColor.replace('#', '')}`;
 
   const toTitleCase = (str) => {
     return str.toLowerCase().split(' ').map(word => 
@@ -68,7 +69,24 @@ const AdminLinkGen = () => {
                   placeholder="e.g. Tabeen" 
                 />
               </div>
+              
+              {/* QMail Address Input */}
               <div>
+                <label className=" text-xs font-black text-purple-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                  <AtSign size={12}/> Receiver Address
+                </label>
+                <input 
+                  type="text" 
+                  value={qmail} 
+                  onChange={(e) => setQmail(e.target.value)} 
+                  className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono text-sm" 
+                  placeholder="Mega~Tabeen.Khajawal#F28" 
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+               <div>
                 <label className="block text-xs font-black text-blue-400 uppercase tracking-widest mb-2">Message Cost (USD)</label>
                 <input 
                   type="number" 
@@ -81,7 +99,7 @@ const AdminLinkGen = () => {
 
             <div className="grid md:grid-cols-2 gap-6 border-t border-gray-800 pt-6">
               <div>
-                <label className="flex items-center gap-2 text-xs font-black text-purple-400 uppercase tracking-widest mb-2">
+                <label className="flex items-center gap-2 text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
                   <Palette size={14}/> Page Background
                 </label>
                 <div className="flex items-center gap-3">
@@ -95,7 +113,7 @@ const AdminLinkGen = () => {
                 </div>
               </div>
               <div>
-                <label className="flex items-center gap-2 text-xs font-black text-purple-400 uppercase tracking-widest mb-2">
+                <label className="flex items-center gap-2 text-xs font-black text-gray-500 uppercase tracking-widest mb-2">
                   <Palette size={14}/> Button Accent
                 </label>
                 <div className="flex items-center gap-3">
@@ -114,29 +132,29 @@ const AdminLinkGen = () => {
           {/* Actions Section */}
           <div className="space-y-4">
             <button 
-              disabled={!name} 
+              disabled={!name || !qmail} 
               onClick={handleCopy} 
               className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                name ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                name && qmail ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
               }`}
             >
               {copied ? <><Check size={18}/> Copied!</> : <><Copy size={18}/> Copy Direct Link</>}
             </button>
             <button 
-              disabled={!name} 
+              disabled={!name || !qmail} 
               onClick={() => setShowEmbed(!showEmbed)} 
               className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                name ? 'bg-gradient-to-r from-blue-600 to-purple-500 text-white shadow-lg shadow-blue-900/20' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                name && qmail ? 'bg-gradient-to-r from-blue-600 to-purple-500 text-white shadow-lg shadow-blue-900/20' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
               }`}
             >
               <Code size={18} /> {showEmbed ? "Hide Embed Code" : "Embed Button"}
             </button>
             <a 
-              href={name ? generatedUrl : "#"} 
+              href={name && qmail ? generatedUrl : "#"} 
               target="_blank" 
               rel="noreferrer" 
               className={`w-full py-3 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
-                name ? 'border-gray-700 text-gray-400 hover:bg-white/5' : 'border-gray-800 text-gray-800 pointer-events-none'
+                name && qmail ? 'border-gray-700 text-gray-400 hover:bg-white/5' : 'border-gray-800 text-gray-800 pointer-events-none'
               }`}
             >
               <ExternalLink size={14} /> Preview Page
@@ -146,7 +164,7 @@ const AdminLinkGen = () => {
 
         {/* Embed Snippet Display */}
         <AnimatePresence>
-          {showEmbed && name && (
+          {showEmbed && name && qmail && (
             <motion.div 
               initial={{ opacity: 0, height: 0 }} 
               animate={{ opacity: 1, height: 'auto' }} 
@@ -173,23 +191,19 @@ const AdminLinkGen = () => {
           )}
         </AnimatePresence>
 
-        {/* Instructions for Team - RESTORED SECTION */}
         <div className="mt-12 bg-blue-500/5 border border-blue-500/10 p-8 rounded-3xl shadow-lg">
           <h4 className="text-blue-400 font-bold mb-4 flex items-center gap-2 text-lg">
             <ShieldCheck size={20} /> Deployment Instructions
           </h4>
           <ol className="text-sm text-gray-400 space-y-4 list-decimal list-inside leading-relaxed">
             <li>
-              <strong>Configure Assets:</strong> Enter the influencer's name, set their required postage cost, and select their preferred brand colors.
+              <strong>Configure Assets:</strong> Enter the influencer's name and their <strong className="text-white">Distributed Address</strong> (e.g. Mega~Name#123).
             </li>
             <li>
-              <strong>Direct Link:</strong> Copy the "Direct Link" for use in Instagram bios, Twitter profiles, or Linktree pages.
+              <strong>Direct Link:</strong> Copy the "Direct Link" for use in Instagram bios or Linktree.
             </li>
             <li>
-              <strong>Embed Button:</strong> Provide the "Embed Button" code to influencers with their own websites. They simply need to paste this HTML snippet into their site's code.
-            </li>
-            <li>
-              <strong>The Result:</strong> When users click these assets, they are sent to a customized <strong>Verified Access</strong> landing page where they pay the postage to send a private message.
+              <strong>Embed Button:</strong> Paste the HTML snippet into any website to create a "Send Private Message" button.
             </li>
           </ol>
         </div>

@@ -51,10 +51,11 @@ const VerifiedAccess = () => {
 
   useEffect(() => {
     const scriptId = 'paypal-sdk-script';
+    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb';
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
       script.id = scriptId;
-      script.src = "https://www.paypal.com/sdk/js?client-id=sb&currency=USD&components=buttons";
+      script.src =   script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&components=buttons`;
       script.async = true;
       script.onload = () => { setIsPaypalLoaded(true); setTimeout(renderPayPalButtons, 100); };
       document.body.appendChild(script);
