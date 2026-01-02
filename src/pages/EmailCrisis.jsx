@@ -300,7 +300,7 @@ function EmailCrisis() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Link to="/quantum-safe">
+              <Link to="/technology">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -419,7 +419,7 @@ function EmailCrisis() {
                     Spoofing is <span className="text-white font-medium">mathematically impossible</span>.
                   </p>
                   <Link 
-                    to="/quantum-safe"
+                    to="/how-it-works"
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
                     See How QMail Prevents This →
@@ -520,7 +520,7 @@ function EmailCrisis() {
                     ))}
                   </ul>
                   <Link 
-                    to="/quantum-safe"
+                    to="/technology"
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
                     Learn About Quantum-Safe Encryption →

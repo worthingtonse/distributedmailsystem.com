@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, Info } from 'lucide-react'
+import { Menu, X, Info, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 function Navigation() {
@@ -17,7 +17,11 @@ function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
- 
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsOpen(false)
+  }, [location])
+
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Claim Address', path: '/register' },
@@ -27,6 +31,11 @@ function Navigation() {
     { name: 'Technology', path: '/technology' }, 
     { name: 'Strategy', path: '/strategy' },     
     { name: 'FAQs', path: '/faq' },
+    { 
+      name: 'Reference', 
+      path: 'https://cloudcoin.org/qmail-reference.php',
+      external: true 
+    },
   ]
 
   const menuVariants = {
@@ -91,16 +100,36 @@ function Navigation() {
           </motion.div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center space-x-6">
+        {/* Desktop Navigation - Enhanced Responsive Design */}
+        <div className="hidden xl:flex items-center space-x-6">
           {navItems.map((item, index) => (
             <motion.div key={item.path} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
-              <Link to={item.path} className="relative group">
-                <span className={`text-sm font-medium transition-colors ${location.pathname === item.path ? 'text-blue-400' : 'text-gray-300 hover:text-white'}`}>
-                  {item.name}
-                </span>
-                <motion.div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400" animate={{ scaleX: location.pathname === item.path ? 1 : 0 }} />
-              </Link>
+              {item.external ? (
+                <a 
+                  href={item.path} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="relative group flex items-center gap-1"
+                >
+                  <span className="text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                    {item.name}
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                  <motion.div 
+                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400" 
+                    initial={{ scaleX: 0 }}
+                    whileHover={{ scaleX: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                </a>
+              ) : (
+                <Link to={item.path} className="relative group">
+                  <span className={`text-sm font-medium transition-colors ${location.pathname === item.path ? 'text-blue-400' : 'text-gray-300 hover:text-white'}`}>
+                    {item.name}
+                  </span>
+                  <motion.div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400" animate={{ scaleX: location.pathname === item.path ? 1 : 0 }} />
+                </Link>
+              )}
             </motion.div>
           ))}
 
@@ -145,9 +174,86 @@ function Navigation() {
           </div>
         </div>
 
+        {/* Tablet Navigation - Simplified for medium screens */}
+        <div className="hidden lg:flex xl:hidden items-center space-x-4">
+          {/* Essential links for tablet */}
+          {navItems.slice(0, 5).map((item, index) => (
+            <motion.div key={item.path} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
+              {item.external ? (
+                <a 
+                  href={item.path} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="relative group flex items-center gap-1"
+                >
+                  <span className="text-xs font-medium text-gray-300 hover:text-white transition-colors">
+                    {item.name}
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                </a>
+              ) : (
+                <Link to={item.path} className="relative group">
+                  <span className={`text-xs font-medium transition-colors ${location.pathname === item.path ? 'text-blue-400' : 'text-gray-300 hover:text-white'}`}>
+                    {item.name}
+                  </span>
+                  <motion.div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400" animate={{ scaleX: location.pathname === item.path ? 1 : 0 }} />
+                </Link>
+              )}
+            </motion.div>
+          ))}
+
+          {/* More dropdown for remaining items */}
+          <div className="relative group">
+            <button className="text-xs font-medium text-gray-300 hover:text-white transition-colors px-2 py-1 rounded">
+              More ↓
+            </button>
+            <div className="absolute top-full right-0 mt-2 w-48 bg-gray-900/95 backdrop-blur-xl rounded-lg border border-gray-700/50 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <div className="py-2">
+                {navItems.slice(5).map((item) => (
+                  <div key={item.path}>
+                    {item.external ? (
+                      <a 
+                        href={item.path} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors flex items-center gap-2"
+                      >
+                        {item.name}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : (
+                      <Link 
+                        to={item.path} 
+                        className="block px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors"
+                      >
+                        {item.name}
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Partner Portal Button (Tablet) */}
+          <Link to="/button">
+            <motion.button
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full text-white font-semibold text-xs"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Portal
+            </motion.button>
+          </Link>
+        </div>
+
         {/* Mobile Menu Toggle */}
         <motion.div className="lg:hidden" whileTap={{ scale: 0.9 }}>
-          <button onClick={() => setIsOpen(!isOpen)} className="text-white p-2">
+          <button 
+            onClick={() => setIsOpen(!isOpen)} 
+            className="text-white p-2"
+            aria-label={isOpen ? 'Close menu' : 'Open menu'}
+          >
             {isOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
         </motion.div>
@@ -160,9 +266,26 @@ function Navigation() {
             <div className="container mx-auto px-4 py-6 space-y-2">
               {navItems.map((item) => (
                 <motion.div key={item.path} variants={itemVariants}>
-                  <Link to={item.path} onClick={() => setIsOpen(false)} className={`block py-3 px-4 rounded-lg text-base font-medium ${location.pathname === item.path ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-gray-300 hover:text-white'}`}>
-                    {item.name}
-                  </Link>
+                  {item.external ? (
+                    <a 
+                      href={item.path} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-between py-3 px-4 rounded-lg text-base font-medium text-gray-300 hover:text-white hover:bg-gray-800/50 transition-colors"
+                    >
+                      <span>{item.name}</span>
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                  ) : (
+                    <Link 
+                      to={item.path} 
+                      onClick={() => setIsOpen(false)} 
+                      className={`block py-3 px-4 rounded-lg text-base font-medium transition-colors ${location.pathname === item.path ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'text-gray-300 hover:text-white hover:bg-gray-800/50'}`}
+                    >
+                      {item.name}
+                    </Link>
+                  )}
                 </motion.div>
               ))}
               
@@ -174,7 +297,6 @@ function Navigation() {
                   </button>
                 </Link>
               </motion.div>
-
             </div>
           </motion.div>
         )}
