@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShieldCheck, User, Zap, Star, Hexagon, Check, 
   Copy, AtSign, Info, ShieldAlert, Smartphone, Monitor, HardDrive, 
-  Lock, ArrowRight, Shield
+  Lock, ArrowRight, Shield, AlertCircle
 } from 'lucide-react';
 
 const RegisterAddress = () => {
@@ -11,12 +11,13 @@ const RegisterAddress = () => {
   const [selectedEdition, setSelectedEdition] = useState('free'); 
   const [customGroup, setCustomGroup] = useState('');
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
+  const [paypalError, setPaypalError] = useState(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState('');
   const [copied, setCopied] = useState(false);
   const buttonRef = useRef(null);
 
-  // Allegiance Levels from your provided text
+  // Allegiance Levels
   const tiers = [
     { name: 'Bit', price: 10, trust: 'Entry level', best: 'Casual users, testing', icon: Zap, color: 'text-blue-400' },
     { name: 'Byte', price: 20, trust: 'Basic commitment', best: 'Everyday personal email', icon: Hexagon, color: 'text-green-400' },
@@ -60,6 +61,10 @@ const RegisterAddress = () => {
           setGeneratedAddress(`${status}${groupPart}${namePart}${serialPart}`);
           setPaymentComplete(true);
         },
+        onError: (err) => {
+          console.error("PayPal Checkout Error:", err);
+          setPaypalError("The payment gateway encountered an error. Please try again.");
+        },
         style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' }
       }).render(buttonRef.current);
     }
@@ -67,13 +72,28 @@ const RegisterAddress = () => {
 
   useEffect(() => {
     const scriptId = 'paypal-sdk-script';
-    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb';
+    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+
+    if (!clientId) {
+      setPaypalError("PayPal Configuration Missing: Please set VITE_PAYPAL_CLIENT_ID.");
+      return;
+    }
+
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
       script.id = scriptId;
       script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&components=buttons`;
       script.async = true;
-      script.onload = () => setIsPaypalLoaded(true);
+      
+      script.onload = () => {
+        setIsPaypalLoaded(true);
+        setPaypalError(null);
+      };
+
+      script.onerror = () => {
+        setPaypalError("Failed to load PayPal. Please disable any ad-blockers and refresh the page.");
+      };
+
       document.body.appendChild(script);
     } else {
       setIsPaypalLoaded(true);
@@ -81,10 +101,10 @@ const RegisterAddress = () => {
   }, []);
 
   useEffect(() => {
-    if (isPaypalLoaded && selectedTier && !paymentComplete) {
+    if (isPaypalLoaded && selectedTier && !paymentComplete && !paypalError) {
       setTimeout(renderPayPalButtons, 100);
     }
-  }, [isPaypalLoaded, selectedTier, renderPayPalButtons, paymentComplete, selectedEdition]);
+  }, [isPaypalLoaded, selectedTier, renderPayPalButtons, paymentComplete, selectedEdition, paypalError]);
 
   return (
     <div className="pt-32 pb-20 container mx-auto px-4 min-h-screen bg-[#0a0a1a]">
@@ -280,7 +300,21 @@ const RegisterAddress = () => {
                         <span>Total Due:</span>
                         <span>${totalPrice}</span>
                       </div>
-                      <div ref={buttonRef} className="w-full"></div>
+                      
+                      {/* PayPal Button Container with Error Handling */}
+                      <div className="min-h-[150px] flex items-center justify-center">
+                        {paypalError ? (
+                          <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
+                            <AlertCircle className="shrink-0 mt-0.5" size={16} />
+                            <span>{paypalError}</span>
+                          </div>
+                        ) : !isPaypalLoaded ? (
+                          <div className="animate-pulse text-gray-500 text-xs font-bold uppercase tracking-widest">Initialising PayPal...</div>
+                        ) : (
+                          <div ref={buttonRef} className="w-full"></div>
+                        )}
+                      </div>
+
                       <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
                         * Note that refunds are available up to 30 days after your purchase.
                       </p>

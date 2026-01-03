@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 
 const VerifiedAccess = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
+  const [paypalError, setPaypalError] = useState(null);
   const buttonRef = useRef(null);
   
   // Title Case Utility
@@ -18,7 +19,7 @@ const VerifiedAccess = () => {
 
   const recipientRaw = searchParams.get('recipient') || 'Connie Willis';
   const recipientName = toTitleCase(recipientRaw.replace(/%20/g, ' '));
-  const firstName = recipientName.split(' ')[0]; // For shortened mentions like "Connie charges..."
+  const firstName = recipientName.split(' ')[0];
   const displayCost = searchParams.get('cost') || '10';
   
   const customBg = searchParams.get('bg') ? `#${searchParams.get('bg')}` : '#0a0a1a';
@@ -44,6 +45,10 @@ const VerifiedAccess = () => {
           const order = await actions.order.capture();
           navigate('/success', { state: { userData: { firstName: order.payer.name.given_name, email: order.payer.email_address }, recipientName } });
         },
+        onError: (err) => {
+          console.error("PayPal Error:", err);
+          setPaypalError("Payment failed to initialize. Please try again.");
+        },
         style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' }
       }).render(buttonRef.current);
     }
@@ -51,13 +56,29 @@ const VerifiedAccess = () => {
 
   useEffect(() => {
     const scriptId = 'paypal-sdk-script';
-    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'sb';
+    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+
+    if (!clientId) {
+      setPaypalError("PayPal Configuration Missing.");
+      return;
+    }
+
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
       script.id = scriptId;
-      script.src =   script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&components=buttons`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=USD&components=buttons`;
       script.async = true;
-      script.onload = () => { setIsPaypalLoaded(true); setTimeout(renderPayPalButtons, 100); };
+      
+      script.onload = () => { 
+        setIsPaypalLoaded(true); 
+        setPaypalError(null);
+        setTimeout(renderPayPalButtons, 100); 
+      };
+
+      script.onerror = () => {
+        setPaypalError("PayPal failed to load. Check your connection or ad-blocker.");
+      };
+
       document.body.appendChild(script);
     } else {
       setIsPaypalLoaded(true);
@@ -128,7 +149,12 @@ const VerifiedAccess = () => {
             </div>
 
             <div className="min-h-[150px] flex items-center justify-center">
-              {!isPaypalLoaded ? (
+              {paypalError ? (
+                <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-xs flex items-center gap-2">
+                  <AlertCircle size={14} />
+                  <span>{paypalError}</span>
+                </div>
+              ) : !isPaypalLoaded ? (
                 <Loader2 className="animate-spin" size={32} style={{ color: customBtn }} />
               ) : (
                 <div ref={buttonRef} className="w-full"></div>

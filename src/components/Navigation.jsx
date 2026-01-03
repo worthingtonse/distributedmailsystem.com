@@ -25,7 +25,7 @@ function Navigation() {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Claim Address', path: '/register' },
-    { name: 'Top Up', path: '/subscribe' },
+    { name: 'Credits', path: '/subscribe' },
     { name: 'Why QMail', path: '/email-crisis' },
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Technology', path: '/technology' }, 
