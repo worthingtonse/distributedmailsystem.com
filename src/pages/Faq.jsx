@@ -18,7 +18,8 @@ import {
   DollarSign,
   FileText,
   Cpu,
-  HelpCircle
+  HelpCircle,
+  HardDrive
 } from 'lucide-react'
 
 // Reusable Card Component
@@ -125,9 +126,7 @@ const PhaseCard = memo(({ phase, title, status, description, features, delay = 0
 PhaseCard.displayName = 'PhaseCard'
 
 // 3D Floating Question Marks Animation
-// 3D Floating Question Marks Animation
 const FloatingQuestionsAnimation = memo(() => {
-  // Generate question marks with 3D positioning
   const questionMarks = [
     { size: 80, x: 15, y: 20, z: 0, delay: 0, color: 'from-blue-400 to-cyan-400' },
     { size: 60, x: 75, y: 15, z: 50, delay: 0.2, color: 'from-purple-400 to-pink-400' },
@@ -145,7 +144,6 @@ const FloatingQuestionsAnimation = memo(() => {
         perspectiveOrigin: 'center center'
       }}
     >
-      {/* Central large question mark */}
       <m.div
         className="absolute left-1/2 top-1/2 z-20"
         style={{
@@ -174,7 +172,6 @@ const FloatingQuestionsAnimation = memo(() => {
         </div>
       </m.div>
 
-      {/* Floating question marks around */}
       {questionMarks.map((qm, i) => (
         <m.div
           key={i}
@@ -247,7 +244,6 @@ const FloatingQuestionsAnimation = memo(() => {
         </m.div>
       ))}
 
-      {/* Animated connecting lines */}
       <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
         <defs>
           <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -279,36 +275,6 @@ const FloatingQuestionsAnimation = memo(() => {
           />
         ))}
       </svg>
-
-      {/* Floating particles */}
-      {[...Array(12)].map((_, i) => {
-        const randomX = Math.random() * 100
-        const randomY = Math.random() * 100
-        const randomDelay = Math.random() * 2
-        
-        return (
-          <m.div
-            key={`particle-${i}`}
-            className="absolute w-1 h-1 bg-blue-400 rounded-full"
-            style={{
-              left: `${randomX}%`,
-              top: `${randomY}%`,
-            }}
-            initial={{ opacity: 0, scale: 0 }}
-            animate={{
-              y: [0, -100, 0],
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-            }}
-            transition={{
-              duration: 3 + i * 0.2,
-              repeat: Infinity,
-              delay: randomDelay,
-              ease: "easeInOut"
-            }}
-          />
-        )
-      })}
     </div>
   )
 })
@@ -316,7 +282,7 @@ const FloatingQuestionsAnimation = memo(() => {
 FloatingQuestionsAnimation.displayName = 'FloatingQuestionsAnimation'
 
 function FAQ() {
-  const [openItems, setOpenItems] = useState(new Set([0])) // First item open by default
+  const [openItems, setOpenItems] = useState(new Set([0]))
 
   const toggleItem = (index) => {
     setOpenItems(prev => {
@@ -371,22 +337,25 @@ function FAQ() {
 
   const faqData = [
     {
-      category: 'Development',
-      icon: Cpu,
+      category: 'General',
+      icon: Globe,
       items: [
         {
-          question: 'What stage of development is QMail in?',
+          question: 'What is QMail?',
           answer: (
             <div>
-              <p>We are currently in Phase 1 of a 3-Phase rollout:</p>
-              <ul className="list-disc list-inside mt-3 space-y-2">
-                <li><strong className="text-white">Phase 1 (Current):</strong> The Core is operational. Send shredded emails across 5+ servers with auto-generated addresses.</li>
-                <li><strong className="text-white">Phase 2 (Next):</strong> Distributed Key Exchange and Resource Directory for custom addresses and quantum-safe security.</li>
-                <li><strong className="text-white">Phase 3 (Future):</strong> CBDF integration for ultra-compact, rich-formatted messages.</li>
-              </ul>
+              <p>QMail is a decentralized, quantum-safe email protocol. Unlike traditional email where your messages live on a company's server, QMail shreds your messages into encrypted fragments and distributes them across multiple independent servers. No single server can read your mail or know who you're talking to.</p>
             </div>
           )
-        }
+        },
+        {
+            question: 'Who develops QMail?',
+            answer: (
+              <div>
+                <p>QMail is developed by the Perfect Money Foundation, an organization dedicated to building distributed information systems that protect user privacy and promote a decentralized internet economy.</p>
+              </div>
+            )
+          }
       ]
     },
     {
@@ -400,66 +369,28 @@ function FAQ() {
               <p>ProtonMail and similar services encrypt email, but they still store your complete messages in one place. Here's why QMail is fundamentally different:</p>
               <div className="mt-4 space-y-3">
                 <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-blue-400">Traditional Encrypted Email:</strong> Your message is locked in a box (encrypted), but the whole box sits in one data center. Hackers target the box, governments subpoena the box, and the company can still see metadata (who you email, when, how often).</p>
+                  <p><strong className="text-blue-400">Traditional Encrypted Email:</strong> Your message is locked in a box (encrypted), but the whole box sits in one data center. Hackers target the box, and the service provider still manages the centralized metadata (who you email, when, how often).</p>
                 </div>
                 <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">QMail:</strong> We don't just lock the box—we shred the contents into puzzle pieces, encrypt each piece separately, and scatter them across independent servers worldwide. No complete message exists anywhere. Even if someone hacked every server, they'd only have encrypted fragments.</p>
+                  <p><strong className="text-blue-400">QMail:</strong> We don't just lock the box—we shred the contents into fragments, encrypt each piece separately, and scatter them across independent servers worldwide. No complete message exists anywhere in the cloud.</p>
                 </div>
               </div>
-              <p className="mt-4">Think of it this way: ProtonMail is a safe in one location. QMail is 25 pieces of a treasure map buried on different continents.</p>
             </div>
           )
         },
+        {
+            question: 'What can mail servers see about my messages?',
+            answer: (
+              <div>
+                <p>Server operators can see pseudo-anonymous metadata like user IDs, timestamps, and approximate message sizes. However, they <strong className="text-red-400">cannot see</strong> message content, recipient identity, subject lines, or attachments. They literally lack the mathematical components to reassemble your message.</p>
+              </div>
+            )
+          },
         {
           question: 'Who owns/controls the servers?',
           answer: (
             <div>
-              <p>This is where QMail's true power shines:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">No Single Owner:</strong> The network is composed of independently operated servers around the world. No one company, government, or entity controls them all.</p>
-                </div>
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">Your Choice:</strong> You choose which servers to trust. Want to only use servers in privacy-respecting countries? You can. Want to use your friend's server? You can do that too.</p>
-                </div>
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded p-3">
-                  <p><strong className="text-purple-400">Run Your Own:</strong> The ultimate control—operate your own server and get paid directly for providing email services to others.</p>
-                </div>
-              </div>
-            </div>
-          )
-        },
-        {
-          question: 'Can I run my own server?',
-          answer: (
-            <div>
-              <p><strong className="text-green-400">Absolutely!</strong> This is one of the core features of the distributed model.</p>
-              <div className="mt-4 space-y-3">
-                <p><strong className="text-white">Economic Advantage:</strong> The DMS protocol is so efficient that a $2K server does the same work as a $20K server in a tech giant's data center.</p>
-                <p><strong className="text-blue-400">Direct Income:</strong> Get paid directly for providing email services to others.</p>
-                <p><strong className="text-purple-400">Full Control:</strong> Own your data, set your policies, choose your users.</p>
-              </div>
-              <p className="mt-4">Server setup documentation and support will be available as we progress through Phase 2.</p>
-            </div>
-          )
-        },
-        {
-          question: 'Is QMail compatible with existing email?',
-          answer: (
-            <div>
-              <p>QMail represents a fundamental departure from traditional email protocols, but we're building bridges:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">Phase 1:</strong> QMail-to-QMail communication works natively</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Future Phases:</strong> Gateway services will allow controlled interaction with traditional email systems</p>
-                </div>
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded p-3">
-                  <p><strong className="text-yellow-400">Migration Tools:</strong> Import your contacts and essential data from existing email providers</p>
-                </div>
-              </div>
-              <p className="mt-4">The goal is to create a superior alternative that people <em>want</em> to switch to, not force compatibility with broken systems.</p>
+              <p>The network is composed of independently operated servers around the world. No one company or entity controls them all. You have the freedom to choose which servers you trust or even run your own.</p>
             </div>
           )
         }
@@ -473,19 +404,7 @@ function FAQ() {
           question: 'How does the "get paid for email" model work?',
           answer: (
             <div>
-              <p>QMail flips traditional email economics on its head:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">Friends Email Free:</strong> People on your whitelist can email you at no cost, just like always.</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Strangers Pay:</strong> Anyone not on your list must attach a small payment (you set the price—$0.01, $1, or $100). If you don't want their message, you keep the money. If you do want it, you can whitelist them for future free communication.</p>
-                </div>
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded p-3">
-                  <p><strong className="text-purple-400">Spam Becomes Profitable:</strong> Every unwanted email puts money in your pocket instead of wasting your time.</p>
-                </div>
-              </div>
-              <p className="mt-4">This single change makes spam economically impossible while turning your inbox into an asset.</p>
+              <p>QMail flips email economics: strangers must attach a small CloudCoin payment (a "tip") to reach your inbox. If you whitelist a contact, they send for free. This makes spam economically impossible while paying you for your attention.</p>
             </div>
           )
         },
@@ -493,38 +412,7 @@ function FAQ() {
           question: 'What currency is used for payments?',
           answer: (
             <div>
-              <p>QMail is powered by <strong className="text-cyan-400">CloudCoin</strong>, a quantum-safe digital currency designed specifically for fast, secure microtransactions.</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded p-3">
-                  <p><strong className="text-cyan-400">Why CloudCoin?</strong></p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Instant transactions (no blockchain delays)</li>
-                    <li>Zero transaction fees</li>
-                    <li>Quantum-safe by design</li>
-                    <li>Perfect for microtransactions ($0.01 payments work)</li>
-                    <li>No mining, no energy waste</li>
-                  </ul>
-                </div>
-              </div>
-              <p className="mt-4">CloudCoin is built on the same RAIDA technology that powers QMail's security.</p>
-            </div>
-          )
-        },
-        {
-          question: 'How much can I earn?',
-          answer: (
-            <div>
-              <p>Your earnings depend entirely on two factors:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">Your Price:</strong> You set how much strangers must pay to email you. Set it at $0.01 for legitimate professional contacts, or $10+ if you're a celebrity/executive.</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Your Reach:</strong> The more visible you are, the more unsolicited emails you get, and the more you earn from legitimate opportunities.</p>
-                </div>
-              </div>
-              <p className="mt-4"><strong className="text-white">Example:</strong> A mid-level professional receiving 10 unsolicited emails/day at $0.25 each earns $900/year. A public figure with 100 emails/day at $5 each earns $182,500/year.</p>
-              <p className="mt-3 text-gray-400">Additionally, if you run your own server, you earn direct income from users who store their email with you.</p>
+              <p>QMail is powered by <strong className="text-cyan-400">CloudCoin</strong>, a quantum-safe digital currency designed specifically for fast, secure microtransactions without energy waste or blockchain delays.</p>
             </div>
           )
         }
@@ -535,125 +423,26 @@ function FAQ() {
       icon: Cpu,
       items: [
         {
+            question: 'What is CBDF?',
+            answer: (
+              <div>
+                <p>Compact Binary Document Format (CBDF) is our replacement for bloated HTML/CSS. It uses binary codes to define layouts, making messages up to 99% smaller than traditional emails. One byte can accomplish what normally takes 100+ bytes of markup.</p>
+              </div>
+            )
+          },
+        {
           question: 'What is "data striping" and how does it work?',
           answer: (
             <div>
-              <p>Data striping is the core technology that makes QMail unhackable. Here's how it works:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-white">Step 1: Shredding</strong></p>
-                  <p className="mt-2">Your email is split into 5 pieces (stripes), kind of like cutting a photo into puzzle pieces. Each piece is useless on its own.</p>
-                </div>
-                <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-white">Step 2: Encryption</strong></p>
-                  <p className="mt-2">Each stripe is encrypted separately with military-grade AES-128 encryption before leaving your device.</p>
-                </div>
-                <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-white">Step 3: Distribution</strong></p>
-                  <p className="mt-2">These encrypted pieces are sent to 5 different servers around the world. Server A gets piece 1, Server B gets piece 2, etc.</p>
-                </div>
-                <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-white">Step 4: Parity (Self-Healing)</strong></p>
-                  <p className="mt-2">We create "parity" pieces—mathematical backups. If any server goes offline, your email can be mathematically reconstructed from the remaining pieces.</p>
-                </div>
-              </div>
-              <p className="mt-4 text-blue-400">Result: Your email lives nowhere and everywhere at the same time. No single server, no single hacker, no single government can access your message.</p>
+              <p>Your email is shredded into 5-32 "stripes." Each stripe is encrypted with a unique AES-256 key and sent to a different server. We also create "parity" stripes so that if a server goes offline, your message can still be reconstructed mathematically.</p>
             </div>
           )
         },
         {
-          question: 'What happens if one of the servers goes offline?',
+          question: 'Can I send large attachments?',
           answer: (
             <div>
-              <p>This is where QMail's redundancy shines:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Parity to the Rescue:</strong> We don't just store 5 pieces—we store additional "parity" pieces that act like solution keys to a Sudoku puzzle. If any piece goes missing, it can be mathematically rebuilt from the others.</p>
-                </div>
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">You'll Never Notice:</strong> If a server is down, your client automatically pulls from backup servers. Your email still arrives instantly.</p>
-                </div>
-              </div>
-              <p className="mt-4">In fact, we can lose up to 40% of the servers and your messages remain perfectly accessible. Try doing that with Gmail's data centers!</p>
-            </div>
-          )
-        },
-        {
-          question: 'Is QMail truly quantum-safe?',
-          answer: (
-            <div>
-              <p>Yes, and here's why it matters:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-red-500/10 border border-red-500/30 rounded p-3">
-                  <p><strong className="text-red-400">The Threat:</strong> Quantum computers (expected within 10 years) will break all current encryption—RSA, elliptic curve, everything that protects today's email, banking, and internet traffic.</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">QMail's Defense:</strong> We use RAIDA (Redundant Array of Independent Detection Agents) authentication, which doesn't rely on math that quantum computers can break. Even with infinite computing power, an attacker can't forge your identity or decrypt your messages.</p>
-                </div>
-              </div>
-              <p className="mt-4">QMail is built to last 50+ years, not just until the next security vulnerability is discovered.</p>
-            </div>
-          )
-        }
-      ]
-    },
-    {
-      category: 'Privacy & Security',
-      icon: Shield,
-      items: [
-        {
-          question: 'Can QMail see my messages?',
-          answer: (
-            <div>
-              <p><strong className="text-green-400">Absolutely not.</strong> This isn't just a policy—it's mathematically impossible.</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">No Complete Message Exists:</strong> Your email never exists as a complete file on any server. Each server only has an encrypted fragment.</p>
-                </div>
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded p-3">
-                  <p><strong className="text-purple-400">End-to-End Encryption:</strong> Messages are encrypted on your device before being shredded and distributed. Only you and your recipient have the keys.</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Zero Knowledge:</strong> We couldn't read your messages even if we wanted to. Unlike Gmail, ProtonMail, or any centralized service, we literally don't have access.</p>
-                </div>
-              </div>
-            </div>
-          )
-        },
-        {
-          question: 'What about government surveillance or subpoenas?',
-          answer: (
-            <div>
-              <p>This is where distributed architecture becomes powerful:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-gray-800/50 rounded p-3">
-                  <p><strong className="text-white">Traditional Email:</strong> A government can subpoena Google, and boom—all your emails are handed over. One company, one jurisdiction, one point of failure.</p>
-                </div>
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">QMail:</strong> Your email pieces are spread across servers in multiple countries with different legal systems. A subpoena in the US can't touch servers in Switzerland, Iceland, or Japan. Even if they got all the servers (impossible), they'd only have encrypted fragments.</p>
-                </div>
-              </div>
-              <p className="mt-4 text-green-400">You can even choose to only use servers in specific jurisdictions you trust. Complete control.</p>
-            </div>
-          )
-        },
-        {
-          question: 'How does QMail handle spam and phishing?',
-          answer: (
-            <div>
-              <p>QMail eliminates spam through economics, not filters:</p>
-              <div className="mt-4 space-y-3">
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded p-3">
-                  <p><strong className="text-blue-400">Economic Barrier:</strong> Spammers send billions of emails because it costs them nothing. With QMail, every email to a stranger costs money. Spam becomes instantly unprofitable.</p>
-                </div>
-                <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
-                  <p><strong className="text-green-400">Whitelist System:</strong> People you know email you for free. Everyone else pays your price. You decide who gets through.</p>
-                </div>
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded p-3">
-                  <p><strong className="text-purple-400">Cryptographic Identity:</strong> Every QMail address is cryptographically verified. No spoofing, no impersonation, no phishing as we know it.</p>
-                </div>
-              </div>
-              <p className="mt-4">The result: Zero spam, zero phishing, and you get paid for any unwanted messages that slip through.</p>
+              <p>Yes. QMail theoretically supports attachments up to several gigabytes. Because server operators are compensated per megabyte stored, there is no economic incentive for them to limit your storage capacity.</p>
             </div>
           )
         }
@@ -664,17 +453,12 @@ function FAQ() {
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="min-h-screen pt-20">
-        {/* Hero Section */}
         <section className="relative py-20 md:py-32 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-gray-950 to-gray-950" />
           
           <div className="container mx-auto px-4 z-10 relative">
             <div className="max-w-4xl mx-auto text-center">
-              <m.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
+              <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
                   <span className="text-white">Frequently Asked</span>
                   <br />
@@ -684,78 +468,44 @@ function FAQ() {
                 </h1>
               </m.div>
 
-              <m.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-xl md:text-2xl text-gray-400 mb-12 leading-relaxed"
-              >
+              <m.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-xl md:text-2xl text-gray-400 mb-12 leading-relaxed">
                 Everything you need to know about QMail, distributed messaging, and the future of private communication.
               </m.p>
 
-              {/* 3D Floating Questions Animation */}
               <FloatingQuestionsAnimation />
             </div>
           </div>
         </section>
 
-        {/* Development Roadmap Section */}
         <section className="py-20 md:py-32 relative">
           <div className="container mx-auto px-4">
-            <m.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              className="text-center mb-16"
-            >
+            <m.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-                Development{' '}
-                <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Roadmap
-                </span>
+                Development <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Roadmap</span>
               </h2>
-              <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                QMail is rolling out in three carefully planned phases, each building on the last
-              </p>
             </m.div>
 
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
               {developmentPhases.map((phase, index) => (
-                <PhaseCard
-                  key={phase.phase}
-                  phase={phase.phase}
-                  title={phase.title}
-                  status={phase.status}
-                  description={phase.description}
-                  features={phase.features}
-                  delay={index * 0.1}
-                />
+                <PhaseCard key={phase.phase} {...phase} delay={index * 0.1} />
               ))}
             </div>
           </div>
         </section>
 
-        {/* FAQ Sections */}
         {faqData.map((category, categoryIndex) => (
           <section key={category.category} className={`py-20 md:py-32 relative ${categoryIndex % 2 === 1 ? 'bg-gradient-to-b from-transparent via-gray-900/20 to-transparent' : ''}`}>
             <div className="container mx-auto px-4">
-              <m.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                className="text-center mb-12"
-              >
+              <m.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl mb-6">
                   <category.icon className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                  {category.category}
-                </h2>
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{category.category}</h2>
               </m.div>
 
               <div className="max-w-4xl mx-auto space-y-4">
                 {category.items.map((item, index) => {
-                  const globalIndex = categoryIndex * 100 + index // Unique index across all categories
+                  const globalIndex = categoryIndex * 100 + index
                   return (
                     <FAQItem
                       key={globalIndex}
@@ -772,7 +522,6 @@ function FAQ() {
           </section>
         ))}
 
-        {/* CTA Section */}
         <section className="py-20 md:py-32 relative bg-gray-900/30">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
@@ -786,29 +535,25 @@ function FAQ() {
                     Ready to Experience the Future of Email?
                   </h2>
                   
-                  <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                    Join thousands of early adopters who are already using QMail's distributed messaging system.
-                  </p>
-
-                  <div className="space-y-4">
-                    <Link to="/how-it-works">
+                  <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <Link to="/register">
                       <m.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 mr-4 mb-4"
+                        className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
                       >
-                        Learn How It Works
+                        Claim Address
                         <ArrowRight className="w-5 h-5" />
                       </m.button>
                     </Link>
                     
-                    <Link to="/email-crisis">
+                    <Link to="/subscribe">
                       <m.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="w-full sm:w-auto px-8 py-4 border-2 border-gray-600 hover:border-blue-500 text-white rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
                       >
-                        Why We Built This
+                        Subscribe
                         <ArrowRight className="w-5 h-5" />
                       </m.button>
                     </Link>

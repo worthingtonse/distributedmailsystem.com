@@ -18,6 +18,7 @@ const FunnelSuccess = lazy(() => import('./pages/FunnelSuccess.jsx'))
 const AdminLinkGen = lazy(() => import('./pages/AdminLinkGen.jsx'))
 const RegisterAddress = lazy(() => import('./pages/RegisterAddress.jsx'))
 const Subscribe = lazy(() => import('./pages/Subscribe.jsx'))
+const Whitepaper = lazy(() => import('./pages/Whitepaper.jsx'))
 
 /**
  * AnimatedRoutes Component
@@ -54,6 +55,7 @@ const AnimatedRoutes = () => {
             <Route path="/success" element={<FunnelSuccess />} />
             <Route path="/register" element={<RegisterAddress />} />
             <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/whitepaper" element={<Whitepaper />} />
             
             {/* Internal Tools */}
             <Route path="/button" element={<AdminLinkGen />} />

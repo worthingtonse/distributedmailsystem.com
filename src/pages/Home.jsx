@@ -162,9 +162,7 @@ const Footer = memo(() => {
     <footer className="bg-gray-950 border-t border-gray-800">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         <div className="max-w-6xl mx-auto">
-          {/* Main Footer Content */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
-            {/* Brand */}
             <div className="text-center sm:text-left">
               <h3 className="text-xl font-bold text-white mb-3">QMail</h3>
               <p className="text-gray-400 text-sm leading-relaxed">
@@ -173,7 +171,6 @@ const Footer = memo(() => {
               </p>
             </div>
 
-            {/* Support */}
             <div className="text-center sm:text-left">
               <h4 className="text-white font-semibold mb-3">Support</h4>
               <div className="space-y-2">
@@ -195,7 +192,6 @@ const Footer = memo(() => {
               </div>
             </div>
 
-            {/* Legal */}
             <div className="text-center sm:text-left">
               <h4 className="text-white font-semibold mb-3">Legal</h4>
               <div className="space-y-2">
@@ -214,7 +210,6 @@ const Footer = memo(() => {
               </div>
             </div>
 
-            {/* Development Status */}
             <div className="text-center sm:text-left">
               <h4 className="text-white font-semibold mb-3">Development</h4>
               <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
@@ -228,7 +223,6 @@ const Footer = memo(() => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div className="border-t border-gray-800 pt-6">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
               <p className="text-gray-500 text-sm text-center sm:text-left">
@@ -249,48 +243,6 @@ const Footer = memo(() => {
 
 Footer.displayName = "Footer";
 
-// Scroll indicator component for better UX
-const ScrollIndicator = memo(({ onClick }) => {
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsVisible(window.scrollY < 100);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  if (!isVisible) return null;
-
-  return (
-    <m.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 2, duration: 1 }}
-      className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10"
-    >
-      <button
-        onClick={onClick}
-        className="flex flex-col items-center gap-2 text-white/70 hover:text-white transition-colors group"
-        aria-label="Scroll to next section"
-      >
-        <span className="text-sm font-medium">Discover More</span>
-        <div className="w-8 h-12 border-2 border-white/30 rounded-full flex justify-center">
-          <m.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="w-1 h-3 bg-white/50 rounded-full mt-2 group-hover:bg-white/80"
-          />
-        </div>
-      </button>
-    </m.div>
-  );
-});
-
-ScrollIndicator.displayName = "ScrollIndicator";
-
 function Home() {
   const heroRef = useRef(null);
 
@@ -310,31 +262,31 @@ function Home() {
 
   const problemAreas = [
     {
-      icon: Ban,
-      title: "Drowning in Spam",
+      icon: Server,
+      title: "The Server Problem",
       description:
-        "150 billion spam messages sent daily. Half of all email is junk you never asked for.",
+        "If your email lives on a server, it can be subpoenaed, hacked, or scanned.",
       gradient: "from-red-500 to-orange-500",
     },
     {
-      icon: AlertTriangle,
-      title: "Phishing & Fraud",
+      icon: Eye,
+      title: "Metadata Trails",
       description:
-        "Email spoofing is trivially easy. You can't trust who's really sending you messages.",
+        "Even if the message is encrypted, \"They\" know who you talked to and when.",
       gradient: "from-orange-500 to-yellow-500",
     },
     {
-      icon: Eye,
-      title: "Zero Privacy",
+      icon: AlertTriangle,
+      title: "Encryption Shelf Life",
       description:
-        "Your messages travel unencrypted, read by servers, corporations, and governments.",
+        "Modern encryption has a shelf life. \"Harvest now, decrypt later\" is a real threat.",
       gradient: "from-purple-500 to-pink-500",
     },
     {
-      icon: DollarSign,
-      title: "Hidden Costs",
+      icon: Ban,
+      title: "No Middle Man",
       description:
-        '"Free" email isn\'t free. You pay with your data, attention, and security.',
+        "There is no \"Post Office\" in the middle to tap.",
       gradient: "from-cyan-500 to-blue-500",
     },
   ];
@@ -342,25 +294,25 @@ function Home() {
   const solutions = [
     {
       icon: Shield,
-      title: "Decentralized",
+      title: "Shredded Delivery",
       description:
-        "Your messages are shredded, encrypted, and distributed across 32 servers using QMAIL technology. Even quantum computers can't decrypt them.",
+        "Messages are shredded, encrypted with AES encryption, dispersed among tens of mail servers including those owned by you, your friends and family.",
       link: "/register",
       gradient: "from-blue-500 to-cyan-500",
     },
     {
-      icon: DollarSign,
-      title: "Consumer Driven",
+      icon: Lock,
+      title: "Post-Quantum Cryptography (PQC)",
       description:
-        "Set your price. Unknown senders pay you to reach your inbox. Friends and trusted contacts? They're always free.",
+        "We use a newly invented quantum-safe key exchange system that stays secure even when quantum computers arrive.",
       link: "/register",
       gradient: "from-green-500 to-emerald-500",
     },
     {
-      icon: Zap,
-      title: "Zero Spam, Guaranteed",
+      icon: Globe,
+      title: "Sovereign Identity",
       description:
-        "Economic barriers eliminate spam by design. No filters needed. No false positives. Just a clean inbox.",
+        "Your address is tied to a cryptographic key, not a central registrar or DNS provider. You can publish yourself in the Distributed Resource Director (Phase II) so others can find you or not. Own your identity.",
       link: "/register",
       gradient: "from-purple-500 to-pink-500",
     },
@@ -434,7 +386,6 @@ function Home() {
           className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
           style={{ opacity }}
         >
-          {/* Static gradient background */}
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-gray-950 to-gray-950" />
 
           <div className="container mx-auto px-4 z-10 relative">
@@ -445,24 +396,18 @@ function Home() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
                 <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-8">
-                  Email{" "}
+                  Decentralized. <br />
                   <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                    Revolution
+                    Quantum-Safe.
                   </span>
                   <br />
-                  Starts Now
+                  Unsurveillable.
                 </h1>
 
-                <p className="text-xl md:text-2xl text-gray-300 mb-12 leading-relaxed">
-                  The first messaging system where{" "}
-                  <span className="text-blue-400 font-semibold">
-                    senders pay you
-                  </span>{" "}
-                  instead of selling your data. Zero spam. Quantum-safe
-                  security. Own your digital identity.
+                <p className="text-lg md:text-xl text-gray-300 mb-12 leading-relaxed">
+                  QMail isn't a service; it's an <span className="text-blue-400 font-semibold">open standard, open-source protocol.</span> By removing the client-server architecture, we've removed the spies. No central authority, no metadata trails, and no "backdoors"—just email rebuilt from first principles for the post-quantum age.
                 </p>
 
-                {/* Action Buttons */}
                 <div className="flex flex-col gap-3 justify-center items-center pt-4 w-full max-w-sm mx-auto sm:max-w-none sm:flex-row sm:gap-4">
                   <AnimatedButton
                     to="/register"
@@ -482,7 +427,6 @@ function Home() {
                   </AnimatedButton>
                 </div>
 
-                {/* Scroll CTA */}
                 <div className="pt-6 sm:pt-8">
                   <button
                     onClick={scrollToNextSection}
@@ -519,9 +463,7 @@ function Home() {
                 </span>
               </h2>
               <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                Traditional email was designed in 1982 for a small, trusted
-                network of researchers. Today's internet has 5 billion users,
-                and email is fundamentally broken.
+                The traditional email system is fundamentally broken.
               </p>
             </m.div>
 
@@ -579,8 +521,7 @@ function Home() {
                 </span>
               </h2>
               <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                QMail isn't just better email—it's a complete reimagining of
-                digital communication built for the modern world.
+                QMail is a complete reimagining of digital communication built for a post-quantum world.
               </p>
             </m.div>
 
@@ -636,11 +577,11 @@ function Home() {
 
                   <blockquote className="text-xl md:text-2xl text-gray-300 italic mb-8 leading-relaxed">
                     "QMail represents a fundamental paradigm shift in secure
-                    communications. Its QMAIL architecture makes data breaches
-                    not just difficult, but
+                    communications. By removing the server, we've removed the
+                    single point of failure and the
                     <span className="text-blue-400 font-semibold">
                       {" "}
-                      mathematically impractical
+                      incentive for surveillance
                     </span>
                     ."
                   </blockquote>
@@ -648,7 +589,7 @@ function Home() {
                   <div className="flex flex-wrap justify-center gap-8 pt-8 border-t border-gray-700/50">
                     {[
                       { icon: Shield, text: "Decentralized" },
-                      { icon: FileCheck, text: "Consumer Driven" },
+                      { icon: FileCheck, text: "Sovereign Identity" },
                       { icon: Globe, text: "Open Standard" },
                       { icon: Server, text: "Distributed Architecture" },
                     ].map((badge, i) => (
@@ -701,7 +642,6 @@ function Home() {
               className="max-w-6xl mx-auto"
             >
               <div className="bg-gray-900/50 backdrop-blur-xl rounded-3xl border border-gray-700/50 overflow-hidden">
-                {/* Table Header */}
                 <div className="grid grid-cols-3 gap-4 p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-b border-gray-700/50">
                   <div className="text-gray-400 font-semibold text-sm md:text-base">
                     Feature
@@ -714,7 +654,6 @@ function Home() {
                   </div>
                 </div>
 
-                {/* Table Rows */}
                 {comparisonData.map((row, index) => (
                   <m.div
                     key={row.feature}
@@ -775,11 +714,10 @@ function Home() {
                   </p>
                   <p className="text-sm sm:text-base lg:text-lg text-gray-300 mb-6 sm:mb-8 lg:mb-12 italic leading-relaxed max-w-3xl mx-auto px-4">
                     "It's like moving your data out of a rented storage unit and
-                    into your own home in a gated community. It's more private,
-                    you have more space and spammers pay you rent."
+                    into your own home. It's more private,
+                    you have more space and you own the foundation."
                   </p>
 
-                  {/* Services List */}
                   <div className="text-left max-w-4xl mx-auto mb-6 sm:mb-8 lg:mb-12">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3 lg:gap-4 text-gray-300">
                       {services.map((service, index) => (
@@ -800,7 +738,6 @@ function Home() {
                     </div>
                   </div>
 
-                  {/* Contact CTA */}
                   <div className="bg-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700/50 max-w-3xl mx-auto flex flex-col items-center text-center">
                     <p className="text-xs sm:text-sm lg:text-base xl:text-lg text-gray-300 mb-4 sm:mb-6 px-2">
                       Send us a QMail at <br className="sm:hidden" />

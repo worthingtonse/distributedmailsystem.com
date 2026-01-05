@@ -25,12 +25,13 @@ function Navigation() {
   const navItems = [
     { name: 'Home', path: '/' },
     { name: 'Claim Address', path: '/register' },
-    { name: 'Credits', path: '/subscribe' },
+    { name: 'Tips', path: '/subscribe' },
     { name: 'Why QMail', path: '/email-crisis' },
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Technology', path: '/technology' }, 
     { name: 'Strategy', path: '/strategy' },     
     { name: 'FAQs', path: '/faq' },
+    { name: 'Whitepaper', path: '/whitepaper' },
     { 
       name: 'Reference', 
       path: 'https://cloudcoin.org/qmail-reference.php',
