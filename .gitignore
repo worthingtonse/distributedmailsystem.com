@@ -1,40 +1,14 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Node.js dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Environment Variables (CRITICAL)
-.env
-.env.production
-.env.development
-.env.local
-.env.*.local
-
-# Vite / Build
+# Build outputs
 dist/
-dist-ssr/
-*.local
+client/dist/
+server/dist/
 
-# System Files
-Thumbs.db
-desktop.ini
+# Security & Logs
+.env
+SoldCoins.txt
+npm-debug.log*
