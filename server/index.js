@@ -156,8 +156,10 @@ app.post('/api/generate-mailbox', async (req, res) => {
 // Serve the built React files
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// FIXED: Using '/*' for modern Express/PM2 to prevent PathError
-app.get('/*', (req, res) => {
+
+// Using a Regex match for all routes (captured as '0')
+// This fixes the "Missing parameter name" error in newer Express versions
+app.get(/^\/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
