@@ -157,8 +157,9 @@ app.post('/api/generate-mailbox', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 
-// This uses a named capture group 'splat' which is compatible with all versions
-app.get('/:splat*', (req, res) => {
+// Using a Regex match for all routes (captured as '0')
+// This fixes the "Missing parameter name" error in newer Express versions
+app.get(/^\/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
