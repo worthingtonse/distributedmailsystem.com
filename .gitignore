@@ -12,3 +12,5 @@ server/dist/
 .env
 SoldCoins.txt
 npm-debug.log*
+
+.git/

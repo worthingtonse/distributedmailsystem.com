@@ -30,18 +30,20 @@ function convertToCustomBase32(decimalInt) {
     }
 }
 
-// --- 2. Corrected Polling Helper (using /api/v1/tasks) ---
+// --- 2. Corrected Polling Helper ---
 async function pollLockerKey(taskId) {
-    const maxAttempts = 10; 
+    const maxAttempts = 15; // Increased attempts for safety
     const delay = 1000; 
 
     for (let i = 0; i < maxAttempts; i++) {
         try {
-            // Using the correct plural 'tasks' endpoint
+            // Corrected plural tasks endpoint
             const response = await axios.get(`http://localhost:8006/api/v1/tasks?id=${taskId}`);
             
-            if (response.data.status === "success" && response.data.payload?.key) {
-                return response.data.payload.key;
+            // Per your screenshot, we look for 'transmit_code' inside the payload
+            if (response.data.status === "success" && response.data.payload?.transmit_code) {
+                console.log(`LockerKey found: ${response.data.payload.transmit_code}`);
+                return response.data.payload.transmit_code;
             }
         } catch (err) {
             console.error(`Polling task ${taskId} attempt ${i+1} failed:`, err.message);
@@ -57,16 +59,13 @@ app.post('/api/generate-mailbox', async (req, res) => {
     let lockerKey = "DY6-UYDM"; // Fallback
 
     try {
-        // Step A: POST to /api/v1/locker with correct payload
-        const lockerResponse = await axios.post('http://localhost:8006/api/v1/locker', {
-            // Add any specific payload fields from your screenshot here
-            // e.g., "action": "get_key"
-        }, { timeout: 3000 });
+        // Step A: POST to /api/v1/locker
+        const lockerResponse = await axios.post('http://localhost:8006/api/v1/locker', {}, { timeout: 3000 });
         
         if (lockerResponse.data.status === "success" && lockerResponse.data.payload?.task_id) {
             const taskId = lockerResponse.data.payload.task_id;
             
-            // Step B: Poll for the key using the plural /tasks endpoint
+            // Step B: Poll for the transmit_code
             const resultKey = await pollLockerKey(taskId);
             if (resultKey) {
                 lockerKey = resultKey;
@@ -76,7 +75,7 @@ app.post('/api/generate-mailbox', async (req, res) => {
         console.warn("RAIDA Error. Using fallback key:", lockerKey);
     }
 
-    // Step C: Logic for amount classes
+    // Step C: Determine Class
     let amountClass = 'bit';
     if (amountPaid >= 1000) amountClass = 'giga';
     else if (amountPaid >= 100) amountClass = 'mega';
@@ -96,14 +95,14 @@ app.post('/api/generate-mailbox', async (req, res) => {
         `InboxFee=10\r\n` +
         `Class=${amountClass}`;
 
-    // Step E: URL-Safe Base64 Encoding
+    // Step E: URL-Safe Base64
     const b64Code = Buffer.from(iniContent)
         .toString('base64')
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 
-    // Step F: Create/Update SoldCoins.txt
+    // Step F: Log the sale
     const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 22);
     const logEntry = `${timestamp}, ${lastName}, ${firstName}, ${lockerKey}, ${b64Code}\n`;
     fs.appendFileSync(path.join(__dirname, 'SoldCoins.txt'), logEntry);
