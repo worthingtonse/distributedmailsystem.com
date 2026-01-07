@@ -141,7 +141,7 @@ app.post('/api/generate-mailbox', async (req, res) => {
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // Fallback: Send all non-API requests to index.html for React Router
-app.get('*', (req, res) => {
+app.get('*all', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
