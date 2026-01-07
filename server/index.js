@@ -1,3 +1,6 @@
+// 1. Load environment variables
+require('dotenv').config(); 
+
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -10,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- 1. Custom Base32 Conversion (from Sean's Python script) ---
+// --- 1. Custom Base32 Conversion ---
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function convertToCustomBase32(decimalInt) {
@@ -29,36 +32,57 @@ function convertToCustomBase32(decimalInt) {
     }
 }
 
-// --- 2. API Endpoint to Generate Mailbox Token ---
-app.post('/api/generate-mailbox-code', async (req, res) => {
+// --- 2. Helper for Polling RAIDA Task ---
+async function pollLockerKey(taskId) {
+    const maxAttempts = 5;
+    const delay = 1000; // 1 second between checks
+
+    for (let i = 0; i < maxAttempts; i++) {
+        try {
+            // Adjust this URL to match your exact Task ID API endpoint
+            const response = await axios.get(`http://localhost:8006/api/v1/task?id=${taskId}`);
+            if (response.data.status === "success" && response.data.key) {
+                return response.data.key;
+            }
+        } catch (err) {
+            console.error("Polling attempt failed:", err.message);
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    return null;
+}
+
+// --- 3. API Endpoint to Generate Mailbox Token ---
+// Changed to /api/generate-mailbox to match your RegisterAddress.jsx
+app.post('/api/generate-mailbox', async (req, res) => {
     const { firstName, lastName, amountPaid } = req.body;
-    let lockerKey = "DY6-UYDM"; // Default fallback key from Sean's list
+    let lockerKey = "DY6-UYDM"; // Fallback key
 
     try {
-        // Step A: Attempt to get Locker Key from local RAIDA service (Port 8006)
-        // We use the v1 prefix as confirmed by your 'info' call
-        const lockerResponse = await axios.get('http://localhost:8006/api/v1/lockerkey', { timeout: 2000 });
+        // Step A: Request Task ID from RAIDA
+        const initialResponse = await axios.get('http://localhost:8006/api/v1/lockerkey', { timeout: 2000 });
         
-        if (lockerResponse.data.status === "success") {
-            lockerKey = lockerResponse.data.payload?.key || lockerResponse.data.key;
+        if (initialResponse.data.status === "success" && initialResponse.data.task_id) {
+            // Step B: Poll for the actual key using the Task ID
+            const resultKey = await pollLockerKey(initialResponse.data.task_id);
+            if (resultKey) lockerKey = resultKey;
         }
     } catch (error) {
-        console.warn("RAIDA LockerKey service 4153/Error. Using development fallback key:", lockerKey);
+        console.warn("RAIDA service error. Using fallback key:", lockerKey);
     }
 
-    // Step B: Determine Class based on amount paid (Match Sean's Python logic)
+    // Step C: Determine Class based on amount paid
     let amountClass = 'bit';
     if (amountPaid >= 1000) amountClass = 'giga';
     else if (amountPaid >= 100) amountClass = 'mega';
     else if (amountPaid >= 50) amountClass = 'kilo';
     else if (amountPaid >= 20) amountClass = 'byte';
 
-    // Step C: Placeholder for Serial Number logic
-    // The Python script scans /var/cc/; until that is mapped, we use a test serial
+    // Step D: Placeholder Serial Logic
     const rawSerial = "12345"; 
     const customSerial = convertToCustomBase32(rawSerial);
 
-    // Step D: Construct .ini string (Windows \r\n endings required by QMail)
+    // Step E: Construct .ini string
     const iniContent = 
         `LockerKey=${lockerKey}\r\n` +
         `SerialNumber=${customSerial}\r\n` +
@@ -68,14 +92,14 @@ app.post('/api/generate-mailbox-code', async (req, res) => {
         `InboxFee=10\r\n` +
         `Class=${amountClass}`;
 
-    // Step E: Encode to URL-Safe Base64
+    // Step F: Encode to URL-Safe Base64
     const b64Code = Buffer.from(iniContent)
         .toString('base64')
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 
-    // Step F: Log the sale to SoldCoins.txt
+    // Step G: Log to SoldCoins.txt
     const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 22);
     const logEntry = `${timestamp}, ${lastName}, ${firstName}, ${lockerKey}, ${b64Code}\n`;
     fs.appendFileSync(path.join(__dirname, 'SoldCoins.txt'), logEntry);
@@ -83,13 +107,8 @@ app.post('/api/generate-mailbox-code', async (req, res) => {
     res.json({ success: true, mailboxToken: b64Code });
 });
 
-// --- 3. Bundle Settings (Serve React Frontend) ---
-
-// Serve static files from the 'dist' folder
+// --- 4. Bundle Settings ---
 app.use(express.static(path.join(__dirname, 'dist')));
-
-// The "Catch-All" route: handles React Router paths (like /success or /register)
-// Using '*all' to avoid the PathError in newer path-to-regexp versions
 app.get('*all', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
@@ -98,5 +117,4 @@ app.get('*all', (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`Backend Bridge active with RAIDA Fallback support.`);
 });

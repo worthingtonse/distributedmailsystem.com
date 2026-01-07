@@ -116,8 +116,9 @@ const RegisterAddress = () => {
           onApprove: async (data, actions) => {
             const order = await actions.order.capture();
 
+            // Use the environment variable and ensure the endpoint matches your backend route (-code)
             const response = await fetch(
-              "http://localhost:5000/api/generate-mailbox",
+              `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox-code`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
