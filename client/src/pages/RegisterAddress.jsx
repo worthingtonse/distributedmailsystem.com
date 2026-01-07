@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
@@ -36,6 +37,7 @@ const RegisterAddress = () => {
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [copied, setCopied] = useState(false);
   const buttonRef = useRef(null);
+  const navigate = useNavigate();
 
   // Allegiance Levels
   const tiers = [
