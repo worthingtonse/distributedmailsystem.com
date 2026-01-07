@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load PORT and other variables from .env
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -12,7 +12,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Global logger to see every request hitting the server
+// Request Logger: Critical for PM2 monitoring
 app.use((req, res, next) => {
     console.log(`>>> ${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
@@ -33,65 +33,82 @@ function convertToCustomBase32(decimalInt) {
         }
         return chars.reverse().join('');
     } catch (e) {
-        return "ERROR_INVALID_SERIAL";
+        return "ERROR_SERIAL";
     }
 }
 
-// --- 3. Polling Helper for RAIDA transmit_code ---
+// --- 3. Polling Helper: RAIDA RESTful Path ---
 async function pollLockerKey(taskId) {
-    const maxAttempts = 15; 
-    const delay = 1000; 
+    const maxAttempts = 15;
+    const delay = 1000;
 
     for (let i = 0; i < maxAttempts; i++) {
         try {
-            // Using the plural 'tasks' endpoint as per your requirement
-            const response = await axios.get(`http://localhost:8006/api/v1/tasks?id=${taskId}`);
+            // FIXED: Using the RESTful path parameter format: /tasks/ID
+            const response = await axios.get(`http://127.0.0.1:8006/api/v1/tasks/${taskId}`);
             
-            // Check for 'transmit_code' inside the payload as per your screenshot
-            if (response.data.status === "success" && response.data.payload?.transmit_code) {
-                console.log(`LockerKey retrieved: ${response.data.payload.transmit_code}`);
-                return response.data.payload.transmit_code;
+            const payload = response.data.payload;
+            console.log(`Polling Task [${taskId}] - Status: ${payload?.status} - Progress: ${payload?.progress}%`);
+
+            // If success, return the real key
+            if (response.data.status === "success" && payload?.transmit_code) {
+                return payload.transmit_code;
+            }
+
+            // If the task itself reports an error (e.g., Wallet not found), stop polling
+            if (payload?.status === "error") {
+                console.error(`RAIDA Task reported internal error: ${payload.message || 'Unknown error'}`);
+                break;
             }
         } catch (err) {
-            console.error(`Polling task ${taskId} attempt ${i+1} failed:`, err.message);
+            console.error(`Polling attempt ${i+1} failed to connect:`, err.message);
         }
         await new Promise(resolve => setTimeout(resolve, delay));
     }
     return null;
 }
 
-// --- 4. API Endpoint: Generate Mailbox Token ---
+// --- 4. Main API Endpoint ---
 app.post('/api/generate-mailbox', async (req, res) => {
     const { firstName, lastName, amountPaid } = req.body;
-    let lockerKey = "DY6-UYDM"; // Fallback key
+    let lockerKey = "DY6-UYDM"; // Safety Fallback
 
-    console.log(`>>> Processing Registration for: ${firstName} ${lastName} ($${amountPaid})`);
+    console.log(`>>> Processing Registration: ${firstName} ${lastName} ($${amountPaid})`);
 
     try {
-        // Step A: Request Task ID from RAIDA Locker
-        console.log("Connecting to RAIDA Locker at http://localhost:8006/api/v1/locker...");
-        const lockerResponse = await axios.post('http://localhost:8006/api/v1/locker', {}, { timeout: 5000 });
+        // Step A: Request Task ID with required JSON body (amount/name)
+        console.log("Contacting RAIDA Locker at 127.0.0.1:8006...");
+        const lockerResponse = await axios.post(
+            'http://127.0.0.1:8006/api/v1/locker', 
+            { 
+                amount: amountPaid || 10, 
+                name: `${firstName} ${lastName}` 
+            }, 
+            { 
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 5000 
+            }
+        );
         
-        if (lockerResponse.data.status === "success" && lockerResponse.data.payload?.task_id) {
-            const taskId = lockerResponse.data.payload.task_id;
-            console.log(`Task ID [${taskId}] received. Polling RAIDA...`);
+        // FIXED: Accessing 'id' from payload as confirmed by your curl
+        if (lockerResponse.data.status === "success" && lockerResponse.data.payload?.id) {
+            const taskId = lockerResponse.data.payload.id;
+            console.log(`Task ID [${taskId}] created. Waiting for transmit_code...`);
 
-            // Step B: Poll for the transmit_code
+            // Step B: Poll for the result
             const resultKey = await pollLockerKey(taskId);
             if (resultKey) {
                 lockerKey = resultKey;
+                console.log("Real LockerKey obtained successfully.");
             } else {
-                console.warn("RAIDA polling timed out. Using fallback key.");
+                console.warn("Could not retrieve real key. Proceeding with fallback.");
             }
-        } else {
-            console.error("RAIDA did not return a valid Task ID.");
         }
     } catch (error) {
-        console.error("RAIDA Communication Error:", error.message);
-        console.log("Proceeding with fallback LockerKey.");
+        console.error("RAIDA Connection failed:", error.message);
     }
 
-    // Step C: Determine Class based on payment tier
+    // Step C: Logic for Class and Serial
     let amountClass = 'bit';
     if (amountPaid >= 1000) amountClass = 'giga';
     else if (amountPaid >= 100) amountClass = 'mega';
@@ -101,7 +118,7 @@ app.post('/api/generate-mailbox', async (req, res) => {
     const rawSerial = "12345"; 
     const customSerial = convertToCustomBase32(rawSerial);
 
-    // Step D: Construct .ini content
+    // Step D: Construct .ini
     const iniContent = 
         `LockerKey=${lockerKey}\r\n` +
         `SerialNumber=${customSerial}\r\n` +
@@ -111,43 +128,44 @@ app.post('/api/generate-mailbox', async (req, res) => {
         `InboxFee=10\r\n` +
         `Class=${amountClass}`;
 
-    // Step E: URL-Safe Base64 Encoding
+    // Step E: URL-Safe Base64
     const b64Code = Buffer.from(iniContent)
         .toString('base64')
         .replace(/\+/g, '-')
         .replace(/\//g, '_')
         .replace(/=+$/, '');
 
-    // Step F: Write to SoldCoins.txt
+    // Step F: Write to Log File
     try {
-        const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 22);
+        const timestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
         const logEntry = `${timestamp}, ${lastName}, ${firstName}, ${lockerKey}, ${b64Code}\n`;
         fs.appendFileSync(path.join(__dirname, 'SoldCoins.txt'), logEntry);
-        console.log("Transaction successfully logged to SoldCoins.txt");
-    } catch (fsError) {
-        console.error("File System Error (SoldCoins.txt):", fsError.message);
+    } catch (fsErr) {
+        console.error("Failed to write to SoldCoins.txt:", fsErr.message);
     }
 
-    // Return the token to the frontend
+    // Response for Frontend (provides both keys for compatibility)
     res.json({ 
         success: true, 
         mailboxToken: b64Code,
-        mailboxCode: b64Code // Providing both names for compatibility
+        mailboxCode: b64Code 
     });
 });
 
-// --- 5. Static Files & Routing ---
-// Serve the React build files from the 'dist' folder
+// --- 5. Frontend & Routing ---
+// Serve the built React files
 app.use(express.static(path.join(__dirname, 'dist')));
 
-// Fallback: Send all non-API requests to index.html for React Router
-app.get('*all', (req, res) => {
+// FIXED: Using '/*' for modern Express/PM2 to prevent PathError
+app.get('/*', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // --- 6. Start Server ---
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`========================================`);
     console.log(`Server running on port ${PORT}`);
-    console.log(`Backend fully operational. Checking local RAIDA on 8006...`);
+    console.log(`RAIDA endpoint: http://127.0.0.1:8006`);
+    console.log(`========================================`);
 });
