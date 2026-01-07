@@ -118,7 +118,7 @@ const RegisterAddress = () => {
 
             // Use the environment variable and ensure the endpoint matches your backend route (-code)
             const response = await fetch(
-              `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox-code`,
+              `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox`,
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
