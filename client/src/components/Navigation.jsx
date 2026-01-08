@@ -32,10 +32,10 @@ function Navigation() {
     { name: 'Strategy', path: '/strategy' },     
     { name: 'FAQs', path: '/faq' },
     { name: 'Whitepaper', path: '/whitepaper' },
-    { 
-      name: 'Reference', 
+    {
+      name: 'API',
       path: 'https://cloudcoin.org/qmail-reference.php',
-      external: true 
+      external: true
     },
   ]
 
