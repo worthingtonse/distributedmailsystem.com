@@ -448,13 +448,13 @@ function HowItWorks() {
                   </div>
 
                   <div className="space-y-4">
-                    <Link to="/faq">
+                    <Link to="/register">
                       <m.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 mr-4 mb-4"
                       >
-                        Learn More in FAQ
+                        Claim Your Address
                         <ArrowRight className="w-5 h-5" />
                       </m.button>
                     </Link>

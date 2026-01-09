@@ -34,7 +34,11 @@ const FunnelSuccess = () => {
   const [inboxFee, setInboxFee] = useState("10");
   const [definer, setDefiner] = useState(state?.definer || "Verified User");
 
-  const userAddress = state?.generatedAddress || "Mega~User.Name#7D2P";
+  // Debug: log the state to see what's being passed
+  console.log("FunnelSuccess state:", state);
+
+  const userAddress = state?.email || state?.generatedAddress || "(Email not received - please complete registration)";
+  const lockerCode = state?.lockerCode || "";
   const userFirstName = state?.userData?.firstName || "User";
 
   // Provisioning Simulation
@@ -156,7 +160,7 @@ const FunnelSuccess = () => {
                   Success, {userFirstName}!
                 </h1>
                 <p className="text-gray-400">
-                  Your decentralized identity is now live on the mesh.
+                  Your decentralized identity is now live on the Distributed Resource Directory and others can search you up.
                 </p>
               </div>
 
@@ -185,6 +189,23 @@ const FunnelSuccess = () => {
                       sending private messages.
                     </p>
                   </div>
+
+                  {/* Locker Code Card */}
+                  {lockerCode && (
+                    <div className="bg-white/5 backdrop-blur-xl border border-green-500/20 p-6 rounded-[2rem]">
+                      <h3 className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-4 flex items-center gap-2 whitespace-nowrap">
+                        <Key size={14} /> Your Locker Code
+                      </h3>
+                      <div className="bg-black/40 p-4 rounded-xl border border-white/5">
+                        <code className="text-2xl text-green-400 font-mono">
+                          {lockerCode}
+                        </code>
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-3 italic">
+                        Save this code securely. You'll need it to access your mailbox.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Real-Time Config Card */}
                   <div className="bg-gradient-to-br from-blue-600/10 to-purple-600/10 backdrop-blur-xl border border-blue-500/20 p-8 rounded-[2.5rem]">

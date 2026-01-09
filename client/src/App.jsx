@@ -15,6 +15,7 @@ const FAQ = lazy(() => import('./pages/Faq.jsx'))
 const Strategy = lazy(() => import('./pages/SalesStrategy.jsx'))
 const VerifiedAccess = lazy(() => import('./pages/VerifiedAccess.jsx'))
 const FunnelSuccess = lazy(() => import('./pages/FunnelSuccess.jsx'))
+const InfluencerSuccess = lazy(() => import('./pages/InfluencerSuccess.jsx'))
 const AdminLinkGen = lazy(() => import('./pages/AdminLinkGen.jsx'))
 const RegisterAddress = lazy(() => import('./pages/RegisterAddress.jsx'))
 const Subscribe = lazy(() => import('./pages/Subscribe.jsx'))
@@ -26,7 +27,7 @@ const Whitepaper = lazy(() => import('./pages/Whitepaper.jsx'))
  */
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const hideNav = ['/access', '/success'].includes(location.pathname);
+  const hideNav = ['/access', '/success', '/success-influencer'].includes(location.pathname);
 
   return (
     <div className="relative min-h-screen">
@@ -53,6 +54,7 @@ const AnimatedRoutes = () => {
             {/* Sales Funnel & Onboarding */}
             <Route path="/access" element={<VerifiedAccess />} />
             <Route path="/success" element={<FunnelSuccess />} />
+            <Route path="/success-influencer" element={<InfluencerSuccess />} />
             <Route path="/register" element={<RegisterAddress />} />
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/whitepaper" element={<Whitepaper />} />

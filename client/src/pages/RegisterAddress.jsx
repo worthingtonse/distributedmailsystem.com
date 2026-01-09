@@ -31,6 +31,7 @@ const RegisterAddress = () => {
   const [selectedTier, setSelectedTier] = useState(null);
   const [selectedEdition, setSelectedEdition] = useState("free");
   const [customGroup, setCustomGroup] = useState("");
+  const [inboxFee, setInboxFee] = useState("0");
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
@@ -39,10 +40,10 @@ const RegisterAddress = () => {
   const buttonRef = useRef(null);
   const navigate = useNavigate();
 
-  // Allegiance Levels
+  // Stake Levels
   const tiers = [
     {
-      name: "Bit",
+      name: ".Bit",
       price: 10,
       trust: "Entry level",
       best: "Casual users, testing",
@@ -50,7 +51,7 @@ const RegisterAddress = () => {
       color: "text-blue-400",
     },
     {
-      name: "Byte",
+      name: ".Byte",
       price: 20,
       trust: "Basic commitment",
       best: "Everyday personal email",
@@ -58,7 +59,7 @@ const RegisterAddress = () => {
       color: "text-green-400",
     },
     {
-      name: "Kilo",
+      name: ".Kilo",
       price: 50,
       trust: "Moderate stake",
       best: "Freelancers, small creators",
@@ -66,7 +67,7 @@ const RegisterAddress = () => {
       color: "text-purple-400",
     },
     {
-      name: "Mega",
+      name: ".Mega",
       price: 100,
       trust: "Strong signal of legitimacy",
       best: "Professionals, businesses",
@@ -74,7 +75,7 @@ const RegisterAddress = () => {
       color: "text-yellow-400",
     },
     {
-      name: "Giga",
+      name: ".Giga",
       price: 1000,
       trust: "Highest trust — serious users only",
       best: "Executives, high-profile individuals",
@@ -82,6 +83,13 @@ const RegisterAddress = () => {
       color: "text-red-400",
     },
   ];
+
+  // Set default tier to .Bit on mount
+  useEffect(() => {
+    if (!selectedTier) {
+      setSelectedTier(tiers[0]);
+    }
+  }, []);
 
   const totalPrice = useMemo(() => {
     const base = selectedTier ? selectedTier.price : 0;
@@ -118,7 +126,7 @@ const RegisterAddress = () => {
           onApprove: async (data, actions) => {
             const order = await actions.order.capture();
 
-            // Use the environment variable and ensure the endpoint matches your backend route (-code)
+            // Call backend to generate mailbox
             const response = await fetch(
               `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox`,
               {
@@ -128,17 +136,24 @@ const RegisterAddress = () => {
                   firstName: order.payer.name.given_name,
                   lastName: order.payer.name.surname,
                   amountPaid: totalPrice,
+                  inboxFee: parseFloat(inboxFee),
+                  description: customGroup || "",
                 }),
               }
             );
 
             const result = await response.json();
 
-            // Pass the real mailboxCode to the success page
+            if (!result.success) {
+              setPaypalError(result.error || "Registration failed. Please try again.");
+              return;
+            }
+
+            // Pass email and locker code to the success page
             navigate("/success", {
               state: {
-                generatedAddress: generatedAddress, // your UI address
-                mailboxCode: result.mailboxCode, // the real base64 token
+                email: result.email,
+                lockerCode: result.lockerCode,
                 userData: { firstName: order.payer.name.given_name },
               },
             });
@@ -158,7 +173,7 @@ const RegisterAddress = () => {
         })
         .render(buttonRef.current);
     }
-  }, [selectedTier, customGroup, totalPrice, selectedEdition]);
+  }, [selectedTier, customGroup, totalPrice, selectedEdition, inboxFee]);
 
   useEffect(() => {
     const scriptId = "paypal-sdk-script";
@@ -205,6 +220,7 @@ const RegisterAddress = () => {
     paymentComplete,
     selectedEdition,
     paypalError,
+    inboxFee,
   ]);
 
   return (
@@ -236,10 +252,10 @@ const RegisterAddress = () => {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono">
             {[
-              "Giga~CEO-VivaTech.John.Doe#8D2P",
-              "Bit~Go-49ers!.Laura.Croft#UYV4",
-              "Mega~Developer.Ron.Wagner#CA93",
-              "Kilo~的我大个.Wo.Chang#89RE",
+              "John.Doe@CEO-VivaTech#8D2P.Giga",
+              "Laura.Croft@Go-49ers!#UYV4.Bit",
+              "Ron.Wagner@Developer#CA93.Mega",
+              "Wo.Chang@的我大个#89RE.Kilo",
             ].map((ex, i) => (
               <div
                 key={i}
@@ -257,25 +273,21 @@ const RegisterAddress = () => {
             <div className="grid md:grid-cols-2 gap-8">
               <div className="bg-gray-900 p-8 rounded-[2rem] border border-gray-800 h-full">
                 <h3 className="text-xl font-bold text-white mb-6">
-                  How DMS Addresses Work
+                  Parts of Phase I Addresses
                 </h3>
                 <div className="space-y-4 text-sm leading-relaxed">
                   <p>
-                    <b className="text-blue-400">Allegiance Level:</b> Your
-                    "domain" that signals commitment.
-                  </p>
-                  <p>
-                    <b className="text-purple-400">~ Self-Describer:</b>{" "}
-                    Optional! Identity, role, or personality (e.g.,
-                    "CEO-VivaTech").
-                  </p>
-                  <p>
-                    <b className="text-white">. Name:</b> Pulled from your
+                    <b className="text-white">Semi Verified Name:</b> Pulled from your
                     payment card name for verification.
                   </p>
                   <p>
-                    <b className="text-cyan-400"># Mailbox ID:</b> A unique
-                    random code for your address.
+                    <b className="text-purple-400">Self-Describer:</b> You in a word.
+                  </p>
+                  <p>
+                    <b className="text-cyan-400">Mailbox ID:</b> Your mailbox ID.
+                  </p>
+                  <p>
+                    <b className="text-blue-400">Stake Level:</b> The amount of money users staked for their address (bit,byte,kilo,mega,giga)
                   </p>
                 </div>
               </div>
@@ -296,11 +308,33 @@ const RegisterAddress = () => {
               </div>
             </div>
 
+            {/* --- PHASE STATUS INFO --- */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-gray-900 p-6 rounded-2xl border border-blue-500/20">
+                <h4 className="font-black text-white mb-2 uppercase tracking-tighter text-sm">
+                  Phase I (Current)
+                </h4>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Your address is automatically published in the DRD. The
+                  First/Second words come directly from your card name.
+                </p>
+              </div>
+              <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 opacity-60">
+                <h4 className="font-black text-white mb-2 uppercase tracking-tighter text-sm">
+                  Phase II (Coming Soon)
+                </h4>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Edit your profile, add details, and customize your inbox
+                  presence.
+                </p>
+              </div>
+            </div>
+
             {/* --- ALLEGIANCE TABLE --- */}
             <section className="bg-gray-900 rounded-[2rem] border border-gray-800 overflow-hidden">
               <div className="p-8 border-b border-gray-800">
                 <h3 className="text-xl font-bold text-white">
-                  Allegiance Levels & Status
+                  Stake Levels & Status
                 </h3>
               </div>
               <div className="overflow-x-auto">
@@ -338,7 +372,7 @@ const RegisterAddress = () => {
                   <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
                     1
                   </span>
-                  Select Your Allegiance Level
+                  Stake Your Address:
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                   {tiers.map((tier) => (
@@ -361,7 +395,7 @@ const RegisterAddress = () => {
                 </div>
               </div>
 
-              {/* STEP 2: EDITION SELECTOR */}
+              {/* STEP 2: EDITION SELECTOR - COMMENTED OUT FOR LATER
               <div className="space-y-6">
                 <h2 className="text-2xl font-black text-white flex items-center gap-3">
                   <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
@@ -417,108 +451,118 @@ const RegisterAddress = () => {
                   </div>
                 </div>
               </div>
+              END COMMENTED OUT SECTION */}
 
-              {/* STEP 3: PREVIEW & CHECKOUT */}
-              <AnimatePresence>
-                {selectedTier && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-10 pt-10 border-t border-gray-800"
-                  >
-                    <div className="grid md:grid-cols-2 gap-8 items-end">
-                      <div className="space-y-4">
-                        <label className="text-xs font-bold text-blue-400 uppercase tracking-widest">
-                          Optional Self-Describer
-                        </label>
-                        <div className="flex items-center gap-3">
-                          <span className="text-4xl text-gray-700 font-mono">
-                            ~
-                          </span>
-                          <input
-                            type="text"
-                            value={customGroup}
-                            onChange={handleGroupChange}
-                            placeholder="e.g. CEO-VivaTech"
-                            className="w-full bg-black border border-gray-800 rounded-2xl px-6 py-4 text-white outline-none focus:border-blue-500 transition-all text-xl font-mono"
-                          />
-                        </div>
-                      </div>
-                      <div className="bg-black p-6 rounded-2xl border border-gray-800">
-                        <span className="text-[10px] text-gray-500 uppercase block mb-2 font-bold tracking-widest">
-                          Address Preview
-                        </span>
-                        <div className="text-lg md:text-xl font-mono text-white break-all">
-                          <span className={selectedTier.color}>
-                            {selectedTier.name}
-                          </span>
-                          {customGroup && (
-                            <span className="text-purple-400">
-                              ~{customGroup}
-                            </span>
-                          )}
-                          <span className="text-gray-400">.Your.Name</span>
-                          <span className="text-cyan-500">#8D2P</span>
-                        </div>
-                      </div>
+              {/* STEP 2: SELF DESCRIBER */}
+              <div className="space-y-6 pt-10 border-t border-gray-800">
+                <div className="grid md:grid-cols-2 gap-8 items-end">
+                  <div className="space-y-4">
+                    <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
+                        2
+                      </span>
+                      Self Describer
+                    </h2>
+                    <div className="flex items-center gap-3">
+                      <span className="text-4xl text-gray-700 font-mono">
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        value={customGroup}
+                        onChange={handleGroupChange}
+                        placeholder="e.g. CEO-VivaTech"
+                        className="w-full bg-white border border-gray-300 rounded-2xl px-6 py-4 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 transition-all text-xl font-mono"
+                      />
                     </div>
-
-                    <div className="max-w-md mx-auto space-y-8 bg-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
-                      <div className="flex justify-between items-center font-black text-2xl text-white">
-                        <span>Total Due:</span>
-                        <span>${totalPrice}</span>
-                      </div>
-
-                      {/* PayPal Button Container with Error Handling */}
-                      <div className="min-h-[150px] flex items-center justify-center">
-                        {paypalError ? (
-                          <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
-                            <AlertCircle
-                              className="shrink-0 mt-0.5"
-                              size={16}
-                            />
-                            <span>{paypalError}</span>
-                          </div>
-                        ) : !isPaypalLoaded ? (
-                          <div className="animate-pulse text-gray-500 text-xs font-bold uppercase tracking-widest">
-                            Initialising PayPal...
-                          </div>
-                        ) : (
-                          <div ref={buttonRef} className="w-full"></div>
-                        )}
-                      </div>
-
-                      <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
-                        * Note that refunds are available up to 30 days after
-                        your purchase.
-                      </p>
+                  </div>
+                  <div className="bg-black p-6 rounded-2xl border border-gray-800">
+                    <span className="text-[10px] text-gray-500 uppercase block mb-2 font-bold tracking-widest">
+                      Address Preview
+                    </span>
+                    <div className="text-lg md:text-xl font-mono text-white break-all">
+                      <span className="text-gray-400">FirstName.LastName</span>
+                      <span className="text-purple-400">@{customGroup || "Describer"}</span>
+                      <span className="text-cyan-400">#mail-id</span>
+                      {selectedTier && (
+                        <span className={selectedTier.color}>{selectedTier.name}</span>
+                      )}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <p className="text-xs text-gray-500 mt-2 italic">
+                      Your name and mail-id will be added after your registration.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* STEP 3: INBOX FEE */}
+              <div className="space-y-4 pt-10 border-t border-gray-800">
+                <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
+                    3
+                  </span>
+                  Inbox Fee
+                </h2>
+                <p className="text-sm text-gray-400">
+                  Applies to everyone until white lists are enabled in Phase 2
+                </p>
+                <select
+                  value={inboxFee}
+                  onChange={(e) => setInboxFee(e.target.value)}
+                  className="w-full max-w-xs bg-white border border-gray-300 rounded-2xl px-6 py-4 text-gray-900 outline-none focus:border-blue-500 transition-all text-xl font-mono cursor-pointer"
+                >
+                  <option value="0">$0 (default)</option>
+                  <option value="0.01">$0.01</option>
+                  <option value="0.10">$0.10</option>
+                  <option value="1">$1</option>
+                  <option value="10">$10</option>
+                  <option value="20">$20</option>
+                  <option value="30">$30</option>
+                  <option value="40">$40</option>
+                  <option value="50">$50</option>
+                  <option value="60">$60</option>
+                  <option value="70">$70</option>
+                  <option value="80">$80</option>
+                  <option value="90">$90</option>
+                  <option value="100">$100</option>
+                </select>
+              </div>
+
+              {/* CHECKOUT */}
+              <div className="pt-10 border-t border-gray-800">
+                <div className="max-w-md mx-auto space-y-8 bg-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
+                  <div className="flex justify-between items-center font-black text-2xl text-white">
+                    <span>Total Due:</span>
+                    <span>${totalPrice}</span>
+                  </div>
+
+                  {/* PayPal Button Container with Error Handling */}
+                  <div className="min-h-[150px] flex items-center justify-center">
+                    {paypalError ? (
+                      <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
+                        <AlertCircle
+                          className="shrink-0 mt-0.5"
+                          size={16}
+                        />
+                        <span>{paypalError}</span>
+                      </div>
+                    ) : !isPaypalLoaded ? (
+                      <div className="animate-pulse text-gray-500 text-xs font-bold uppercase tracking-widest">
+                        Initialising PayPal...
+                      </div>
+                    ) : (
+                      <div ref={buttonRef} className="w-full"></div>
+                    )}
+                  </div>
+
+                  <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
+                    * Note that refunds are available up to 30 days after
+                    your purchase.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* --- PHASE INFO --- */}
-            <div className="grid md:grid-cols-2 gap-6 pb-20">
-              <div className="bg-gray-900 p-8 rounded-2xl border border-blue-500/20">
-                <h4 className="font-black text-white mb-2 uppercase tracking-tighter">
-                  Phase I (Current)
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Your address is automatically published in the DRD. The
-                  First/Second words come directly from your card name.
-                </p>
-              </div>
-              <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800 opacity-60">
-                <h4 className="font-black text-white mb-2 uppercase tracking-tighter">
-                  Phase II (Coming Soon)
-                </h4>
-                <p className="text-xs text-gray-400 leading-relaxed">
-                  Edit your profile, add details, and customize your inbox
-                  presence.
-                </p>
-              </div>
-            </div>
           </div>
         ) : (
           /* --- SUCCESS STATE --- */

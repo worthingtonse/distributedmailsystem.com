@@ -29,7 +29,7 @@ function Navigation() {
     { name: 'Why QMail', path: '/email-crisis' },
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'Technology', path: '/technology' }, 
-    { name: 'Strategy', path: '/strategy' },     
+    { name: 'Influencers', path: '/strategy' },     
     { name: 'FAQs', path: '/faq' },
     { name: 'Whitepaper', path: '/whitepaper' },
     {
@@ -134,45 +134,6 @@ function Navigation() {
             </motion.div>
           ))}
 
-          {/* Partner Portal Button (Desktop) */}
-          <div className="relative">
-            <Link to="/button">
-              <motion.button
-                onMouseEnter={() => setShowTooltip(true)}
-                onMouseLeave={() => setShowTooltip(false)}
-                className="relative px-6 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full text-white font-semibold text-sm overflow-hidden group"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <motion.div className="absolute inset-0 bg-gradient-to-r from-cyan-500 via-purple-500 to-blue-500" initial={{ x: '100%' }} whileHover={{ x: 0 }} transition={{ duration: 0.3 }} />
-                <span className="relative z-10">Partner Portal</span>
-              </motion.button>
-            </Link>
-
-            <AnimatePresence>
-              {showTooltip && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full mt-3 right-0 w-64 max-w-[85vw] md:max-w-xs p-4 bg-gray-900 border border-blue-500/30 rounded-2xl shadow-2xl backdrop-blur-xl z-[60]"
-                >
-                  <div className="flex gap-3 text-left">
-                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400">
-                      <Info size={16} />
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-white mb-1">Partner Portal</h4>
-                      <p className="text-[10px] text-gray-400 leading-relaxed">
-                        Access internal tools to generate custom messaging links and embeddable buttons for influencer campaigns.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="absolute -top-1.5 right-8 w-3 h-3 bg-gray-900 border-t border-l border-blue-500/30 rotate-45" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
 
         {/* Tablet Navigation - Simplified for medium screens */}
@@ -236,16 +197,6 @@ function Navigation() {
             </div>
           </div>
 
-          {/* Partner Portal Button (Tablet) */}
-          <Link to="/button">
-            <motion.button
-              className="px-4 py-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full text-white font-semibold text-xs"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Portal
-            </motion.button>
-          </Link>
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -290,14 +241,6 @@ function Navigation() {
                 </motion.div>
               ))}
               
-              {/* Partner Portal Button for Mobile */}
-              <motion.div variants={itemVariants} className="pt-4">
-                <Link to="/button" onClick={() => setIsOpen(false)}>
-                  <button className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 rounded-full text-white font-semibold text-base">
-                    Partner Portal
-                  </button>
-                </Link>
-              </motion.div>
             </div>
           </motion.div>
         )}
