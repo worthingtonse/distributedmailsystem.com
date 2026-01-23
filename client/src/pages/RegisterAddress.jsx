@@ -472,7 +472,7 @@ const RegisterAddress = () => {
                         value={customGroup}
                         onChange={handleGroupChange}
                         placeholder="e.g. CEO-VivaTech"
-                        className="w-full bg-white border border-gray-300 rounded-2xl px-6 py-4 text-gray-900 placeholder-gray-400 outline-none focus:border-blue-500 transition-all text-xl font-mono"
+                      className="w-full bg-gray-900/60 border border-blue-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-blue-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
                       />
                     </div>
                   </div>
@@ -509,7 +509,7 @@ const RegisterAddress = () => {
                 <select
                   value={inboxFee}
                   onChange={(e) => setInboxFee(e.target.value)}
-                  className="w-full max-w-xs bg-white border border-gray-300 rounded-2xl px-6 py-4 text-gray-900 outline-none focus:border-blue-500 transition-all text-xl font-mono cursor-pointer"
+                className="w-full max-w-xs bg-gray-900/60 border border-blue-500/30 rounded-2xl px-6 py-4 text-white outline-none focus:border-blue-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono cursor-pointer"
                 >
                   <option value="0">$0 (default)</option>
                   <option value="0.01">$0.01</option>
