@@ -39,6 +39,7 @@ const RegisterAddress = () => {
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [copied, setCopied] = useState(false);
   const buttonRef = useRef(null);
+  const influencerButtonRef = useRef(null);
   const navigate = useNavigate();
   const [iframeHeight, setIframeHeight] = useState(800);
   const [isInfluencerMode, setIsInfluencerMode] = useState(false);
@@ -124,8 +125,10 @@ const RegisterAddress = () => {
   };
 
   const renderPayPalButtons = useCallback(() => {
-    if (window.paypal && buttonRef.current && (selectedTier || isInfluencerMode)) {
-      buttonRef.current.innerHTML = "";
+    // Use the correct container ref based on current mode
+    const activeRef = isInfluencerMode ? influencerButtonRef : buttonRef;
+    if (window.paypal && activeRef.current && (selectedTier || isInfluencerMode)) {
+      activeRef.current.innerHTML = "";
       window.paypal
         .Buttons({
           createOrder: (data, actions) => {
@@ -189,7 +192,7 @@ const RegisterAddress = () => {
             }
           },
         })
-        .render(buttonRef.current);
+        .render(activeRef.current);
     }
   }, [selectedTier, customGroup, totalPrice, selectedEdition, inboxFee, isInfluencerMode]);
 
@@ -229,7 +232,9 @@ const RegisterAddress = () => {
 
   useEffect(() => {
     if (isPaypalLoaded && (selectedTier || isInfluencerMode) && !paymentComplete && !paypalError) {
-      setTimeout(renderPayPalButtons, 100);
+      // 300ms delay gives AnimatePresence time to mount the correct container
+      // before PayPal tries to render into it
+      setTimeout(renderPayPalButtons, 300);
     }
   }, [
     isPaypalLoaded,
@@ -357,7 +362,7 @@ const RegisterAddress = () => {
                             value={customGroup}
                             onChange={handleGroupChange}
                             placeholder="e.g. FitnessWithLaura"
-                            className="max-w-sm bg-gray-900/60 border border-purple-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-purple-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
+                            className="w-full bg-gray-900/60 border border-purple-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-purple-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
                           />
                         </div>
 
@@ -396,7 +401,7 @@ const RegisterAddress = () => {
                                 Initialising PayPal...
                               </div>
                             ) : (
-                              <div ref={buttonRef} className="w-full"></div>
+                              <div ref={influencerButtonRef} className="w-full"></div>
                             )}
                           </div>
 
