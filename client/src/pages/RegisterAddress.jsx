@@ -142,6 +142,54 @@ const RegisterAddress = () => {
   const renderPayPalButtons = useCallback(() => {
     // Use the correct container ref based on current mode
     const activeRef = isInfluencerMode ? influencerButtonRef : buttonRef;
+
+    // If ref not yet attached (container still mounting), retry after short delay
+    if (!activeRef.current) {
+      setTimeout(() => {
+        const retryRef = isInfluencerMode ? influencerButtonRef : buttonRef;
+        if (window.paypal && retryRef.current) {
+          retryRef.current.innerHTML = "";
+          window.paypal.Buttons({
+            createOrder: (data, actions) => actions.order.create({
+              purchase_units: [{
+                amount: { value: totalPrice.toString() },
+                description: isInfluencerMode
+                  ? "QMail Influencer Address Registration"
+                  : `DMS Registration: .${selectedTier?.name} + ${selectedEdition} edition`,
+              }],
+            }),
+            onApprove: async (data, actions) => {
+              try {
+                const order = await actions.order.capture();
+                const response = await fetch(
+                  `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      firstName: order.payer.name.given_name,
+                      lastName: order.payer.name.surname,
+                      amountPaid: totalPrice,
+                      inboxFee: parseFloat(inboxFeeRef.current),
+                      description: customGroupRef.current || (isInfluencerMode ? "Influencer" : ""),
+                    }),
+                  }
+                );
+                const result = await response.json();
+                if (!result.success) { setPaypalError(result.error || "Registration failed."); return; }
+                if (isInfluencerMode) {
+                  navigate("/strategy", { state: { verifiedName: `${order.payer.name.given_name} ${order.payer.name.surname}`, qmail: result.email, paypalEmail: order.payer.email_address || "", token: result.token || "" } });
+                } else {
+                  navigate("/success", { state: { email: result.email, lockerCode: result.lockerCode } });
+                }
+              } catch { setPaypalError("Payment capture mein error aaya hai."); }
+            },
+          }).render(retryRef.current);
+        }
+      }, 500);
+      return;
+    }
+
     if (window.paypal && activeRef.current && (selectedTier || isInfluencerMode)) {
       activeRef.current.innerHTML = "";
       window.paypal
@@ -161,7 +209,6 @@ const RegisterAddress = () => {
           onApprove: async (data, actions) => {
             try {
               const order = await actions.order.capture();
-
               const response = await fetch(
                 `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox`,
                 {
@@ -177,14 +224,11 @@ const RegisterAddress = () => {
                   }),
                 },
               );
-
               const result = await response.json();
-
               if (!result.success) {
                 setPaypalError(result.error || "Registration failed.");
                 return;
               }
-
               if (isInfluencerMode) {
                 navigate("/strategy", {
                   state: {
