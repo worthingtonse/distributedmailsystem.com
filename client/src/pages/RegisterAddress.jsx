@@ -122,7 +122,7 @@ const RegisterAddress = () => {
   }, []);
 
   const totalPrice = useMemo(() => {
-    if (isInfluencerMode) return 0;
+    if (isInfluencerMode) return 0;  // display $0 to user
     const base = selectedTier ? selectedTier.price : 0;
     const extra = selectedEdition === "pro" ? 10 : 0;
     return base + extra;
@@ -152,9 +152,11 @@ const RegisterAddress = () => {
           window.paypal.Buttons({
             createOrder: (data, actions) => actions.order.create({
               purchase_units: [{
-                amount: { value: totalPrice.toString() },
+                // PayPal rejects $0 in production — send $0.01 for identity verification
+                // Backend still receives amountPaid: 0 (no actual charge)
+                amount: { value: isInfluencerMode ? "0.01" : totalPrice.toString() },
                 description: isInfluencerMode
-                  ? "QMail Influencer Address Registration"
+                  ? "QMail Influencer Identity Verification"
                   : `DMS Registration: .${selectedTier?.name} + ${selectedEdition} edition`,
               }],
             }),
@@ -198,9 +200,11 @@ const RegisterAddress = () => {
             return actions.order.create({
               purchase_units: [
                 {
-                  amount: { value: totalPrice.toString() },
+                  // PayPal rejects $0 in production — send $0.01 for identity verification
+                  // Backend still receives amountPaid: 0 (no actual charge)
+                  amount: { value: isInfluencerMode ? "0.01" : totalPrice.toString() },
                   description: isInfluencerMode
-                    ? "QMail Influencer Address Registration"
+                    ? "QMail Influencer Identity Verification"
                     : `DMS Registration: .${selectedTier.name} + ${selectedEdition} edition`,
                 },
               ],
