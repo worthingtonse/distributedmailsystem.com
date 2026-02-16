@@ -33,6 +33,21 @@ const RegisterAddress = () => {
   const [selectedEdition, setSelectedEdition] = useState("free");
   const [customGroup, setCustomGroup] = useState("");
   const [inboxFee, setInboxFee] = useState("0");
+
+  // Refs for values used inside PayPal callbacks — prevents re-creating
+  // renderPayPalButtons on every keystroke which causes DOM crash
+  const customGroupRef = useRef("");
+  const inboxFeeRef = useRef("0");
+
+  const handleCustomGroupChange = (val) => {
+    setCustomGroup(val);
+    customGroupRef.current = val;
+  };
+
+  const handleInboxFeeChange = (val) => {
+    setInboxFee(val);
+    inboxFeeRef.current = val;
+  };
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState(null);
   const [paymentComplete, setPaymentComplete] = useState(false);
@@ -121,7 +136,7 @@ const RegisterAddress = () => {
 
   const handleGroupChange = (e) => {
     const value = e.target.value.replace(/[^a-zA-Z0-9-]/g, "");
-    setCustomGroup(value);
+    handleCustomGroupChange(value);
   };
 
   const renderPayPalButtons = useCallback(() => {
@@ -156,9 +171,9 @@ const RegisterAddress = () => {
                     firstName: order.payer.name.given_name,
                     lastName: order.payer.name.surname,
                     amountPaid: totalPrice,
-                    inboxFee: parseFloat(inboxFee),
+                    inboxFee: parseFloat(inboxFeeRef.current),
                     description:
-                      customGroup || (isInfluencerMode ? "Influencer" : ""),
+                      customGroupRef.current || (isInfluencerMode ? "Influencer" : ""),
                   }),
                 },
               );
@@ -194,7 +209,9 @@ const RegisterAddress = () => {
         })
         .render(activeRef.current);
     }
-  }, [selectedTier, customGroup, totalPrice, selectedEdition, inboxFee, isInfluencerMode]);
+  // customGroup and inboxFee intentionally excluded — using refs to avoid
+  // re-creating this callback on every keystroke (causes PayPal DOM crash)
+  }, [selectedTier, totalPrice, selectedEdition, isInfluencerMode]);
 
   useEffect(() => {
     const scriptId = "paypal-sdk-script";
@@ -243,7 +260,6 @@ const RegisterAddress = () => {
     paymentComplete,
     selectedEdition,
     paypalError,
-    inboxFee,
     isInfluencerMode,
   ]);
 
@@ -362,7 +378,7 @@ const RegisterAddress = () => {
                             value={customGroup}
                             onChange={handleGroupChange}
                             placeholder="e.g. FitnessWithLaura"
-                            className="w-full bg-gray-900/60 border border-purple-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-purple-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
+                            className="max-w-md bg-gray-900/60 border border-purple-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-purple-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
                           />
                         </div>
 
@@ -629,7 +645,7 @@ const RegisterAddress = () => {
                             </div>
                             <select
                               value={inboxFee}
-                              onChange={(e) => setInboxFee(e.target.value)}
+                              onChange={(e) => handleInboxFeeChange(e.target.value)}
                               className="w-full bg-gray-900/60 border border-blue-500/30 rounded-2xl px-6 py-4 text-white outline-none focus:border-blue-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono cursor-pointer"
                             >
                               <option value="0">$0 (default)</option>
