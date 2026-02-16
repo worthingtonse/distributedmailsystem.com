@@ -173,6 +173,7 @@ const RegisterAddress = () => {
                     verifiedName: `${order.payer.name.given_name} ${order.payer.name.surname}`,
                     qmail: result.email,
                     paypalEmail: order.payer.email_address || "",
+                    token: result.token || "",
                   },
                 });
               } else {

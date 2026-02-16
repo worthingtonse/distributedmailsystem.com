@@ -47,6 +47,7 @@ function SalesStrategy() {
   // Link generator state
   const [name, setName] = useState(verifiedData.verifiedName || "");
   const [qmail, setQmail] = useState(verifiedData.qmail || "");
+  const [token, setToken] = useState(verifiedData.token || "");
   const [cost, setCost] = useState("10");
   const [buttonText, setButtonText] = useState("Send Me a Private Message");
 
@@ -91,6 +92,8 @@ function SalesStrategy() {
       const result = await response.json();
       if (result.success) {
         setPaymentFormSuccess(true);
+        // Save token returned by backend — used in shareable link
+        if (result.token) setToken(result.token);
         setPaypalEmail("");
         setAlternativePayment("");
       } else {
@@ -104,8 +107,9 @@ function SalesStrategy() {
   };
 
   const baseUrl = (import.meta.env.VITE_BASE_URL || window.location.origin) + "/access";
-  const easyLink = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}`;
-  const themedUrl = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}&bg=${bgColor.replace("#", "")}&btn=${btnColor.replace("#", "")}&font=${encodeURIComponent(textFont)}`;
+  const tokenParam = token ? `&token=${token}` : "";
+  const easyLink = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}${tokenParam}`;
+  const themedUrl = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}&bg=${bgColor.replace("#", "")}&btn=${btnColor.replace("#", "")}&font=${encodeURIComponent(textFont)}${tokenParam}`;
 
   const logoCircle = `<div style="width:40px;height:40px;background:rgba(37,99,235,0.2);border:1px solid rgba(59,130,246,0.4);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>`;
 
