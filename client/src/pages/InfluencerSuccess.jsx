@@ -315,6 +315,32 @@ const InfluencerSuccess = () => {
                   <span className="font-bold uppercase tracking-widest">End-to-End Quantum Safe Encryption</span>
                 </div>
               </div>
+
+              {/* Support Section */}
+              <div className="max-w-md w-full mx-auto">
+                <div className="bg-black/40 backdrop-blur-xl p-6 rounded-2xl border border-white/10">
+                  <h4 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-yellow-400" />
+                    Need Help?
+                  </h4>
+                  <svg
+                    viewBox="0 0 400 160"
+                    className="w-full"
+                    role="img"
+                    aria-label="Contact information: Phone (530) 591-7028, QMail Sean.Worthington@CEO#C23.Giga, Email CloudCoin@Protonmail.com, Web Support.CloudCoin.com"
+                  >
+                    <rect width="400" height="160" fill="#111827" rx="8" />
+                    <text x="20" y="35" fill="#facc15" fontSize="12" fontWeight="bold" fontFamily="monospace">Phone:</text>
+                    <text x="80" y="35" fill="#d1d5db" fontSize="12" fontFamily="monospace">(530) 591-7028</text>
+                    <text x="20" y="65" fill="#facc15" fontSize="12" fontWeight="bold" fontFamily="monospace">QMail:</text>
+                    <text x="80" y="65" fill="#d1d5db" fontSize="12" fontFamily="monospace">Sean.Worthington@CEO#C23.Giga</text>
+                    <text x="20" y="95" fill="#facc15" fontSize="12" fontWeight="bold" fontFamily="monospace">Email:</text>
+                    <text x="80" y="95" fill="#d1d5db" fontSize="12" fontFamily="monospace">CloudCoin@Protonmail.com</text>
+                    <text x="20" y="125" fill="#facc15" fontSize="12" fontWeight="bold" fontFamily="monospace">Web:</text>
+                    <text x="80" y="125" fill="#60a5fa" fontSize="12" fontFamily="monospace">https://Support.CloudCoin.com</text>
+                  </svg>
+                </div>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

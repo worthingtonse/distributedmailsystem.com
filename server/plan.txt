@@ -1,0 +1,318 @@
+BACKEND REFACTOR PLAN - server/index.js
+========================================
+Date: 2026-01-08
+
+CURRENT STATE vs REQUIRED STATE
+-------------------------------
+
+The current backend code is incomplete. It needs to be rewritten to match
+the Python logic from the provided scripts.
+
+================================================================================
+STEP-BY-STEP IMPLEMENTATION PLAN
+================================================================================
+
+STEP 1: AMOUNT MAPPING
+----------------------
+Current Code:
+  - Maps amountPaid to class name only (bit, byte, kilo, mega, giga)
+
+Required:
+  - Map amountPaid to BOTH class name AND file_start pattern for coin lookup
+
+  const AMOUNT_MAPPING = {
+    10:   { class: "bit",  fileStart: "1." },
+    20:   { class: "byte", fileStart: "10." },
+    50:   { class: "kilo", fileStart: "100." },
+    100:  { class: "mega", fileStart: "1_000." },
+    1000: { class: "giga", fileStart: "10_000." }
+  };
+
+--------------------------------------------------------------------------------
+
+STEP 2: PATH CONFIGURATION
+--------------------------
+Current Code:
+  - No wallet path configuration
+
+Required:
+  - Add wallet directory paths
+
+  const BASE_DIR = "/var/cc/cloudcoin_desktop/Wallets";
+  const WALLETS = {
+    distMailBank:    `${BASE_DIR}/distributed_mail_system/Bank`,
+    distMailFracked: `${BASE_DIR}/distributed_mail_system/Fracked`,
+    defaultBank:     `${BASE_DIR}/Default/Bank`,
+    defaultFracked:  `${BASE_DIR}/Default/Fracked`
+  };
+
+--------------------------------------------------------------------------------
+
+STEP 3: CLEAN UP DISTRIBUTED_MAIL_SYSTEM WALLET
+-----------------------------------------------
+Current Code:
+  - Does NOT clean up the wallet
+
+Required:
+  - Move ALL .bin files from distributed_mail_system/Bank to Default/Fracked
+  - Move ALL .bin files from distributed_mail_system/Fracked to Default/Fracked
+
+  async function cleanupDistMailWallet() {
+    const foldersToClean = [WALLETS.distMailBank, WALLETS.distMailFracked];
+
+    for (const folder of foldersToClean) {
+      if (fs.existsSync(folder)) {
+        const files = fs.readdirSync(folder).filter(f => f.endsWith('.bin'));
+        for (const file of files) {
+          const src = path.join(folder, file);
+          const dest = path.join(WALLETS.defaultFracked, file);
+          fs.renameSync(src, dest);
+        }
+      }
+    }
+  }
+
+--------------------------------------------------------------------------------
+
+STEP 4: FIND MATCHING COIN IN DEFAULT WALLET
+--------------------------------------------
+Current Code:
+  - Uses hardcoded serial "12345"
+
+Required:
+  - Search Default/Bank and Default/Fracked for files starting with fileStart
+  - Extract serial number from filename (4th element when split by '.')
+  - Filename format example: "1.CloudCoin.1.12345678.bin" -> serial is "12345678"
+
+  function findMatchingCoin(fileStart) {
+    const searchDirs = [WALLETS.defaultBank, WALLETS.defaultFracked];
+
+    for (const dir of searchDirs) {
+      if (fs.existsSync(dir)) {
+        const files = fs.readdirSync(dir);
+        for (const file of files) {
+          if (file.startsWith(fileStart) && file.endsWith('.bin')) {
+            const parts = file.split('.');
+            const serial = parts[3]; // 4th element (0-indexed: 3)
+            return { filePath: path.join(dir, file), fileName: file, serial };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+--------------------------------------------------------------------------------
+
+STEP 5: MOVE COIN TO DISTRIBUTED_MAIL_SYSTEM WALLET
+---------------------------------------------------
+Current Code:
+  - Does NOT move coins
+
+Required:
+  - Move the found coin file to distributed_mail_system/Fracked
+
+  function moveCoinToDistMail(sourceFile, fileName) {
+    const dest = path.join(WALLETS.distMailFracked, fileName);
+    fs.renameSync(sourceFile, dest);
+    return dest;
+  }
+
+--------------------------------------------------------------------------------
+
+STEP 6: CALL LOCKER API
+-----------------------
+Current Code (INCORRECT):
+  - Calls POST http://127.0.0.1:8006/api/v1/locker with { amount, name }
+  - Uses "name" for wallet name incorrectly
+
+Required:
+  - Call POST http://127.0.0.1:8006/api/v1/locker
+  - Request body: { name: "distributed_mail_system", amount: amountPaid, tag: null }
+  - "name" is the WALLET name, not user name
+  - "tag" can be null or "FirstName LastName"
+
+  const lockerResponse = await axios.post(
+    'http://127.0.0.1:8006/api/v1/locker',
+    {
+      name: "distributed_mail_system",
+      amount: amountPaid,
+      tag: `${firstName} ${lastName}`  // or null
+    },
+    { headers: { 'Content-Type': 'application/json' }, timeout: 5000 }
+  );
+
+--------------------------------------------------------------------------------
+
+STEP 7: POLL TASKS API FOR TRANSMIT_CODE
+----------------------------------------
+Current Code:
+  - Polls /api/v1/tasks/{taskId} and looks for payload.transmit_code
+
+Required:
+  - Poll /api/v1/tasks/{taskId}
+  - Wait for status === "completed"
+  - Get transmit_code from payload.data.transmit_code (NOT payload.transmit_code)
+
+  Response structure:
+  {
+    "payload": {
+      "id": "...",
+      "status": "completed",
+      "data": {
+        "transmit_code": "MMU-K7H2",   <-- HERE
+        ...
+      }
+    },
+    "status": "success"
+  }
+
+  Updated polling function:
+  async function pollLockerKey(taskId) {
+    const maxAttempts = 30;  // Increase from 15 to 30
+    const delay = 1000;
+
+    for (let i = 0; i < maxAttempts; i++) {
+      const response = await axios.get(`http://127.0.0.1:8006/api/v1/tasks/${taskId}`);
+      const payload = response.data.payload;
+
+      if (payload?.status === "completed" && payload?.data?.transmit_code) {
+        return payload.data.transmit_code;
+      }
+
+      if (payload?.status === "error") {
+        console.error("Task failed:", payload.message);
+        break;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+    return null;
+  }
+
+--------------------------------------------------------------------------------
+
+STEP 8: CONVERT SERIAL TO CUSTOM BASE32
+---------------------------------------
+Current Code:
+  - Already has convertToCustomBase32() function (correct)
+
+Required:
+  - No changes needed, function is correct
+
+--------------------------------------------------------------------------------
+
+STEP 9: CONSTRUCT .INI FILE
+---------------------------
+Current Code:
+  - Uses hardcoded serial
+  - Description is hardcoded "QMail Purchase"
+
+Required:
+  - Use REAL serial from coin filename
+  - LockerKey = transmit_code from API
+  - Include all fields
+
+  const iniContent =
+    `LockerKey=${transmitCode}\r\n` +
+    `SerialNumber=${customSerial}\r\n` +
+    `FirstName=${firstName}\r\n` +
+    `LastName=${lastName}\r\n` +
+    `Description=${description || "QMail Purchase"}\r\n` +
+    `InboxFee=${inboxFee || 0}\r\n` +
+    `Class=${amountClass}`;
+
+--------------------------------------------------------------------------------
+
+STEP 10: ENCODE TO URL-SAFE BASE64
+----------------------------------
+Current Code:
+  - Already does this correctly
+
+Required:
+  - No changes needed
+
+--------------------------------------------------------------------------------
+
+STEP 11: REGISTER USER IN users.csv
+-----------------------------------
+Current Code:
+  - Does NOT register users in CSV
+
+Required:
+  - Append user to /var/www/distributedmailsystem.com/users.csv
+  - Columns: CustomSerialNumber, FirstName, LastName, Description, InboxFee, Class, Beacon
+  - Create file with headers if it doesn't exist
+  - Beacon is hardcoded to "raida11" for Phase I
+
+  function registerUser(customSerial, firstName, lastName, description, inboxFee, amountClass) {
+    const filePath = '/var/www/distributedmailsystem.com/users.csv';
+    const headers = 'CustomSerialNumber,FirstName,LastName,Description,InboxFee,Class,Beacon';
+    const beacon = 'raida11';  // Hardcoded for Phase I
+
+    const fileExists = fs.existsSync(filePath);
+
+    if (!fileExists) {
+      fs.writeFileSync(filePath, headers + '\n');
+    }
+
+    const row = `${customSerial},${firstName},${lastName},${description || ''},${inboxFee},${amountClass},${beacon}\n`;
+    fs.appendFileSync(filePath, row);
+  }
+
+--------------------------------------------------------------------------------
+
+STEP 12: LOG TO SoldCoins.txt
+-----------------------------
+Current Code:
+  - Already logs to SoldCoins.txt (correct format)
+
+Required:
+  - Format: timestamp,lastName,firstName,lockerKey,b64Code
+  - Timestamp format: YYYY-MM-DD HH:MM:SS.mm (2 decimal places for ms)
+
+--------------------------------------------------------------------------------
+
+STEP 13: RETURN RESPONSE TO FRONTEND
+------------------------------------
+Current Code:
+  - Returns { success, mailboxToken, mailboxCode }
+
+Required:
+  - Same, no changes needed
+
+================================================================================
+SUMMARY OF CHANGES
+================================================================================
+
+1. Add AMOUNT_MAPPING constant with class AND fileStart
+2. Add WALLETS path configuration
+3. Add cleanupDistMailWallet() function
+4. Add findMatchingCoin() function
+5. Add moveCoinToDistMail() function
+6. Fix locker API call (name = "distributed_mail_system", not user name)
+7. Fix pollLockerKey() to get transmit_code from payload.data.transmit_code
+8. Add registerUser() function for users.csv
+9. Update main endpoint to orchestrate all steps in correct order
+
+================================================================================
+EXECUTION ORDER IN MAIN ENDPOINT
+================================================================================
+
+1. Extract { firstName, lastName, amountPaid, inboxFee, description } from req.body
+2. Validate amountPaid is in AMOUNT_MAPPING
+3. Get { class: amountClass, fileStart } from AMOUNT_MAPPING
+4. Call cleanupDistMailWallet()
+5. Call findMatchingCoin(fileStart)
+6. If no coin found, return error
+7. Call moveCoinToDistMail()
+8. Call locker API with { name: "distributed_mail_system", amount: amountPaid, tag }
+9. Poll tasks API for transmit_code
+10. Convert serial to custom base32
+11. Construct .ini content
+12. Encode to URL-safe base64
+13. Register user in users.csv
+14. Log to SoldCoins.txt
+15. Return { success: true, mailboxCode: b64Code }
+
+================================================================================

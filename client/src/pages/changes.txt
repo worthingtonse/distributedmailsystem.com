@@ -1,0 +1,126 @@
+PLANNED CHANGES FOR RegisterAddress.jsx - Round 2
+=================================================
+Date: 2026-01-08
+
+File: /var/www/distributedmailsystem.com/client/src/pages/RegisterAddress.jsx
+
+---
+
+TASK 13: Update Address Preview format and add note
+----------------------------------------------------
+CURRENT (lines 473-484):
+  <div className="text-lg md:text-xl font-mono text-white break-all">
+    <span className={selectedTier.color}>
+      {selectedTier.name}
+    </span>
+    {customGroup && (
+      <span className="text-purple-400">
+        ~{customGroup}
+      </span>
+    )}
+    <span className="text-gray-400">.Your.Name</span>
+    <span className="text-cyan-500">#8D2P</span>
+  </div>
+
+CHANGE TO:
+  <div className="text-lg md:text-xl font-mono text-white break-all">
+    <span className="text-gray-400">FirstName.LastName</span>
+    <span className="text-purple-400">@{customGroup || "Describer"}</span>
+    <span className="text-cyan-400">#mail-id</span>
+    <span className={selectedTier.color}>.{selectedTier.name}</span>
+  </div>
+  <p className="text-xs text-gray-500 mt-2 italic">
+    Your name and mail-id will be added after your registration.
+  </p>
+
+FORMAT: FirstName.LastName@Describer#mail-id.bit
+- FirstName.LastName: static gray text
+- @Describer: updates dynamically (shows "Describer" if empty, otherwise shows customGroup)
+- #mail-id: static cyan text
+- .bit/.byte/.kilo/.mega/.giga: changes based on selected tier
+
+---
+
+TASK 14: Add Step 3 Inbox Fee dropdown + related changes
+---------------------------------------------------------
+
+CHANGE 1: Add inboxFee state variable (after line 33)
+  const [inboxFee, setInboxFee] = useState("0");
+
+CHANGE 2: Set default tier to Bit (line 31)
+  FROM: const [selectedTier, setSelectedTier] = useState(null);
+  TO:   Use useEffect to set default tier to first tier (Bit)
+
+CHANGE 3: Update tier names to have dot prefix (lines 43-84)
+  - "Bit" → ".Bit"
+  - "Byte" → ".Byte"
+  - "Kilo" → ".Kilo"
+  - "Mega" → ".Mega"
+  - "Giga" → ".Giga"
+
+CHANGE 4: Remove AnimatePresence/motion.div wrapper (lines 441-446, 518-520)
+  - Remove the conditional {selectedTier && (...)} since steps always visible
+  - Remove AnimatePresence and motion.div wrappers
+
+CHANGE 5: Add Step 3 Inbox Fee section after Self Describer
+  <div className="space-y-4">
+    <h2 className="text-2xl font-black text-white flex items-center gap-3">
+      <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
+        3
+      </span>
+      Inbox Fee
+    </h2>
+    <p className="text-sm text-gray-400">
+      Applies to everyone until white lists are enabled in Phase 2
+    </p>
+    <select
+      value={inboxFee}
+      onChange={(e) => setInboxFee(e.target.value)}
+      className="w-full max-w-xs bg-white border border-gray-300 rounded-2xl px-6 py-4 text-gray-900 outline-none focus:border-blue-500 transition-all text-xl font-mono"
+    >
+      <option value="0">$0 (default)</option>
+      <option value="0.01">$0.01</option>
+      <option value="0.10">$0.10</option>
+      <option value="1">$1</option>
+      <option value="10">$10</option>
+      <option value="20">$20</option>
+      <option value="30">$30</option>
+      <option value="40">$40</option>
+      <option value="50">$50</option>
+      <option value="60">$60</option>
+      <option value="70">$70</option>
+      <option value="80">$80</option>
+      <option value="90">$90</option>
+      <option value="100">$100</option>
+    </select>
+  </div>
+
+CHANGE 6: Pass inboxFee to backend (lines 127-131)
+  FROM:
+    body: JSON.stringify({
+      firstName: order.payer.name.given_name,
+      lastName: order.payer.name.surname,
+      amountPaid: totalPrice,
+    }),
+
+  TO:
+    body: JSON.stringify({
+      firstName: order.payer.name.given_name,
+      lastName: order.payer.name.surname,
+      amountPaid: totalPrice,
+      inboxFee: parseFloat(inboxFee),
+    }),
+
+CHANGE 7: Add inboxFee to renderPayPalButtons dependencies (line 161)
+
+---
+
+SUMMARY:
+1. Add inboxFee state
+2. Set default tier to Bit using useEffect
+3. Change tier names: Bit → .Bit, etc.
+4. Remove AnimatePresence wrapper, show all steps
+5. Add Step 3 Inbox Fee dropdown
+6. Update Address Preview format
+7. Add note below preview
+8. Pass inboxFee to backend
