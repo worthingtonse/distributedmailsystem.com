@@ -2,8 +2,10 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { usePaypalConfig } from '../hooks/usePaypalConfig';
 
 const VerifiedAccess = () => {
+  const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
@@ -232,13 +234,14 @@ const VerifiedAccess = () => {
   }, [paymentAmount, recipientName, navigate, wantEmail, cloudCoinsBalance, influencerAddress, inboxFee]);
 
   useEffect(() => {
-    const scriptId = 'paypal-sdk-script';
-    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
-
-    if (!clientId) {
-      setPaypalError("PayPal Configuration Missing.");
+    if (paypalConfigLoading) return;
+    if (paypalConfigError || !paypalConfig?.clientId) {
+      setPaypalError(paypalConfigError || "PayPal Configuration Missing.");
       return;
     }
+
+    const scriptId = 'paypal-sdk-script';
+    const clientId = paypalConfig.clientId;
 
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -261,7 +264,7 @@ const VerifiedAccess = () => {
       setIsPaypalLoaded(true);
       setTimeout(renderPayPalButtons, 100);
     }
-  }, [renderPayPalButtons]);
+  }, [renderPayPalButtons, paypalConfigLoading, paypalConfigError, paypalConfig]);
 
   // Re-render PayPal buttons when amount changes
   useEffect(() => {

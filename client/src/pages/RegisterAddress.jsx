@@ -6,6 +6,7 @@ import React, {
   useMemo,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePaypalConfig } from "../hooks/usePaypalConfig";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldCheck,
@@ -29,6 +30,7 @@ import {
 } from "lucide-react";
 
 const RegisterAddress = () => {
+  const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [selectedTier, setSelectedTier] = useState(null);
   const [selectedEdition, setSelectedEdition] = useState("free");
   const [customGroup, setCustomGroup] = useState("");
@@ -262,15 +264,16 @@ const RegisterAddress = () => {
   }, [selectedTier, totalPrice, selectedEdition, isInfluencerMode]);
 
   useEffect(() => {
-    const scriptId = "paypal-sdk-script";
-    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
-
-    if (!clientId) {
+    if (paypalConfigLoading) return;
+    if (paypalConfigError || !paypalConfig?.clientId) {
       setPaypalError(
-        "PayPal Configuration Missing: Please set VITE_PAYPAL_CLIENT_ID.",
+        paypalConfigError || "PayPal Configuration Missing: server did not return a client ID.",
       );
       return;
     }
+
+    const scriptId = "paypal-sdk-script";
+    const clientId = paypalConfig.clientId;
 
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -293,7 +296,7 @@ const RegisterAddress = () => {
     } else {
       setIsPaypalLoaded(true);
     }
-  }, []);
+  }, [paypalConfigLoading, paypalConfigError, paypalConfig]);
 
   useEffect(() => {
     if (isPaypalLoaded && (selectedTier || isInfluencerMode) && !paymentComplete && !paypalError) {

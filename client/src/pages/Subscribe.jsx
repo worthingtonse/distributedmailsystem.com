@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Zap, Star, Crown, Check, ShieldCheck } from "lucide-react";
+import { usePaypalConfig } from "../hooks/usePaypalConfig";
 
 const Subscribe = () => {
+  const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
@@ -10,7 +12,7 @@ const Subscribe = () => {
 
   const plans = [
     {
-      id: import.meta.env.VITE_PAYPAL_PLAN_ID_CASUAL,
+      id: paypalConfig?.planIdCasual || '',
       name: "Casual User",
       price: "5",
       capacity: "50 MB/Month",
@@ -23,7 +25,7 @@ const Subscribe = () => {
       ]
     },
     {
-      id: import.meta.env.VITE_PAYPAL_PLAN_ID_TYPICAL,
+      id: paypalConfig?.planIdTypical || '',
       name: "Typical User",
       price: "10",
       capacity: "300 MB/Month",
@@ -37,7 +39,7 @@ const Subscribe = () => {
       ]
     },
     {
-      id: import.meta.env.VITE_PAYPAL_PLAN_ID_POWER,
+      id: paypalConfig?.planIdPower || '',
       name: "Power User",
       price: "20",
       capacity: "1,000 MB/Month",
@@ -79,8 +81,11 @@ const Subscribe = () => {
   }, [selectedPlan]);
 
   useEffect(() => {
+    if (paypalConfigLoading) return;
+    if (paypalConfigError || !paypalConfig?.clientId) return;
+
     const scriptId = "paypal-sub-script";
-    const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+    const clientId = paypalConfig.clientId;
 
     if (!document.getElementById(scriptId)) {
       const script = document.createElement("script");
@@ -94,7 +99,7 @@ const Subscribe = () => {
     } else {
       setIsPaypalLoaded(true);
     }
-  }, []);
+  }, [paypalConfigLoading, paypalConfigError, paypalConfig]);
 
   useEffect(() => {
     if (isPaypalLoaded && selectedPlan && !subscribed) {

@@ -298,6 +298,31 @@ function SalesStrategy() {
                       </div>
                     )}
 
+                    {/* Full Name field (editable when not verified) */}
+                    <div className="mb-5">
+                      <label className="block text-xs font-bold text-green-400 uppercase tracking-widest mb-2">
+                        Your Full Name *
+                        {isVerified && (
+                          <span className="ml-2 text-green-400 normal-case font-normal tracking-normal text-xs">
+                            ✓ Verified from PayPal
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={name}
+                        onChange={(e) => !isVerified && setName(e.target.value)}
+                        readOnly={isVerified}
+                        className={`w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all ${
+                          isVerified
+                            ? "bg-gray-900 border-green-700/50 text-green-300 cursor-not-allowed"
+                            : "bg-black border-gray-700 focus:border-green-500"
+                        }`}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+
                     <div className="grid md:grid-cols-2 gap-5 mb-5">
                       <div>
                         <label className="block text-xs font-bold text-green-400 uppercase tracking-widest mb-2">
@@ -400,7 +425,7 @@ function SalesStrategy() {
                 {/* Identity / Settings panel */}
                 <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
                   <div className="grid md:grid-cols-2 gap-5 mb-5">
-                    {/* Name */}
+                    {/* Name (read-only, filled from Stage 1) */}
                     <div>
                       <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
                         Your Name
@@ -413,14 +438,9 @@ function SalesStrategy() {
                       <input
                         type="text"
                         value={name}
-                        onChange={(e) => !isVerified && setName(e.target.value)}
-                        readOnly={isVerified}
-                        className={`w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all ${
-                          isVerified
-                            ? "bg-gray-900 border-green-700/50 text-green-300 cursor-not-allowed"
-                            : "bg-black border-gray-700 focus:border-blue-500"
-                        }`}
-                        placeholder="Enter your name"
+                        readOnly
+                        className="w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all bg-gray-900 border-gray-600 cursor-not-allowed"
+                        placeholder="Fill in your name in Stage 1 above"
                       />
                     </div>
 

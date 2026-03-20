@@ -19,6 +19,30 @@ app.use((req, res, next) => {
     next();
 });
 
+// --- 1b. PayPal Config Endpoint (reads paypal-mode.txt at runtime — no rebuild needed) ---
+app.get('/api/paypal-config', (req, res) => {
+    const modePath = path.join(__dirname, 'paypal-mode.txt');
+    let sandboxMode = true; // default to sandbox for safety
+
+    try {
+        const content = fs.readFileSync(modePath, 'utf8').trim();
+        sandboxMode = content.includes('sandbox-mode=true');
+    } catch (err) {
+        console.warn('paypal-mode.txt not found — defaulting to sandbox mode.');
+    }
+
+    const suffix = sandboxMode ? 'SANDBOX' : 'LIVE';
+    const mode = sandboxMode ? 'sandbox' : 'live';
+
+    res.json({
+        clientId:      process.env[`PAYPAL_CLIENT_ID_${suffix}`]        || '',
+        planIdCasual:  process.env[`PAYPAL_PLAN_ID_CASUAL_${suffix}`]   || '',
+        planIdTypical: process.env[`PAYPAL_PLAN_ID_TYPICAL_${suffix}`]  || '',
+        planIdPower:   process.env[`PAYPAL_PLAN_ID_POWER_${suffix}`]    || '',
+        mode,
+    });
+});
+
 // --- 2. Configuration Constants ---
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
