@@ -1,0 +1,8 @@
+hex_code,denomination,code_word
+0x00,1,bit
+0x01,10,byte
+0x02,100,kilo
+0x03,1000,mega
+0x04,10000,giga
+0x05,100000,tera
+0x06,1000000,peta

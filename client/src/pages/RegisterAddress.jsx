@@ -327,41 +327,6 @@ const RegisterAddress = () => {
               </span>
             </h1>
 
-            <div className="flex justify-center gap-6 mb-8">
-              <button
-                onClick={() => setIsInfluencerMode(!isInfluencerMode)}
-                className={`flex items-center gap-2 font-bold px-6 py-3 rounded-full border transition-all ${
-                  isInfluencerMode
-                    ? "bg-purple-600 border-purple-400 text-white"
-                    : "bg-gray-800 border-gray-700 text-gray-400"
-                }`}
-              >
-                <User size={18} />{" "}
-                {isInfluencerMode
-                  ? "Influencer Mode Active"
-                  : "Sign Up as Influencer ($0)"}
-              </button>
-              <a
-                href="https://t.me/+9YVOgaobizw5NjEx"
-                target="_blank"
-                className="flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20 transition-all"
-              >
-                <Smartphone size={18} /> Join Telegram
-              </a>
-
-              <a
-                href="https://support.cloudcoin.com/en/"
-                target="_blank"
-                className="flex items-center gap-2 text-gray-400 hover:text-white font-bold bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 transition-all"
-              >
-                <Shield size={18} /> Support Center
-              </a>
-            </div>
-
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Break free from Big Tech providers like Gmail or Outlook scanning
-              your inbox and owning your data.
-            </p>
           </header>
 
           {!paymentComplete ? (
@@ -493,70 +458,6 @@ const RegisterAddress = () => {
                     transition={{ duration: 0.3 }}
                     className="space-y-16"
                   >
-                    {/* --- ADDRESS FORMAT & SPAM PROTECTION --- */}
-                    <div className="grid md:grid-cols-2 gap-8">
-                      <div className="bg-gray-900 p-8 rounded-[2rem] border border-gray-800 h-full">
-                        <h3 className="text-xl font-bold text-white mb-6">
-                          Parts of Phase I Addresses
-                        </h3>
-                        <div className="space-y-4 text-sm leading-relaxed mb-6">
-                          <p>
-                            <b className="text-yellow-400">Semi Verified Name:</b>{" "}
-                            Pulled from your payment card name for verification.
-                          </p>
-                          <p>
-                            <b className="text-purple-400">Self-Describer:</b> You in a word.
-                          </p>
-                          <p>
-                            <b className="text-cyan-400">Mailbox ID:</b> Your mailbox ID.
-                          </p>
-                          <p>
-                            <b className="text-blue-400">Stake Level:</b> The amount of money users staked for their address (bit, byte, kilo, mega, giga)
-                          </p>
-                        </div>
-
-                        {/* Real-World Examples */}
-                        <div className="mt-6">
-                          <h4 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                            <Info className="text-blue-400" size={18} /> Real-World Examples
-                          </h4>
-                          <div className="grid grid-cols-1 gap-3 font-mono">
-                            {[
-                              "John.Doe@CEO-VivaTech#8D2P.Giga",
-                              "Laura.Croft@Go-49ers!#UYV4.Bit",
-                              "Ron.Wagner@Developer#CA93.Mega",
-                              "Wo.Chang@的我大个#89RE.Kilo",
-                            ].map((ex, i) => (
-                              <div
-                                key={i}
-                                className="bg-black p-3 rounded-lg border border-gray-800 text-gray-300 text-xs"
-                              >
-                                {ex}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gray-900 p-8 rounded-[2rem] border border-gray-800 h-full">
-                        <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                          <ShieldAlert className="text-yellow-500" /> Economic Anti-Spam
-                        </h3>
-                        <p className="text-sm text-gray-400 leading-relaxed mb-4">
-                          DMS requires a <b>refundable stake</b> to activate your address. This incentive makes high-volume abuse impractical while proving you are serious.
-                        </p>
-                        <div className="mt-6 p-4 bg-black rounded-xl border border-yellow-500/20 text-xs text-yellow-200 mb-6">
-                          "Higher stakes = higher trust. Legitimate professionals won't risk their reputation on spam".
-                        </div>
-                        <div className="mt-4 p-4 bg-black rounded-xl border border-blue-500/20">
-                          <h4 className="text-sm font-bold text-blue-400 mb-2">Inbox Fee</h4>
-                          <p className="text-xs text-gray-400 leading-relaxed">
-                            People must pay you if they want to send you an email. You can set your own inbox fee. You can increase or decrease it later.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
                     {/* --- SELECTION FORM --- */}
                     <div className="bg-gray-900 p-8 md:p-12 rounded-[3rem] border border-gray-800 space-y-12">
 
@@ -566,8 +467,11 @@ const RegisterAddress = () => {
                           <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
                             1
                           </span>
-                          Stake Levels & Status:
+                          Choose Your Stake Level & Status Indicator:
                         </h2>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                          DMS requires a refundable stake to activate your address. This incentive makes high-volume abuse impractical while proving you are serious. Higher stakes = higher trust. Legitimate professionals won't risk their reputation on spam.
+                        </p>
 
                         <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl">
                           <div className="overflow-x-auto">
@@ -651,75 +555,8 @@ const RegisterAddress = () => {
                         </div>
                       </div>
 
-                      {/* STEP 2 & 3: SELF DESCRIBER AND INBOX FEE */}
-                      <div className="pt-10 border-t border-gray-800">
-                        <div className="grid md:grid-cols-2 gap-8">
-                          {/* STEP 2: SELF DESCRIBER */}
-                          <div className="space-y-4">
-                            <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                              <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
-                                2
-                              </span>
-                              Self Describer
-                            </h2>
-                            <div className="flex items-center gap-3">
-                              <span className="text-4xl text-gray-700 font-mono">@</span>
-                              <input
-                                type="text"
-                                value={customGroup}
-                                onChange={handleGroupChange}
-                                placeholder="e.g. CEO-VivaTech"
-                                className="w-full bg-gray-900/60 border border-blue-500/30 rounded-2xl px-6 py-4 text-white placeholder-gray-500 outline-none focus:border-blue-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono"
-                              />
-                            </div>
-                          </div>
-
-                          {/* STEP 3: INBOX FEE */}
-                          <div className="space-y-4">
-                            <div className="flex items-center gap-2">
-                              <h2 className="text-2xl font-black text-white flex items-center gap-3">
-                                <span className="w-8 h-8 rounded-full bg-blue-600 text-sm flex items-center justify-center font-mono">
-                                  3
-                                </span>
-                                Inbox Fee
-                              </h2>
-                              <div className="group relative">
-                                <Info
-                                  className="text-gray-400 hover:text-blue-400 transition-colors cursor-help"
-                                  size={16}
-                                />
-                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 whitespace-nowrap">
-                                  Applies to everyone until white lists are enabled in Phase 2
-                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
-                                </div>
-                              </div>
-                            </div>
-                            <select
-                              value={inboxFee}
-                              onChange={(e) => handleInboxFeeChange(e.target.value)}
-                              className="w-full bg-gray-900/60 border border-blue-500/30 rounded-2xl px-6 py-4 text-white outline-none focus:border-blue-500/60 focus:bg-gray-900/80 transition-all text-xl font-mono cursor-pointer"
-                            >
-                              <option value="0">$0 (default)</option>
-                              <option value="0.01">$0.01</option>
-                              <option value="0.10">$0.10</option>
-                              <option value="1">$1</option>
-                              <option value="10">$10</option>
-                              <option value="20">$20</option>
-                              <option value="30">$30</option>
-                              <option value="40">$40</option>
-                              <option value="50">$50</option>
-                              <option value="60">$60</option>
-                              <option value="70">$70</option>
-                              <option value="80">$80</option>
-                              <option value="90">$90</option>
-                              <option value="100">$100</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
                       {/* CHECKOUT — Regular */}
-                      <div className="pt-10 border-t border-gray-800">
+                      <div className="pt-10">
                         <div className="max-w-md mx-auto space-y-8 bg-black p-8 rounded-3xl border border-gray-800 shadow-2xl">
                           <div className="flex justify-between items-center font-black text-2xl text-white">
                             <span>Stake Your Address:</span>
@@ -746,6 +583,37 @@ const RegisterAddress = () => {
                           </p>
                         </div>
                       </div>
+                    </div>
+
+                    {/* --- ACTION BUTTONS --- */}
+                    <div className="flex justify-center gap-6">
+                      <button
+                        onClick={() => setIsInfluencerMode(!isInfluencerMode)}
+                        className={`flex items-center gap-2 font-bold px-6 py-3 rounded-full border transition-all ${
+                          isInfluencerMode
+                            ? "bg-purple-600 border-purple-400 text-white"
+                            : "bg-gray-800 border-gray-700 text-gray-400"
+                        }`}
+                      >
+                        <User size={18} />{" "}
+                        {isInfluencerMode
+                          ? "Influencer Mode Active"
+                          : "Sign Up as Influencer ($0)"}
+                      </button>
+                      <a
+                        href="https://t.me/+9YVOgaobizw5NjEx"
+                        target="_blank"
+                        className="flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20 transition-all"
+                      >
+                        <Smartphone size={18} /> Join Telegram
+                      </a>
+                      <a
+                        href="https://support.cloudcoin.com/en/"
+                        target="_blank"
+                        className="flex items-center gap-2 text-gray-400 hover:text-white font-bold bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 transition-all"
+                      >
+                        <Shield size={18} /> Support Center
+                      </a>
                     </div>
 
                     {/* --- PHASE STATUS INFO --- */}

@@ -55,8 +55,25 @@ const AMOUNT_MAPPING = {
     1000: { class: "giga",  coinDenomination: 10000 }
 };
 
-// Phase I hardcoded beacon
-const DEFAULT_BEACON = "raida11";
+// Phase I hardcoded beacons
+const DEFAULT_BEACON = "RAIDA11";
+const BACKUP_BEACON = "RAIDA14";
+
+// --- Email Address Generation (adjective.noun.denomination) ---
+const ADJECTIVES = fs.readFileSync(path.join(__dirname, '..', 'adjectives.txt'), 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
+const NOUNS = fs.readFileSync(path.join(__dirname, '..', 'nouns.txt'), 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
+
+function generateEmailAddress(serialNumber, denominationClass) {
+    // serialNumber is a 4-byte integer; extract last two bytes
+    const nounByte = serialNumber & 0xFF;                       // last byte
+    const preAdjectiveByte = (serialNumber >> 8) & 0xFF;        // second byte from end
+    const adjectiveByte = (preAdjectiveByte + nounByte) % 256;  // the transform
+
+    const adjective = ADJECTIVES[adjectiveByte] || 'unknown';
+    const noun = NOUNS[nounByte] || 'unknown';
+
+    return `@${adjective}.${noun}.${denominationClass}`;
+}
 
 // --- Token Generation ---
 // Generates a short HMAC token tied to qmail + fullName
@@ -89,9 +106,9 @@ function convertToCustomBase32(decimalInt) {
 
 // --- 4. Database Helper Functions ---
 
-function registerUser(customSerial, firstName, lastName, description, inboxFee, amountClass) {
+function registerUser(email, firstName, lastName, description, inboxFee) {
     const filePath = '/var/www/distributedmailsystem.com/users.csv';
-    const headers = 'CustomSerialNumber,FirstName,LastName,Description,InboxFee,Class,Beacon';
+    const headers = 'Email,FirstName,LastName,Description,InboxFee,Beacon,Backup_Beacon';
 
     try {
         const fileExists = fs.existsSync(filePath);
@@ -108,17 +125,17 @@ function registerUser(customSerial, firstName, lastName, description, inboxFee, 
         };
 
         const row = [
-            escapeField(customSerial),
+            escapeField(email),
             escapeField(firstName),
             escapeField(lastName),
             escapeField(description),
             escapeField(inboxFee),
-            escapeField(amountClass),
-            escapeField(DEFAULT_BEACON)
+            escapeField(DEFAULT_BEACON),
+            escapeField(BACKUP_BEACON)
         ].join(',') + '\n';
 
         fs.appendFileSync(filePath, row);
-        console.log(`Registered user: ${firstName} ${lastName} -> users.csv`);
+        console.log(`Registered user: ${firstName} ${lastName} (${email}) -> users.csv`);
     } catch (err) {
         console.error("Failed to register user:", err.message);
     }
@@ -157,33 +174,29 @@ app.post('/api/generate-mailbox', async (req, res) => {
     const lockerKey = `DMS-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
     try {
-        // Step 3: Call Core API Locker Upload (Port 8080)
-        // Supervisor Requirement: 2 second timeout
-        console.log(`Calling Core API LockerPut at 8080 for denomination ${mapping.coinDenomination}...`);
-        
+        // Step 3: Call Core API Locker Put-One-Coin (Port 8080)
+        console.log(`Calling Core API put-one-coin at 8080 for denomination ${mapping.coinDenomination}...`);
+
         const coreResponse = await axios.get(
-            `http://localhost:8080/api/transactions/locker/upload?locker_key=${lockerKey}&denomination=${mapping.coinDenomination}`,
+            `http://localhost:8080/api/transactions/locker/put-one-coin?locker_key=${lockerKey}&denomination=${mapping.coinDenomination}`,
             { timeout: 2000 }
         );
 
         if (coreResponse.data.status === "success") {
-            // Step 4: Extract Serial Number from Response
-            // Single Coin Mode success response property: denomination as serial
-            const coinSerial = coreResponse.data.denomination; 
-            console.log(`Core API Success. Uploaded coin serial: ${coinSerial}`);
-
-            // Step 5: Generate custom base32 and email
-            const customSerial = convertToCustomBase32(coinSerial);
+            // Step 4: Extract serial number and denomination from response
+            const serialNumber = coreResponse.data.serial_number;
             const amountClass = mapping.class;
-            const describerPart = description ? `@${description}` : "";
-            const email = `${firstName}.${lastName}${describerPart}#${customSerial}.${amountClass.charAt(0).toUpperCase() + amountClass.slice(1)}`;
+            console.log(`Core API Success. Serial: ${serialNumber}, Class: ${amountClass}`);
+
+            // Step 5: Generate email address using adjective.noun.denomination algorithm
+            const email = generateEmailAddress(serialNumber, amountClass);
 
             // Step 6: Database Logging
-            registerUser(customSerial, firstName, lastName, description || "", inboxFee || 0, amountClass);
+            registerUser(email, firstName, lastName, description || "", inboxFee || 0);
             logSoldCoin(firstName, lastName, lockerKey, email);
 
             console.log(`Registration Complete: ${email}`);
-            
+
             res.json({
                 success: true,
                 email: email,
@@ -195,9 +208,9 @@ app.post('/api/generate-mailbox', async (req, res) => {
         }
     } catch (error) {
         console.error("Core API Connection failed:", error.message);
-        res.status(503).json({ 
-            success: false, 
-            error: "Could not connect to CloudCoin Core service. Please ensure Core is running on port 8080." 
+        res.status(503).json({
+            success: false,
+            error: "Could not connect to CloudCoin Core service. Please ensure Core is running on port 8080."
         });
     }
 });
