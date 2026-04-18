@@ -28,8 +28,12 @@ import {
   AlertCircle,
   Sparkles,
 } from "lucide-react";
+import { track } from "../utils/analytics";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const RegisterAddress = () => {
+  useDocumentMeta({ title: 'Get Started', description: 'Claim your unique decentralized QMail address. Register as a user or sign up free as an influencer.' });
+
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [selectedTier, setSelectedTier] = useState(null);
   const [selectedEdition, setSelectedEdition] = useState("free");
@@ -182,9 +186,10 @@ const RegisterAddress = () => {
                 const result = await response.json();
                 if (!result.success) { setPaypalError(result.error || "Registration failed."); return; }
                 if (isInfluencerMode) {
+                  track('influencer_signup_complete', { name: `${order.payer.name.given_name} ${order.payer.name.surname}` });
                   navigate("/strategy", { state: { verifiedName: `${order.payer.name.given_name} ${order.payer.name.surname}`, qmail: result.email, paypalEmail: order.payer.email_address || "", token: result.token || "" } });
                 } else {
-                  navigate("/success", { state: { email: result.email, lockerCode: result.lockerCode } });
+                  navigate("/success", { state: { email: result.email, lockerCode: result.lockerCode, firstName: order.payer.name.given_name, lastName: order.payer.name.surname } });
                 }
               } catch { setPaypalError("Payment capture mein error aaya hai."); }
             },
@@ -236,6 +241,7 @@ const RegisterAddress = () => {
                 return;
               }
               if (isInfluencerMode) {
+                track('influencer_signup_complete', { name: `${order.payer.name.given_name} ${order.payer.name.surname}` });
                 navigate("/strategy", {
                   state: {
                     verifiedName: `${order.payer.name.given_name} ${order.payer.name.surname}`,
@@ -249,6 +255,8 @@ const RegisterAddress = () => {
                   state: {
                     email: result.email,
                     lockerCode: result.lockerCode,
+                    firstName: order.payer.name.given_name,
+                    lastName: order.payer.name.surname,
                   },
                 });
               }
@@ -588,7 +596,7 @@ const RegisterAddress = () => {
                     {/* --- ACTION BUTTONS --- */}
                     <div className="flex justify-center gap-6">
                       <button
-                        onClick={() => setIsInfluencerMode(!isInfluencerMode)}
+                        onClick={() => { if (!isInfluencerMode) track('influencer_signup_start'); setIsInfluencerMode(!isInfluencerMode); }}
                         className={`flex items-center gap-2 font-bold px-6 py-3 rounded-full border transition-all ${
                           isInfluencerMode
                             ? "bg-purple-600 border-purple-400 text-white"

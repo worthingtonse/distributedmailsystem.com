@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import Navigation from './components/Navigation.jsx'
+import Footer from './components/Footer.jsx'
 import StarryBackground from './components/StarryBackground.jsx'
 import Loader from './components/Loader.jsx'
 import ScrollToTop from './components/ScrollToTop.jsx'
@@ -13,6 +14,7 @@ const EmailCrisis = lazy(() => import('./pages/EmailCrisis.jsx'))
 const Technology = lazy(() => import('./pages/Technology.jsx'))
 const FAQ = lazy(() => import('./pages/Faq.jsx')) 
 const Strategy = lazy(() => import('./pages/SalesStrategy.jsx'))
+const Influencers = lazy(() => import('./pages/Influencers.jsx'))
 const VerifiedAccess = lazy(() => import('./pages/VerifiedAccess.jsx'))
 const FunnelSuccess = lazy(() => import('./pages/FunnelSuccess.jsx'))
 const InfluencerSuccess = lazy(() => import('./pages/InfluencerSuccess.jsx'))
@@ -20,6 +22,10 @@ const AdminLinkGen = lazy(() => import('./pages/AdminLinkGen.jsx'))
 const RegisterAddress = lazy(() => import('./pages/RegisterAddress.jsx'))
 const Subscribe = lazy(() => import('./pages/Subscribe.jsx'))
 const Whitepaper = lazy(() => import('./pages/Whitepaper.jsx'))
+const Downloads = lazy(() => import('./pages/Downloads.jsx'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'))
+const Privacy = lazy(() => import('./pages/Privacy.jsx'))
+const Terms = lazy(() => import('./pages/Terms.jsx'))
 
 /**
  * AnimatedRoutes Component
@@ -27,7 +33,7 @@ const Whitepaper = lazy(() => import('./pages/Whitepaper.jsx'))
  */
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const hideNav = ['/access', '/success', '/success-influencer'].includes(location.pathname);
+  const hideNav = ['/access', '/admin'].includes(location.pathname);
 
   return (
     <div className="relative min-h-screen">
@@ -48,6 +54,7 @@ const AnimatedRoutes = () => {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/technology" element={<Technology />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/influencers" element={<Influencers />} />
             <Route path="/strategy" element={<Strategy />} />
             <Route path="/email-crisis" element={<EmailCrisis />} /> 
             
@@ -58,12 +65,19 @@ const AnimatedRoutes = () => {
             <Route path="/register" element={<RegisterAddress />} />
             <Route path="/subscribe" element={<Subscribe />} />
             <Route path="/whitepaper" element={<Whitepaper />} />
-            
+            <Route path="/download" element={<Downloads />} />
+
+            {/* Legal */}
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+
             {/* Internal Tools */}
             <Route path="/button" element={<AdminLinkGen />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </Suspense>
       </AnimatePresence>
+      {!hideNav && <Footer />}
     </div>
   );
 };

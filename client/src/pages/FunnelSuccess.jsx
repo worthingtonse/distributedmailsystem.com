@@ -22,6 +22,7 @@ import {
   Settings,
   DollarSign,
   AtSign,
+  Info,
 } from "lucide-react";
 
 const FunnelSuccess = () => {
@@ -29,17 +30,22 @@ const FunnelSuccess = () => {
   const [isProvisioning, setIsProvisioning] = useState(true);
   const [provisionStep, setProvisionStep] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [anonymousLoading, setAnonymousLoading] = useState(false);
 
   // Real-time setup state
   const [inboxFee, setInboxFee] = useState("10");
   const [definer, setDefiner] = useState(state?.definer || "Verified User");
 
-  // Debug: log the state to see what's being passed
-  console.log("FunnelSuccess state:", state);
-
   const userAddress = state?.email || state?.generatedAddress || "(Email not received - please complete registration)";
   const lockerCode = state?.lockerCode || "";
-  const userFirstName = state?.userData?.firstName || "User";
+  const userFirstName = state?.firstName || "User";
+  const userLastName = state?.lastName || "";
+
+  // Display address: include name prefix only if not anonymous
+  const displayAddress = isAnonymous
+    ? userAddress
+    : `${userFirstName}.${userLastName}${userAddress}`;
 
   // Provisioning Simulation
   const steps = [
@@ -62,9 +68,34 @@ const FunnelSuccess = () => {
   }, [provisionStep]);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(userAddress);
+    navigator.clipboard.writeText(displayAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleAnonymousToggle = async () => {
+    if (isAnonymous) {
+      // Already anonymous — no undo (names already removed from server)
+      return;
+    }
+    setAnonymousLoading(true);
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_BASE_URL || ''}/api/make-anonymous`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userAddress }),
+        }
+      );
+      const result = await response.json();
+      if (result.success) {
+        setIsAnonymous(true);
+      }
+    } catch (err) {
+      console.error("Failed to make anonymous:", err);
+    }
+    setAnonymousLoading(false);
   };
 
   const discoveryLinks = [
@@ -153,11 +184,11 @@ const FunnelSuccess = () => {
               className="space-y-12"
             >
               <div className="text-center space-y-4">
-                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto border border-green-500/20 text-green-400 mb-6">
-                  <CheckCircle2 size={40} />
-                </div>
-                <h1 className="text-5xl font-black uppercase tracking-tighter">
-                  Success, {userFirstName}!
+                <h1 className="text-5xl font-black uppercase tracking-tighter flex items-center justify-center gap-4">
+                  <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center border border-green-500/20 text-green-400 shrink-0">
+                    <CheckCircle2 size={36} />
+                  </div>
+                  Success!
                 </h1>
                 <p className="text-gray-400">
                   Your decentralized identity is now live on the Distributed Resource Directory and others can search you up.
@@ -169,12 +200,35 @@ const FunnelSuccess = () => {
                 <div className="lg:col-span-7 space-y-8">
                   {/* The Address Card */}
                   <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl">
-                    <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2 whitespace-nowrap">
-                      <AtSign size={14} /> Your Copy-Paste Address
-                    </h3>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2 whitespace-nowrap">
+                        <AtSign size={14} /> Your Copy-Paste Address
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleAnonymousToggle}
+                          disabled={isAnonymous || anonymousLoading}
+                          className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full border transition-all ${
+                            isAnonymous
+                              ? "bg-green-600/20 border-green-500/30 text-green-400 cursor-default"
+                              : "bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-500 hover:text-white"
+                          }`}
+                        >
+                          <Lock size={14} />
+                          {anonymousLoading ? "Updating..." : isAnonymous ? "Anonymous" : "Go Anonymous"}
+                        </button>
+                        <div className="group relative">
+                          <Info className="text-gray-500 hover:text-blue-400 transition-colors cursor-help" size={16} />
+                          <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 w-56 leading-relaxed">
+                            Remove your name from your address. No one will be able to look you up by name in the Distributed Resource Directory.
+                            <div className="absolute top-full right-4 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex flex-col md:flex-row items-center gap-4 bg-black/40 p-6 rounded-2xl border border-white/5">
                       <code className="text-xl md:text-2xl text-white font-mono flex-1 break-all text-center md:text-left">
-                        {userAddress}
+                        {displayAddress}
                       </code>
                       <button
                         onClick={handleCopy}
@@ -188,6 +242,12 @@ const FunnelSuccess = () => {
                       Copy and paste this into your email client to start
                       sending private messages.
                     </p>
+                    <Link
+                      to="/download"
+                      className="mt-6 w-full bg-white text-black px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Download size={18} /> Download the Qmail Software
+                    </Link>
                   </div>
 
                   {/* Locker Code Card */}
@@ -262,29 +322,13 @@ const FunnelSuccess = () => {
                     </div>
                   </div>
 
-                  {/* Software Download */}
-                  <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-8">
-                    <div className="flex-1 text-center md:text-left">
-                      <h3 className="text-white font-bold mb-2 flex items-center justify-center md:justify-start gap-2 uppercase tracking-widest text-xs">
-                        <Download size={16} className="text-blue-400" /> Core
-                        Software
-                      </h3>
-                      <p className="text-sm text-gray-400">
-                        Claim your full inbox and manage coins with the native
-                        client.
-                      </p>
-                    </div>
-                    <button className="bg-white text-black px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2">
-                      <Download size={18} /> Download for OS
-                    </button>
-                  </div>
                 </div>
 
                 {/* Right Side: Next Steps & Links */}
                 <div className="lg:col-span-5 space-y-6">
                   <div className="bg-black/40 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem]">
                     <h3 className="text-lg font-black text-white mb-8 uppercase tracking-tighter">
-                      What's Next?
+                      What's Next in Phase II?
                     </h3>
                     <div className="space-y-4">
                       {discoveryLinks.map((link, i) => (

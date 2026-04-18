@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://distributedmailsystem.com/sitemap.xml
+
+# Internal tools
+Disallow: /admin
+Disallow: /button
+Disallow: /access

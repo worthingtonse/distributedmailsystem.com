@@ -1,10 +1,14 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck, Users, Clock } from 'lucide-react';
 import { usePaypalConfig } from '../hooks/usePaypalConfig';
+import { track } from '../utils/analytics';
+import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 const VerifiedAccess = () => {
+  useDocumentMeta({ title: 'Send a Private Message', description: 'Send a quantum-safe, priority message through QMail.' });
+
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -16,10 +20,13 @@ const VerifiedAccess = () => {
   const [verifyStatus, setVerifyStatus] = useState("checking"); // "checking" | "verified" | "unverified" | "no-token"
 
   // New state for the redesigned form
-  const [wantEmail, setWantEmail] = useState(true);
-  const [selectedPackage, setSelectedPackage] = useState('standard');
+  const [wantEmail, setWantEmail] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState('message');
   const [customAmount, setCustomAmount] = useState('');
   const [showCustom, setShowCustom] = useState(false);
+
+  // Social proof
+  const [socialProof, setSocialProof] = useState(null);
 
   // Title Case Utility
   const toTitleCase = (str) => {
@@ -44,6 +51,15 @@ const VerifiedAccess = () => {
   // Token from URL
   const linkToken = searchParams.get('token') || '';
 
+  // Track page load and fetch social proof
+  useEffect(() => {
+    track('verified_access_load', { influencer: recipientName, inboxFee });
+    fetch(`${import.meta.env.VITE_BASE_URL || ''}/api/social-proof`)
+      .then(r => r.json())
+      .then(setSocialProof)
+      .catch(() => {});
+  }, []);
+
   // Verify token with backend on page load
   useEffect(() => {
     if (!linkToken) {
@@ -66,6 +82,11 @@ const VerifiedAccess = () => {
 
   // Package options based on inbox fee
   const packages = {
+    message: {
+      label: 'Just Message',
+      price: inboxFee,
+      description: `1 message to ${firstName}`
+    },
     basic: {
       label: 'Basic',
       price: inboxFee + 5,
@@ -74,13 +95,13 @@ const VerifiedAccess = () => {
     standard: {
       label: 'Standard',
       price: 25,
-      description: `1 message + balance for more`,
+      description: `1 message + credits for more`,
       recommended: true
     },
     best: {
       label: 'Best Value',
       price: 50,
-      description: `1 message + balance for 5+ more`
+      description: `1 message + credits for 5+`
     }
   };
 
@@ -88,7 +109,7 @@ const VerifiedAccess = () => {
   const getPaymentAmount = () => {
     if (showCustom && customAmount) {
       const amount = parseInt(customAmount, 10);
-      return Math.max(inboxFee + 1, Math.min(1000, amount));
+      return Math.max(inboxFee, Math.min(1000, amount));
     }
     return packages[selectedPackage]?.price || packages.standard.price;
   };
@@ -202,6 +223,9 @@ const VerifiedAccess = () => {
               console.error('Failed to log affiliate sale:', logErr);
             }
 
+            // Track successful payment
+            track('payment_complete', { influencer: recipientName, amount: paymentAmount, package: selectedPackage });
+
             // Navigate to influencer success page with all data
             navigate('/success-influencer', {
               state: {
@@ -226,6 +250,7 @@ const VerifiedAccess = () => {
         },
         onError: (err) => {
           console.error("PayPal Error:", err);
+          track('payment_error', { influencer: recipientName, amount: paymentAmount });
           setPaypalError("Payment failed to initialize. Please try again.");
         },
         style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' }
@@ -275,7 +300,7 @@ const VerifiedAccess = () => {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center p-6 transition-colors duration-1000"
+      className="min-h-screen flex flex-col items-center justify-center p-3 md:p-6 transition-colors duration-1000"
       style={{ backgroundColor: customBg }}
     >
       {/* ── Verification Banner ── */}
@@ -291,13 +316,24 @@ const VerifiedAccess = () => {
           <span><strong>Verified page</strong> — This is the official Distributed Mail page for <strong>{recipientName}</strong>.</span>
         </div>
       )}
-      {(verifyStatus === "unverified" || verifyStatus === "no-token") && (
+      {verifyStatus === "no-token" && (
+        <div className="w-full max-w-5xl mb-4 px-5 py-4 rounded-2xl bg-yellow-900/20 border border-yellow-500/30 text-sm">
+          <div className="flex items-start gap-3 text-yellow-200">
+            <AlertCircle size={18} className="shrink-0 mt-0.5 text-yellow-400" />
+            <div>
+              <p className="font-bold text-yellow-200 mb-1">Verification token missing</p>
+              <p className="text-yellow-300/80">This link does not include a verification token. It may have been truncated by a social media platform, or the influencer may not have finished setup. Check that you have the full URL, or contact the person who shared it.</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {verifyStatus === "unverified" && (
         <div className="w-full max-w-5xl mb-4 px-5 py-4 rounded-2xl bg-red-900/30 border border-red-500/40 text-sm">
           <div className="flex items-start gap-3 text-red-300">
             <AlertCircle size={18} className="shrink-0 mt-0.5 text-red-400" />
             <div>
-              <p className="font-bold text-red-200 mb-1">⚠️ This page could not be verified</p>
-              <p>This link was not generated by the Distributed Mail System. It may be a fake or spoofed page. <strong>Do not make any payments.</strong> If you believe this is an error, contact support below.</p>
+              <p className="font-bold text-red-200 mb-1">This page could not be verified</p>
+              <p>The verification token does not match any registered influencer. This may be a fake or spoofed page. <strong>Do not make any payments.</strong> If you believe this is an error, contact support below.</p>
             </div>
           </div>
         </div>
@@ -305,13 +341,13 @@ const VerifiedAccess = () => {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-5xl w-full grid lg:grid-cols-2 gap-12 bg-black/40 backdrop-blur-3xl p-10 md:p-16 rounded-[40px] border border-white/10 shadow-2xl"
+        className="max-w-5xl w-full grid lg:grid-cols-2 gap-8 md:gap-12 bg-black/40 backdrop-blur-3xl p-6 md:p-10 lg:p-16 rounded-[24px] md:rounded-[40px] border border-white/10 shadow-2xl"
       >
-        {/* Left Side: Information */}
-        <div className="space-y-8">
+        {/* Left Side: Information (appears second on mobile) */}
+        <div className="space-y-8 order-2 lg:order-1">
           <div>
             <h1 className="text-4xl md:text-5xl font-black text-white leading-tight mb-2">
-              {recipientName}
+              Send {firstName} a Private, Priority Message
             </h1>
             <p className="text-xl font-mono opacity-80" style={{ color: customBtn }}>
               {influencerAddress}
@@ -341,12 +377,26 @@ const VerifiedAccess = () => {
                 <span className="text-white font-bold not-italic">Zero Spam:</span> Because postage is required, spammers cannot afford to email them. Your message lands in their <strong className="text-white">"Priority Inbox."</strong>
               </p>
             </div>
+
+            {/* Social Proof */}
+            <div className="flex flex-col gap-2 pt-2">
+              <div className="flex items-center gap-2 text-sm text-gray-400">
+                <Clock size={14} className="text-green-400 shrink-0" />
+                <span>{firstName} typically responds within <strong className="text-white">24 hours</strong></span>
+              </div>
+              {socialProof && socialProof.totalPurchases > 0 && (
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                  <Users size={14} className="text-blue-400 shrink-0" />
+                  <span><strong className="text-white">{socialProof.totalPurchases}</strong> people have used QMail{socialProof.recentSales > 0 ? ` — ${socialProof.recentSales} this week` : ''}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Right Side: Payment Gateway */}
-        <div className="flex flex-col">
-          <div className="bg-white/5 p-8 rounded-[32px] border border-white/10 space-y-6">
+        {/* Right Side: Payment Gateway (appears first on mobile) */}
+        <div className="flex flex-col order-1 lg:order-2">
+          <div className="bg-white/5 p-5 md:p-8 rounded-[24px] md:rounded-[32px] border border-white/10 space-y-6">
 
             {/* Header */}
             <div className="text-center">
@@ -375,7 +425,7 @@ const VerifiedAccess = () => {
                   onChange={(e) => setWantEmail(e.target.checked)}
                   className="w-4 h-4 rounded accent-blue-500 mt-0.5 shrink-0"
                 />
-                <span>Uncheck this box if you do not want a free email address ($20 value)</span>
+                <span>Also get your own QMail address — <strong className="text-white">free</strong> ($20 value)</span>
               </label>
             </div>
 
@@ -383,17 +433,20 @@ const VerifiedAccess = () => {
             <div className="space-y-3">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Choose Your Package</p>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {Object.entries(packages).map(([key, pkg]) => (
                   <button
                     key={key}
-                    onClick={() => { setSelectedPackage(key); setShowCustom(false); }}
+                    onClick={() => { setSelectedPackage(key); setShowCustom(false); track('package_select', { package: key, price: pkg.price, influencer: recipientName }); }}
                     className={`relative p-3 rounded-xl border text-center transition-all ${
                       selectedPackage === key && !showCustom
                         ? 'border-blue-500 bg-blue-500/10'
                         : 'border-white/10 bg-white/5 hover:bg-white/10'
                     }`}
                   >
+                    {pkg.recommended && (
+                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[8px] font-bold uppercase tracking-wider bg-blue-500 text-white px-2 py-0.5 rounded-full whitespace-nowrap">Popular</span>
+                    )}
                     <p className="text-white font-bold text-sm">${pkg.price}</p>
                     <p className="text-gray-500 text-[10px]">{pkg.label}</p>
                   </button>
@@ -416,9 +469,9 @@ const VerifiedAccess = () => {
                       type="number"
                       value={customAmount}
                       onChange={(e) => setCustomAmount(e.target.value)}
-                      min={inboxFee + 1}
+                      min={inboxFee}
                       max={1000}
-                      placeholder={`${inboxFee + 1} - 1000`}
+                      placeholder={`${inboxFee} - 1000`}
                       className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-gray-600 focus:border-blue-500 outline-none transition-all text-sm"
                     />
                     <button
@@ -429,7 +482,7 @@ const VerifiedAccess = () => {
                     </button>
                   </div>
                   <p className="text-xs text-gray-500">
-                    Min: ${inboxFee + 1} (inbox fee + $1) | Max: $1,000
+                    Min: ${inboxFee} (inbox fee) | Max: $1,000
                   </p>
                 </div>
               )}
@@ -453,10 +506,15 @@ const VerifiedAccess = () => {
 
             {/* PayPal Buttons */}
             <div className="min-h-[120px] flex items-center justify-center">
-              {(verifyStatus === "unverified" || verifyStatus === "no-token") ? (
+              {verifyStatus === "unverified" ? (
                 <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-xs flex items-center gap-2 w-full">
                   <AlertCircle size={14} className="shrink-0" />
                   <span>Payments are disabled — this page could not be verified as an official influencer page.</span>
+                </div>
+              ) : verifyStatus === "no-token" ? (
+                <div className="text-yellow-400 bg-yellow-400/10 p-4 rounded-xl border border-yellow-500/20 text-xs flex items-center gap-2 w-full">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>Payments are disabled — this link is missing a verification token. Ask the sender for the correct link.</span>
                 </div>
               ) : paypalError ? (
                 <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-xs flex items-center gap-2">
@@ -470,10 +528,19 @@ const VerifiedAccess = () => {
               )}
             </div>
 
-            {/* Security Badge */}
-            <div className="flex items-center justify-center gap-2 text-gray-500">
-              <Lock size={12} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">End-to-End Quantum Safe</span>
+            {/* Trust Badges */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center gap-4 text-gray-500">
+                <div className="flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-green-400" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-green-400/80">Secured by PayPal</span>
+                </div>
+                <div className="w-px h-3 bg-gray-700" />
+                <div className="flex items-center gap-1.5">
+                  <Lock size={12} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Quantum Safe</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

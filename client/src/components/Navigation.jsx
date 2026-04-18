@@ -23,15 +23,15 @@ function Navigation() {
   }, [location])
 
   const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Claim Address', path: '/register' },
-    { name: 'Tips', path: '/subscribe' },
     { name: 'Why QMail', path: '/email-crisis' },
     { name: 'How It Works', path: '/how-it-works' },
-    { name: 'Technology', path: '/technology' }, 
-    { name: 'Influencers', path: '/strategy' },     
+    { name: 'Influencers', path: '/influencers' },
+    { name: 'Get Started', path: '/register' },
+    { name: 'Technology', path: '/technology' },
     { name: 'FAQs', path: '/faq' },
     { name: 'Whitepaper', path: '/whitepaper' },
+    { name: 'Tips', path: '/subscribe' },
+    { name: 'Downloads', path: '/download' },
     {
       name: 'API',
       path: 'https://cloudcoin.org/qmail-reference.php',

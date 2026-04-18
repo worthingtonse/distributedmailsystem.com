@@ -17,7 +17,10 @@ import {
   Mail,
   Link,
   ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
+import { track } from "../utils/analytics";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 // Reusable component for each strategic phase
 const StrategyCard = memo(({ title, children, step }) => {
@@ -40,6 +43,8 @@ const StrategyCard = memo(({ title, children, step }) => {
 StrategyCard.displayName = "StrategyCard";
 
 function SalesStrategy() {
+  useDocumentMeta({ title: 'Influencer Dashboard', description: 'Generate your QMail link, customize your landing page, and start earning from your audience.' });
+
   const location = useLocation();
   const verifiedData = location.state || {};
   const isVerified = !!verifiedData.verifiedName;
@@ -122,6 +127,7 @@ function SalesStrategy() {
     if (!name || !qmail) return;
     navigator.clipboard.writeText(easyLink);
     setCopiedLink(true);
+    track('influencer_link_copy', { influencer: name });
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
@@ -129,6 +135,7 @@ function SalesStrategy() {
     if (!name || !qmail) return;
     navigator.clipboard.writeText(embedCode);
     setCopiedEmbed(true);
+    track('influencer_embed_copy', { influencer: name });
     setTimeout(() => setCopiedEmbed(false), 2000);
   };
 
@@ -138,16 +145,16 @@ function SalesStrategy() {
     <LazyMotion features={domAnimation} strict>
       <div className="min-h-screen pt-20 bg-black">
 
-        {/* ── Header ── */}
-        <section className="py-16 md:py-20 lg:py-24 bg-gradient-to-b from-gray-900 to-black">
+        {/* ── Compact Header ── */}
+        <section className="py-10 md:py-14 bg-gradient-to-b from-gray-900 to-black">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 text-center">
             <m.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 text-white leading-tight">
-                Influencers: Get Paid For Your Attention!
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white leading-tight">
+                Your Influencer Dashboard
               </h1>
 
               {/* Identity Status Badge */}
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-6">
                 {isVerified ? (
                   <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-green-900/30 border border-green-500/50">
                     <ShieldCheck className="w-5 h-5 text-green-400 flex-shrink-0" />
@@ -157,61 +164,19 @@ function SalesStrategy() {
                   </div>
                 ) : (
                   <a
-                    href="/register-address"
+                    href="/register"
                     className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-blue-900/30 border border-blue-500/40 hover:bg-blue-900/50 transition-colors cursor-pointer"
                   >
                     <Zap className="w-5 h-5 text-blue-400 flex-shrink-0" />
                     <span className="text-blue-300 font-semibold text-sm md:text-base">
-                      Don't have a QMail yet? Verify your identity for $0 to unlock one-click links.
+                      Don't have a QMail yet? Verify your identity for $0 to get started.
                     </span>
                   </a>
                 )}
               </div>
 
-              <ul className="text-gray-300 max-w-2xl mx-auto mb-10 text-left inline-block space-y-3">
-                {[
-                  "Doesn't cost you anything",
-                  "A Constant Revenue Stream",
-                  "Keeps Your Inbox Free of Clutter",
-                  "Stop Emails from Antagonists and Time Wasters",
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded bg-green-600 border border-green-500 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-4 h-4 text-white" strokeWidth={3} />
-                    </div>
-                    <span className="text-sm md:text-base">{item}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white uppercase tracking-tight">
-                Sales Funnel <span className="text-blue-500">Strategy</span>
-              </h2>
-
-              {/* Stepper */}
-              <div className="max-w-3xl mx-auto mb-8">
-                <div className="flex items-center justify-center gap-2 md:gap-4">
-                  {[
-                    { n: "1", label: "Create a link", cls: "bg-blue-600 border-blue-400" },
-                    { n: "2", label: "Post the Link",  cls: "bg-blue-600 border-blue-400" },
-                    { n: "3", label: "Receive $$$!",   cls: "bg-green-600 border-green-400" },
-                  ].map(({ n, label, cls }, i) => (
-                    <React.Fragment key={n}>
-                      {i > 0 && <div className="w-8 md:w-12 h-0.5 bg-gray-700" />}
-                      <div className="flex items-center gap-2">
-                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${cls} flex items-center justify-center text-white font-bold`}>
-                          {n}
-                        </div>
-                        <span className="text-sm md:text-base text-gray-300 font-medium">{label}</span>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
-
               <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base px-4">
-                Requires that you have a QMail address. For instant payments, you will need a PayPal
-                account. You can get paid in other ways but it will take more time.
+                Generate your link, share it with your audience, and earn 50% of every sale.
               </p>
             </m.div>
           </div>
@@ -221,8 +186,186 @@ function SalesStrategy() {
         <section className="py-12 md:py-16 lg:py-20 pb-20 md:pb-32">
           <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-6xl">
 
-            {/* ─── Stage 1: Setup Direct Deposit ─── */}
-            <StrategyCard step="1" title="Stage 1: Setup Direct Deposit">
+            {/* ─── Step 1: Generate Your Link ─── */}
+            <div id="stage-1" className="scroll-mt-24" />
+            <StrategyCard step="1" title="Step 1: Generate Your Link">
+              <div className="space-y-6">
+                <p className="text-gray-400 text-sm">
+                  Fill in your details to generate a shareable link. Your followers will use this to message you.
+                </p>
+
+                {/* Identity / Settings panel */}
+                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
+                  <div className="grid md:grid-cols-2 gap-5 mb-5">
+                    <div>
+                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
+                        Your Name *
+                        {isVerified && (
+                          <span className="ml-2 text-green-400 normal-case font-normal tracking-normal text-xs">
+                            ✓ Verified
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => !isVerified && setName(e.target.value)}
+                        readOnly={isVerified}
+                        className={`w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all ${
+                          isVerified
+                            ? "bg-gray-900 border-green-700/50 text-green-300 cursor-not-allowed"
+                            : "bg-black border-gray-700 focus:border-blue-500"
+                        }`}
+                        placeholder="Your full name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
+                        Your QMail Address *
+                        {isVerified && (
+                          <span className="ml-2 text-green-400 normal-case font-normal tracking-normal text-xs">
+                            ✓ Auto-filled
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        value={qmail}
+                        onChange={(e) => !isVerified && setQmail(e.target.value)}
+                        readOnly={isVerified}
+                        className={`w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all font-mono text-sm ${
+                          isVerified
+                            ? "bg-gray-900 border-green-700/50 text-green-300 cursor-not-allowed"
+                            : "bg-black border-gray-700 focus:border-blue-500"
+                        }`}
+                        placeholder="Joe.Doe@WhatEver#8FD.Giga"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
+                        Your Inbox Fee (USD)
+                      </label>
+                      <input
+                        type="number"
+                        value={cost}
+                        onChange={(e) => setCost(e.target.value)}
+                        min="1"
+                        className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">How much senders pay to reach you. You keep 50%.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
+                        Button Text
+                      </label>
+                      <input
+                        type="text"
+                        value={buttonText}
+                        onChange={(e) => setButtonText(e.target.value)}
+                        className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Button Preview */}
+                <div>
+                  <label className="block text-xs font-black text-blue-400 uppercase tracking-widest mb-3 text-center">
+                    Your Button Preview:
+                  </label>
+                  <div className="bg-black/30 border border-gray-800 rounded-xl p-6 flex items-center justify-center gap-3">
+                    <div className="w-11 h-11 bg-blue-600/20 border-2 border-blue-500/40 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
+                      <Mail className="w-6 h-6" />
+                    </div>
+                    <a
+                      href={canGenerate ? easyLink : "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-bold text-base md:text-lg text-white underline decoration-blue-500 decoration-2 underline-offset-8 hover:text-blue-300 transition-colors"
+                    >
+                      {buttonText}
+                    </a>
+                  </div>
+                </div>
+
+                {/* URL display */}
+                <div className="flex items-center gap-3 bg-black rounded-xl border border-gray-700 px-4 py-3">
+                  <span className="text-gray-400 text-xs font-mono flex-1 truncate">
+                    {canGenerate ? easyLink : "Fill in your name and QMail above to generate your link"}
+                  </span>
+                </div>
+
+                {/* Share Buttons */}
+                <div className="space-y-2">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Share Your Link</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button
+                      disabled={!canGenerate}
+                      onClick={handleCopyLink}
+                      className={`py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm ${
+                        canGenerate
+                          ? "bg-blue-600/20 border-2 border-blue-500/40 text-blue-400 hover:bg-blue-600/30 active:scale-95"
+                          : "bg-gray-800/50 border-2 border-gray-700 text-gray-600 cursor-not-allowed"
+                      }`}
+                    >
+                      {copiedLink ? <><Check size={16} /> Copied!</> : <><Copy size={16} /> Copy Link</>}
+                    </button>
+
+                    <a
+                      href={canGenerate ? `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Send me a private, priority message via QMail!\n${easyLink}`)}` : "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`py-3 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
+                        canGenerate
+                          ? "border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          : "border-gray-800 text-gray-700 pointer-events-none"
+                      }`}
+                    >
+                      Share on X
+                    </a>
+
+                    <button
+                      disabled={!canGenerate}
+                      onClick={() => {
+                        if (!canGenerate) return;
+                        navigator.clipboard.writeText(easyLink);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      className={`py-3 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
+                        canGenerate
+                          ? "border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          : "border-gray-800 text-gray-700 cursor-not-allowed"
+                      }`}
+                    >
+                      Instagram Bio
+                    </button>
+
+                    <a
+                      href={canGenerate ? easyLink : "#"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`py-3 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
+                        canGenerate
+                          ? "border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+                          : "border-gray-800 text-gray-700 pointer-events-none"
+                      }`}
+                    >
+                      <ExternalLink size={14} /> Preview
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </StrategyCard>
+
+            {/* ─── Step 2: Setup Direct Deposit ─── */}
+            <div id="stage-2" className="scroll-mt-24" />
+            <StrategyCard step="2" title="Step 2: Setup Direct Deposit">
               <div className="space-y-6">
                 <p className="text-gray-300 leading-relaxed">
                   We need to link our payment system to yours. Just tell us where to send your 50%
@@ -415,150 +558,9 @@ function SalesStrategy() {
               </div>
             </StrategyCard>
 
-            {/* ─── Stage 2: Generate Your Link and Buttons ─── */}
-            <StrategyCard step="2" title="Stage 2: Generate Your Link and Buttons">
-              <div className="space-y-6">
-                <p className="text-gray-400 text-sm">
-                  Customize your messaging button to match your brand
-                </p>
-
-                {/* Identity / Settings panel */}
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700">
-                  <div className="grid md:grid-cols-2 gap-5 mb-5">
-                    {/* Name (read-only, filled from Stage 1) */}
-                    <div>
-                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
-                        Your Name
-                        {isVerified && (
-                          <span className="ml-2 text-green-400 normal-case font-normal tracking-normal text-xs">
-                            ✓ Verified from PayPal
-                          </span>
-                        )}
-                      </label>
-                      <input
-                        type="text"
-                        value={name}
-                        readOnly
-                        className="w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all bg-gray-900 border-gray-600 cursor-not-allowed"
-                        placeholder="Fill in your name in Stage 1 above"
-                      />
-                    </div>
-
-                    {/* QMail */}
-                    <div>
-                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
-                        Your QMail Address
-                        {isVerified && (
-                          <span className="ml-2 text-green-400 normal-case font-normal tracking-normal text-xs">
-                            ✓ Auto-filled
-                          </span>
-                        )}
-                      </label>
-                      <input
-                        type="text"
-                        value={qmail}
-                        onChange={(e) => !isVerified && setQmail(e.target.value)}
-                        readOnly={isVerified}
-                        className={`w-full border rounded-xl px-4 py-3 text-white placeholder-gray-600 outline-none transition-all font-mono text-sm ${
-                          isVerified
-                            ? "bg-gray-900 border-green-700/50 text-green-300 cursor-not-allowed"
-                            : "bg-black border-gray-700 focus:border-blue-500"
-                        }`}
-                        placeholder="Joe.Doe@WhatEver#8FD.Giga"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-5">
-                    {/* Inbox Fee */}
-                    <div>
-                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
-                        Influencer's Inbox Fee (USD)
-                      </label>
-                      <input
-                        type="number"
-                        value={cost}
-                        onChange={(e) => setCost(e.target.value)}
-                        min="1"
-                        className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">How much senders pay to reach you. You keep 50%.</p>
-                    </div>
-
-                    {/* Button Text */}
-                    <div>
-                      <label className="block text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">
-                        Button Text
-                      </label>
-                      <input
-                        type="text"
-                        value={buttonText}
-                        onChange={(e) => setButtonText(e.target.value)}
-                        className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Button Preview */}
-                <div>
-                  <label className="block text-xs font-black text-blue-400 uppercase tracking-widest mb-3 text-center">
-                    Your Button Preview:
-                  </label>
-                  <div className="bg-black/30 border border-gray-800 rounded-xl p-6 flex items-center justify-center gap-3">
-                    <div className="w-11 h-11 bg-blue-600/20 border-2 border-blue-500/40 rounded-full flex items-center justify-center text-blue-400 flex-shrink-0">
-                      <Mail className="w-6 h-6" />
-                    </div>
-                    <a
-                      href={canGenerate ? easyLink : "#"}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="font-bold text-base md:text-lg text-white underline decoration-blue-500 decoration-2 underline-offset-8 hover:text-blue-300 transition-colors"
-                    >
-                      {buttonText}
-                    </a>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <button
-                    disabled={!canGenerate}
-                    onClick={handleCopyLink}
-                    className={`py-4 rounded-xl font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 text-sm ${
-                      canGenerate
-                        ? "bg-blue-600/20 border-2 border-blue-500/40 text-blue-400 hover:bg-blue-600/30 hover:border-blue-500/60 active:scale-95"
-                        : "bg-gray-800/50 border-2 border-gray-700 text-gray-600 cursor-not-allowed"
-                    }`}
-                  >
-                    {copiedLink ? <><Check size={18} /> Copied!</> : <><Copy size={18} /> Copy Easy Link</>}
-                  </button>
-
-                  <a
-                    href={canGenerate ? easyLink : "#"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`py-4 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
-                      canGenerate
-                        ? "border-gray-700 text-gray-400 hover:bg-gray-800"
-                        : "border-gray-800 text-gray-700 pointer-events-none"
-                    }`}
-                  >
-                    <ExternalLink size={14} /> Preview Page
-                  </a>
-                </div>
-
-                {/* URL display */}
-                <div className="flex items-center gap-3 bg-black rounded-xl border border-gray-700 px-4 py-3">
-                  <span className="text-gray-400 text-xs font-mono flex-1 truncate">
-                    {canGenerate ? easyLink : "Fill in your name and QMail above to generate your link"}
-                  </span>
-                </div>
-              </div>
-            </StrategyCard>
-
-            {/* ─── Stage 3: Design Your Landing Page ─── */}
-            <StrategyCard step="3" title="Stage 3: Design Your Landing Page">
+            {/* ─── Step 3: Design Your Landing Page ─── */}
+            <div id="stage-3" className="scroll-mt-24" />
+            <StrategyCard step="3" title="Step 3: Customize Your Landing Page">
               <div className="space-y-6">
                 <p className="text-gray-300 leading-relaxed">
                   We need to give you a button embed code for your website. Customize the colors and font — these control how your landing page looks when fans click your link.
@@ -660,7 +662,7 @@ function SalesStrategy() {
             </StrategyCard>
 
             {/* ─── Stage 4: Deploy ─── */}
-            <StrategyCard step="4" title="Stage 4: Deploy Your Links and Buttons">
+            <StrategyCard step="4" title="Step 4: Deploy Your Links">
               <div className="space-y-6">
                 <p className="text-gray-300 leading-relaxed">
                   Now that you've generated your personalized link and button, it's time to share

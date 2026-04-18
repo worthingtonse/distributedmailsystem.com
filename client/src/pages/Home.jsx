@@ -418,7 +418,7 @@ function Home() {
                     Get Early Access
                   </AnimatedButton>
                   <AnimatedButton
-                    to="/button"
+                    to="/influencers"
                     variant="secondary"
                     size="large"
                     className="w-full sm:w-auto min-w-[140px]"
@@ -442,6 +442,70 @@ function Home() {
             </div>
           </div>
         </m.section>
+
+        {/* For Influencers Section */}
+        <section className="py-16 sm:py-20 lg:py-24 relative bg-gradient-to-b from-transparent via-green-900/5 to-transparent">
+          <div className="container mx-auto px-4">
+            <m.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              className="max-w-5xl mx-auto"
+            >
+              <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 backdrop-blur-xl rounded-3xl border border-green-500/20 p-8 md:p-12">
+                <div className="grid md:grid-cols-2 gap-8 items-center">
+                  <div>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold mb-4">
+                      <DollarSign className="w-3 h-3" />
+                      Free to join
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                      Influencers:{" "}
+                      <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                        Get Paid
+                      </span>{" "}
+                      for Every Message
+                    </h2>
+                    <p className="text-gray-300 mb-6 leading-relaxed">
+                      Share one link with your audience. Every follower who wants to reach you pays a small fee — you keep 50%. Zero setup cost, earnings from day one.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link
+                        to="/influencers"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all text-sm"
+                      >
+                        See How It Works
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-green-500/30 text-green-400 font-bold rounded-full hover:bg-green-500/10 transition-all text-sm"
+                      >
+                        Start Earning
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    {[
+                      { step: "1", title: "Create your link", desc: "Free signup — verified via PayPal in seconds" },
+                      { step: "2", title: "Share it everywhere", desc: "Social media, bio links, email signatures" },
+                      { step: "3", title: "Get paid", desc: "50% of every purchase goes to your PayPal" },
+                    ].map((item) => (
+                      <div key={item.step} className="flex items-start gap-4 p-4 bg-black/30 rounded-xl border border-green-500/10">
+                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-sm font-bold shrink-0">
+                          {item.step}
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold text-sm">{item.title}</p>
+                          <p className="text-gray-400 text-xs">{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </m.div>
+          </div>
+        </section>
 
         {/* Problems Section */}
         <section
@@ -685,7 +749,7 @@ function Home() {
                 className="text-center mt-6 sm:mt-8"
               >
                 <Link
-                  to="/button"
+                  to="/influencers"
                   className="text-blue-400 hover:text-blue-300 font-semibold text-lg inline-flex items-center gap-2"
                 >
                   Influencers, Get Paid to Receive Emails →

@@ -308,6 +308,50 @@ const InfluencerSuccess = () => {
                 </div>
               </div>
 
+              {/* Upsell: Become an Influencer */}
+              <div className="bg-gradient-to-r from-green-600/10 to-emerald-600/10 backdrop-blur-xl border border-green-500/20 p-8 rounded-[2rem]">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                  <div className="flex-1 text-center md:text-left">
+                    <h3 className="text-white font-bold text-lg mb-2">
+                      Want to Get Paid When People Message YOU?
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Create your own QMail link in 60 seconds. Share it with your followers and earn 50% every time someone pays to message you.
+                    </p>
+                  </div>
+                  <Link
+                    to="/influencers"
+                    className="shrink-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:shadow-lg hover:shadow-green-500/25 transition-all flex items-center gap-2"
+                  >
+                    Start Earning <ArrowRight size={16} />
+                  </Link>
+                </div>
+              </div>
+
+              {/* Upsell: Share QMail */}
+              <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] text-center">
+                <p className="text-white font-bold mb-2">Know someone who'd love this?</p>
+                <p className="text-sm text-gray-400 mb-4">Tell your friends about QMail — the world's most private messaging system.</p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I just sent a quantum-safe private message via QMail! Check it out: https://distributedmailsystem.com`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-6 py-2 bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  >
+                    Share on X
+                  </a>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://distributedmailsystem.com');
+                    }}
+                    className="px-6 py-2 bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/20 transition-colors"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+              </div>
+
               {/* Security Note */}
               <div className="text-center">
                 <div className="inline-flex items-center gap-2 text-gray-500 text-xs">
