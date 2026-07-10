@@ -320,7 +320,8 @@ const RegisterAddress = () => {
   }, [paypalConfigLoading, paypalConfigError, paypalConfig]);
 
   useEffect(() => {
-    if (isPaypalLoaded && (selectedTier || isInfluencerMode) && !paymentComplete && !paypalError) {
+    // Influencer sign-ups are closed (Phase II) — never render PayPal there
+    if (isPaypalLoaded && selectedTier && !isInfluencerMode && !paymentComplete && !paypalError) {
       // 300ms delay gives AnimatePresence time to mount the correct container
       // before PayPal tries to render into it
       setTimeout(renderPayPalButtons, 300);
@@ -371,9 +372,14 @@ const RegisterAddress = () => {
                       <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
                         <Sparkles className="text-purple-400" size={28} />
                       </div>
-                      <h2 className="text-2xl font-black text-white mb-3">
-                        Influencer Address — Free & Verified
-                      </h2>
+                      <div className="flex items-center justify-center gap-3 mb-3 flex-wrap">
+                        <h2 className="text-2xl font-black text-white">
+                          Influencer Address — Free & Verified
+                        </h2>
+                        <span className="bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                          Phase II — Coming Soon
+                        </span>
+                      </div>
                       <p className="text-gray-300 text-sm leading-relaxed max-w-2xl mx-auto">
                         Your address will be generated using the <strong className="text-purple-400">exact name on your PayPal account</strong> — no manual entry needed. This verified name prevents impersonators from creating fake lookalike addresses.
                       </p>
@@ -439,47 +445,23 @@ const RegisterAddress = () => {
                             <span className="text-green-400">$0</span>
                           </div>
                           <p className="text-xs text-gray-400 leading-relaxed text-center">
-                            Click below — PayPal will verify your identity at $0. Your name from PayPal is used to create your unique, verified address.
+                            When influencer sign-ups open, PayPal will verify your identity at $0 and your verified PayPal name will be used to create your unique address.
                           </p>
 
-                          <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
-                            <Monitor className="text-yellow-400 shrink-0 mt-0.5" size={18} />
-                            <p className="text-xs text-yellow-200/90 leading-relaxed">
-                              <span className="font-bold text-yellow-300">Windows Desktop only (for now).</span>{" "}
-                              The QMail software runs on Windows Desktop today. Mac and Linux versions are
-                              coming soon — your address will work on them as soon as they're released.
-                            </p>
-                          </div>
-
-                          {/* PayPal Button */}
+                          {/* Influencer sign-ups are closed until the client software
+                              supports influencer accounts (Phase II) */}
                           <div className="min-h-[150px] flex items-center justify-center">
-                            {paymentsDisabled ? (
-                              <div className="text-center py-6 w-full">
-                                <div className="text-2xl font-black text-yellow-400 uppercase tracking-widest mb-3">
-                                  Coming Soon
-                                </div>
-                                <p className="text-xs text-gray-500 leading-relaxed">
-                                  Sign-ups are temporarily unavailable while we finish
-                                  setting up. Check back shortly!
-                                </p>
+                            <div className="text-center py-6 w-full">
+                              <div className="text-2xl font-black text-yellow-400 uppercase tracking-widest mb-3">
+                                Phase II — Coming Soon
                               </div>
-                            ) : paypalError ? (
-                              <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
-                                <AlertCircle className="shrink-0 mt-0.5" size={16} />
-                                <span>{paypalError}</span>
-                              </div>
-                            ) : !isPaypalLoaded ? (
-                              <div className="animate-pulse text-gray-500 text-xs font-bold uppercase tracking-widest">
-                                Initialising PayPal...
-                              </div>
-                            ) : (
-                              <div ref={influencerButtonRef} className="w-full"></div>
-                            )}
+                              <p className="text-xs text-gray-500 leading-relaxed">
+                                The QMail client software isn't ready for influencer
+                                accounts yet. We're building this now — join our
+                                Telegram below to be notified the moment sign-ups open.
+                              </p>
+                            </div>
                           </div>
-
-                          <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
-                            * A $0 PayPal transaction is used only to verify your real name. No amount is charged.
-                          </p>
                         </div>
                       </div>
                     </div>
@@ -672,8 +654,8 @@ const RegisterAddress = () => {
                       >
                         <User size={18} />{" "}
                         {isInfluencerMode
-                          ? "Influencer Mode Active"
-                          : "Sign Up as Influencer ($0)"}
+                          ? "Influencer Preview Active"
+                          : "Influencers: Free Sign-Up (Phase II — Coming Soon)"}
                       </button>
                       <a
                         href="https://t.me/+9YVOgaobizw5NjEx"

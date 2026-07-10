@@ -1,0 +1,12 @@
+# Copy this file to paypal-mode.txt on the server. The real file is NOT in
+# git, so deploys can never accidentally flip production payment state.
+#
+# The server reads paypal-mode.txt on EVERY request, so edits take effect
+# instantly - no rebuild, no restart needed.
+#
+# To open the store:        change the payments-enabled line to true
+# To use real PayPal money: change the sandbox-mode line to false
+#
+# Keep each setting on its own line, exactly as key=value.
+sandbox-mode=true
+payments-enabled=false

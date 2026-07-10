@@ -210,6 +210,10 @@ function Influencers() {
                   Turn your audience into revenue. Share one link, and every follower who wants to reach you pays a small fee — you keep 50%.
                 </p>
 
+                <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
+                  Sign-ups open in Phase II — coming soon
+                </p>
+
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
                   <Link
                     to="/register"
@@ -334,8 +338,11 @@ function Influencers() {
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                   Ready to Get Started?
                 </h2>
-                <p className="text-gray-300 text-lg mb-8 max-w-xl mx-auto">
-                  It costs you nothing. Create your link in under 5 minutes and start earning from your very next post.
+                <p className="text-gray-300 text-lg mb-4 max-w-xl mx-auto">
+                  It costs you nothing. Create your link in minutes and start earning from your very next post.
+                </p>
+                <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-8">
+                  Influencer sign-ups open in Phase II — coming soon
                 </p>
                 <Link
                   to="/register"

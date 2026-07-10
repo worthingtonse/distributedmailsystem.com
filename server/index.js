@@ -20,18 +20,25 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- 1b. PayPal Config Endpoint (reads paypal-mode.txt at runtime — no rebuild needed) ---
-app.get('/api/paypal-config', (req, res) => {
-    const modePath = path.join(__dirname, 'paypal-mode.txt');
-    let sandboxMode = true; // default to sandbox for safety
-
+// --- 1b. Runtime Payment Switches (server/paypal-mode.txt) ---
+// Both switches are read from the file on EVERY request, so editing the
+// file takes effect instantly - no rebuild, no restart, no code change.
+// Defaults fail safe: missing/unreadable file means sandbox on, payments off.
+function readPaymentConfig() {
+    let sandboxMode = true;      // real money only when the file explicitly says so
+    let paymentsEnabled = false; // store closed unless the file explicitly opens it
     try {
-        const content = fs.readFileSync(modePath, 'utf8').trim();
-        sandboxMode = content.includes('sandbox-mode=true');
+        const content = fs.readFileSync(path.join(__dirname, 'paypal-mode.txt'), 'utf8');
+        sandboxMode = !content.includes('sandbox-mode=false');
+        paymentsEnabled = content.includes('payments-enabled=true');
     } catch (err) {
-        console.warn('paypal-mode.txt not found — defaulting to sandbox mode.');
+        console.warn('paypal-mode.txt not found - defaulting to sandbox mode, payments disabled.');
     }
+    return { sandboxMode, paymentsEnabled };
+}
 
+app.get('/api/paypal-config', (req, res) => {
+    const { sandboxMode, paymentsEnabled } = readPaymentConfig();
     const suffix = sandboxMode ? 'SANDBOX' : 'LIVE';
     const mode = sandboxMode ? 'sandbox' : 'live';
 
@@ -41,16 +48,11 @@ app.get('/api/paypal-config', (req, res) => {
         planIdTypical: process.env[`PAYPAL_PLAN_ID_TYPICAL_${suffix}`]  || '',
         planIdPower:   process.env[`PAYPAL_PLAN_ID_POWER_${suffix}`]    || '',
         mode,
-        paymentsEnabled: PAYMENTS_ENABLED,
+        paymentsEnabled,
     });
 });
 
 // --- 2. Configuration Constants ---
-
-// MASTER SWITCH for the payment system. While false, the Register and
-// influencer purchase pages show "Coming Soon" and the purchase endpoints
-// reject requests. Set to true (and restart pm2) when everything works.
-const PAYMENTS_ENABLED = false;
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -407,11 +409,7 @@ const REDEEMED_ORDERS_PATH = path.join(__dirname, 'redeemed_orders.json');
 
 function paypalEnv() {
     // Same source of truth as /api/paypal-config
-    let sandboxMode = true;
-    try {
-        sandboxMode = fs.readFileSync(path.join(__dirname, 'paypal-mode.txt'), 'utf8')
-            .trim().includes('sandbox-mode=true');
-    } catch {}
+    const { sandboxMode } = readPaymentConfig();
     const suffix = sandboxMode ? 'SANDBOX' : 'LIVE';
     return {
         base: sandboxMode ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com',
@@ -527,7 +525,7 @@ async function requireVerifiedPayment(paypalOrderID, minAmount, purpose) {
 // --- 5. Main API Endpoint (Updated for Core C API) ---
 
 app.post('/api/generate-mailbox', async (req, res) => {
-    if (!PAYMENTS_ENABLED) {
+    if (!readPaymentConfig().paymentsEnabled) {
         return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
     }
 
@@ -809,7 +807,7 @@ app.post('/api/log-affiliate-sale', (req, res) => {
 // --- 9. CloudCoins Locker Generation Endpoint ---
 // Called by VerifiedAccess.jsx after payment to generate a CloudCoins locker for the buyer
 app.post('/api/generate-cloudcoins-locker', async (req, res) => {
-    if (!PAYMENTS_ENABLED) {
+    if (!readPaymentConfig().paymentsEnabled) {
         return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
     }
 
@@ -919,7 +917,14 @@ app.post('/api/track', (req, res) => {
 // Returns aggregated stats from all data files for the admin dashboard
 app.get('/api/admin/stats', (req, res) => {
     const password = req.query.key;
-    const adminKey = process.env.ADMIN_KEY || 'qmail-admin-2026';
+    const adminKey = process.env.ADMIN_KEY;
+
+    // Fail closed: no ADMIN_KEY in .env means nobody gets in. Never add a
+    // fallback value here - anything written in this file ends up on GitHub.
+    if (!adminKey) {
+        console.error('ADMIN_KEY is not set in .env - admin stats endpoint is disabled.');
+        return res.status(503).json({ error: 'Admin access is not configured on this server.' });
+    }
 
     if (password !== adminKey) {
         return res.status(401).json({ error: 'Unauthorized' });

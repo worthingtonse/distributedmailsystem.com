@@ -14,3 +14,18 @@ SoldCoins.txt
 npm-debug.log*
 
 .git/
+# Machine-local payment switches (see server/paypal-mode.txt.example)
+server/paypal-mode.txt
+
+# Live data - customer PII and coin inventory, never commit
+users.csv
+influencer_payments.csv
+server/analytics_events.csv
+server/affiliate_sales.csv
+server/issued_wallets.json
+server/redeemed_orders.json
+server/wallet_stock_warnings.json
+qmail_preconfigured_wallets/
+
+# Editor swap files
+*.swp
