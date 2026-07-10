@@ -269,54 +269,64 @@ const FunnelSuccess = () => {
 
                   {/* Real-Time Config Card */}
                   <div className="bg-gradient-to-br from-blue-600/10 to-purple-600/10 backdrop-blur-xl border border-blue-500/20 p-8 rounded-[2.5rem]">
-                    <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-8 flex items-center gap-2 whitespace-nowrap">
-                      <Settings size={14} /> Quick Setup (Live Updates)
+                    <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-3 flex items-center gap-2 whitespace-nowrap">
+                      <Settings size={14} /> Inbox Settings — Phase II Preview
                     </h3>
+                    <p className="text-xs text-gray-400 leading-relaxed mb-8">
+                      These settings aren't active yet. We're building them now as part of
+                      Phase II — you'll be able to configure your inbox here soon.
+                    </p>
                     <div className="grid md:grid-cols-2 gap-8">
-                      {/* Input Group 1 */}
+                      {/* Input Group 1 — Inbox Fee ships in Phase II, shown disabled as a preview */}
                       <div className="flex flex-col">
-                        <label className="text-[9px] text-gray-400 uppercase font-bold tracking-widest flex items-center h-6 mb-2 whitespace-nowrap">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold tracking-widest flex items-center h-6 mb-2 whitespace-nowrap gap-2">
                           Global Inbox Fee
+                          <span className="bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 px-2 py-0.5 rounded-full text-[8px] tracking-widest">
+                            Phase II — Coming Soon
+                          </span>
                         </label>
-                        <div className="relative group">
+                        <div className="relative group opacity-50">
                           <DollarSign
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-blue-400 transition-colors"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"
                             size={16}
                           />
                           <input
                             type="number"
                             value={inboxFee}
-                            onChange={(e) => setInboxFee(e.target.value)}
-                            className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white font-mono focus:border-blue-500 outline-none transition-all shadow-inner"
+                            disabled
+                            className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-gray-400 font-mono outline-none shadow-inner cursor-not-allowed"
                           />
                         </div>
 
-                        <p className="text-[10px] text-gray-500 italic mt-2 min-h-[1.5rem]">
-                          Strangers pay this to reach you.
+                        <p className="text-[10px] text-yellow-200/70 italic mt-2 min-h-[1.5rem]">
+                          Not available yet — in Phase II you'll be able to set the fee strangers pay to reach you.
                         </p>
                       </div>
 
-                      {/* Input Group 2 */}
+                      {/* Input Group 2 — profile editing ships in Phase II, shown disabled as a preview */}
                       <div className="flex flex-col">
-                        <label className="text-[9px] text-gray-400 uppercase font-bold tracking-widest flex items-center h-6 mb-2 whitespace-nowrap">
+                        <label className="text-[9px] text-gray-400 uppercase font-bold tracking-widest flex items-center h-6 mb-2 whitespace-nowrap gap-2">
                           Identify Yourself
+                          <span className="bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 px-2 py-0.5 rounded-full text-[8px] tracking-widest">
+                            Phase II — Coming Soon
+                          </span>
                         </label>
 
-                        <div className="relative group">
+                        <div className="relative group opacity-50">
                           <AtSign
-                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600 group-focus-within:text-purple-400 transition-colors"
+                            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"
                             size={16}
                           />
                           <input
                             type="text"
                             value={definer}
-                            onChange={(e) => setDefiner(e.target.value)}
+                            disabled
                             placeholder="e.g. Lead Developer"
-                            className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white font-mono focus:border-purple-500 outline-none transition-all shadow-inner"
+                            className="w-full bg-black/50 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-gray-400 font-mono outline-none shadow-inner cursor-not-allowed"
                           />
                         </div>
-                        <p className="text-[10px] text-gray-500 italic mt-2 min-h-[1.5rem]">
-                          Visible in the Global Directory.
+                        <p className="text-[10px] text-yellow-200/70 italic mt-2 min-h-[1.5rem]">
+                          Not available yet — in Phase II this title will be visible in the Global Directory.
                         </p>
                       </div>
                     </div>
@@ -354,16 +364,24 @@ const FunnelSuccess = () => {
                     </div>
                   </div>
 
-                  {/* Viral Referral */}
+                  {/* Viral Referral — ships in Phase II, shown disabled as a preview */}
                   <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-[2.5rem] shadow-xl">
-                    <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">
-                      Viral Referral Engine
-                    </h4>
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      <h4 className="font-black text-white uppercase tracking-widest text-xs">
+                        Viral Referral Engine
+                      </h4>
+                      <span className="bg-black/30 border border-white/20 text-yellow-300 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase tracking-widest">
+                        Phase II — Coming Soon
+                      </span>
+                    </div>
                     <p className="text-sm text-blue-100 mb-6">
-                      Refer a friend and get $10 in CloudCoins credited to your
-                      locker instantly.
+                      Coming in Phase II: refer a friend and get $10 in CloudCoins
+                      credited to your locker.
                     </p>
-                    <button className="w-full bg-white/20 hover:bg-white/30 py-3 rounded-xl text-white font-bold text-sm transition-all flex items-center justify-center gap-2">
+                    <button
+                      disabled
+                      className="w-full bg-white/10 py-3 rounded-xl text-white/50 font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed"
+                    >
                       <Share2 size={16} /> Share Referral Link
                     </button>
                   </div>
