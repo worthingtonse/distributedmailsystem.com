@@ -429,6 +429,15 @@ const RegisterAddress = () => {
                             Click below — PayPal will verify your identity at $0. Your name from PayPal is used to create your unique, verified address.
                           </p>
 
+                          <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
+                            <Monitor className="text-yellow-400 shrink-0 mt-0.5" size={18} />
+                            <p className="text-xs text-yellow-200/90 leading-relaxed">
+                              <span className="font-bold text-yellow-300">Windows Desktop only (for now).</span>{" "}
+                              The QMail software runs on Windows Desktop today. Mac and Linux versions are
+                              coming soon — your address will work on them as soon as they're released.
+                            </p>
+                          </div>
+
                           {/* PayPal Button */}
                           <div className="min-h-[150px] flex items-center justify-center">
                             {paypalError ? (
@@ -479,6 +488,10 @@ const RegisterAddress = () => {
                         </h2>
                         <p className="text-sm text-gray-400 leading-relaxed">
                           DMS requires a refundable stake to activate your address. This incentive makes high-volume abuse impractical while proving you are serious. Higher stakes = higher trust. Legitimate professionals won't risk their reputation on spam.
+                        </p>
+                        <p className="text-xs text-yellow-300/90 font-bold flex items-center gap-2">
+                          <Monitor size={14} className="shrink-0" />
+                          Currently available for Windows Desktop — Mac &amp; Linux coming soon.
                         </p>
 
                         <div className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-gray-700/50 overflow-hidden shadow-2xl">
@@ -569,6 +582,15 @@ const RegisterAddress = () => {
                           <div className="flex justify-between items-center font-black text-2xl text-white">
                             <span>Stake Your Address:</span>
                             <span>${totalPrice}</span>
+                          </div>
+
+                          <div className="flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
+                            <Monitor className="text-yellow-400 shrink-0 mt-0.5" size={18} />
+                            <p className="text-xs text-yellow-200/90 leading-relaxed">
+                              <span className="font-bold text-yellow-300">Windows Desktop only (for now).</span>{" "}
+                              The QMail software runs on Windows Desktop today. Mac and Linux versions are
+                              coming soon — your address will work on them as soon as they're released.
+                            </p>
                           </div>
 
                           <div className="min-h-[150px] flex items-center justify-center">
