@@ -14,6 +14,9 @@ import {
   Coins,
   ArrowRight,
   AtSign,
+  AlertTriangle,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 
 const InfluencerSuccess = () => {
@@ -200,6 +203,25 @@ const InfluencerSuccess = () => {
                           <p className="text-xs text-gray-500 mt-3">
                             Save this file somewhere safe. The link works a limited number of times, then the file is permanently deleted from our server.
                           </p>
+                          <div className="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-3">
+                            <p className="text-xs text-amber-400 font-bold uppercase tracking-widest flex items-center gap-2">
+                              <AlertTriangle size={14} /> Please read before you start
+                            </p>
+                            <p className="text-xs text-gray-400 leading-relaxed flex items-start gap-2">
+                              <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                              QMail is a beta product — you may run into a few hiccups while we polish things.
+                            </p>
+                            <p className="text-xs text-gray-400 leading-relaxed flex items-start gap-2">
+                              <RefreshCw size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                              Your zip contains an older version of QMail.exe. The first time you open QMail, a
+                              pop-up will let you know a new version is available — install that upgrade first thing.
+                            </p>
+                            <p className="text-xs text-gray-400 leading-relaxed flex items-start gap-2">
+                              <FileText size={14} className="text-amber-400 shrink-0 mt-0.5" />
+                              Read About_Qmail.txt and Quick_Start_Guide.txt in your zip folder for a much more
+                              enjoyable experience.
+                            </p>
+                          </div>
                         </div>
                       )}
                     </>

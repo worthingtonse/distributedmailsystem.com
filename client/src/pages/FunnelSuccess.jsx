@@ -23,6 +23,9 @@ import {
   DollarSign,
   AtSign,
   Info,
+  AlertTriangle,
+  RefreshCw,
+  FileText,
 } from "lucide-react";
 
 const FunnelSuccess = () => {
@@ -194,6 +197,61 @@ const FunnelSuccess = () => {
                 <p className="text-gray-400">
                   Your decentralized identity is now live on the Distributed Resource Directory and others can search you up.
                 </p>
+              </div>
+
+              {/* Beta & First-Run Notice */}
+              <div className="bg-amber-500/10 backdrop-blur-xl border border-amber-500/30 p-8 rounded-[2.5rem] shadow-2xl">
+                <h3 className="text-sm font-black text-amber-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                  <AlertTriangle size={18} /> Please Read Before You Start
+                </h3>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
+                      <AlertTriangle size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white mb-1">
+                        QMail is a beta product
+                      </p>
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        You may run into a few hiccups while we polish things.
+                        Thank you for being an early adopter — your feedback
+                        makes QMail better.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
+                      <RefreshCw size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white mb-1">
+                        Upgrade QMail first thing
+                      </p>
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        Your zip contains an older version of QMail.exe. The
+                        first time you open QMail, a pop-up will let you know a
+                        new version is available — install that upgrade before
+                        doing anything else.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-white mb-1">
+                        Read the included documents
+                      </p>
+                      <p className="text-xs text-gray-400 leading-relaxed">
+                        Your zip folder includes About_Qmail.txt and
+                        Quick_Start_Guide.txt. Reading them first will make
+                        your QMail experience much more enjoyable.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid lg:grid-cols-12 gap-8">
