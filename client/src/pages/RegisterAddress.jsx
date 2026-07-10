@@ -35,6 +35,8 @@ const RegisterAddress = () => {
   useDocumentMeta({ title: 'Get Started', description: 'Claim your unique decentralized QMail address. Register as a user or sign up free as an influencer.' });
 
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
+  // Payments are switched on/off server-side (PAYMENTS_ENABLED in server/index.js)
+  const paymentsDisabled = !paypalConfig?.paymentsEnabled;
   const [selectedTier, setSelectedTier] = useState(null);
   const [selectedEdition, setSelectedEdition] = useState("free");
   const [customGroup, setCustomGroup] = useState("");
@@ -56,6 +58,15 @@ const RegisterAddress = () => {
   };
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
   const [paypalError, setPaypalError] = useState(null);
+  const [walletStock, setWalletStock] = useState(null);
+
+  // Sold-out tiers are disabled so nobody can pay for a wallet we can't deliver
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_BASE_URL}/api/wallet-stock`)
+      .then((r) => r.json())
+      .then(setWalletStock)
+      .catch(() => setWalletStock(null));
+  }, []);
   const [paymentComplete, setPaymentComplete] = useState(false);
   const [generatedAddress, setGeneratedAddress] = useState("");
   const [copied, setCopied] = useState(false);
@@ -180,6 +191,7 @@ const RegisterAddress = () => {
                       amountPaid: totalPrice,
                       inboxFee: parseFloat(inboxFeeRef.current),
                       description: customGroupRef.current || (isInfluencerMode ? "Influencer" : ""),
+                      paypalOrderID: data.orderID,
                     }),
                   }
                 );
@@ -189,7 +201,7 @@ const RegisterAddress = () => {
                   track('influencer_signup_complete', { name: `${order.payer.name.given_name} ${order.payer.name.surname}` });
                   navigate("/strategy", { state: { verifiedName: `${order.payer.name.given_name} ${order.payer.name.surname}`, qmail: result.email, paypalEmail: order.payer.email_address || "", token: result.token || "" } });
                 } else {
-                  navigate("/success", { state: { email: result.email, lockerCode: result.lockerCode, firstName: order.payer.name.given_name, lastName: order.payer.name.surname } });
+                  navigate("/success", { state: { email: result.email, walletDownloadUrl: result.walletDownloadUrl || null, firstName: order.payer.name.given_name, lastName: order.payer.name.surname } });
                 }
               } catch { setPaypalError("Payment capture mein error aaya hai."); }
             },
@@ -232,6 +244,7 @@ const RegisterAddress = () => {
                     inboxFee: parseFloat(inboxFeeRef.current),
                     description:
                       customGroupRef.current || (isInfluencerMode ? "Influencer" : ""),
+                    paypalOrderID: data.orderID,
                   }),
                 },
               );
@@ -254,7 +267,7 @@ const RegisterAddress = () => {
                 navigate("/success", {
                   state: {
                     email: result.email,
-                    lockerCode: result.lockerCode,
+                    walletDownloadUrl: result.walletDownloadUrl || null,
                     firstName: order.payer.name.given_name,
                     lastName: order.payer.name.surname,
                   },
@@ -440,7 +453,17 @@ const RegisterAddress = () => {
 
                           {/* PayPal Button */}
                           <div className="min-h-[150px] flex items-center justify-center">
-                            {paypalError ? (
+                            {paymentsDisabled ? (
+                              <div className="text-center py-6 w-full">
+                                <div className="text-2xl font-black text-yellow-400 uppercase tracking-widest mb-3">
+                                  Coming Soon
+                                </div>
+                                <p className="text-xs text-gray-500 leading-relaxed">
+                                  Sign-ups are temporarily unavailable while we finish
+                                  setting up. Check back shortly!
+                                </p>
+                              </div>
+                            ) : paypalError ? (
                               <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
                                 <AlertCircle className="shrink-0 mt-0.5" size={16} />
                                 <span>{paypalError}</span>
@@ -517,7 +540,11 @@ const RegisterAddress = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y">
-                                {tiers.map((t, index) => (
+                                {tiers.map((t, index) => {
+                                  const soldOut = walletStock
+                                    ? (walletStock[t.name.slice(1).toLowerCase()] ?? 0) === 0
+                                    : false;
+                                  return (
                                   <tr
                                     key={t.name}
                                     className={`hover:bg-gray-800/30 transition-all duration-300 ${
@@ -528,9 +555,12 @@ const RegisterAddress = () => {
                                   >
                                     <td className="p-6 text-center">
                                       <button
-                                        onClick={() => setSelectedTier(t)}
+                                        onClick={() => !soldOut && setSelectedTier(t)}
+                                        disabled={soldOut}
                                         className={`p-4 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-2 min-w-[90px] relative group ${
-                                          selectedTier?.name === t.name
+                                          soldOut
+                                            ? "bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-60"
+                                            : selectedTier?.name === t.name
                                             ? `bg-blue-600 border-blue-400 text-white shadow-xl shadow-blue-500/20 scale-105`
                                             : "bg-gray-900/50 border-gray-600 text-gray-400 hover:border-gray-500 hover:bg-gray-800/50 hover:scale-102"
                                         }`}
@@ -544,7 +574,9 @@ const RegisterAddress = () => {
                                           }
                                         />
                                         <div className="text-center font-bold uppercase tracking-widest text-[10px]">
-                                          {selectedTier?.name === t.name
+                                          {soldOut
+                                            ? "Sold Out"
+                                            : selectedTier?.name === t.name
                                             ? "Selected"
                                             : "Select"}
                                         </div>
@@ -569,7 +601,8 @@ const RegisterAddress = () => {
                                     <td className="p-6 text-gray-300 font-medium">{t.trust}</td>
                                     <td className="p-6 text-gray-400 italic text-sm leading-relaxed">{t.best}</td>
                                   </tr>
-                                ))}
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -594,7 +627,17 @@ const RegisterAddress = () => {
                           </div>
 
                           <div className="min-h-[150px] flex items-center justify-center">
-                            {paypalError ? (
+                            {paymentsDisabled ? (
+                              <div className="text-center py-6 w-full">
+                                <div className="text-2xl font-black text-yellow-400 uppercase tracking-widest mb-3">
+                                  Coming Soon
+                                </div>
+                                <p className="text-xs text-gray-500 leading-relaxed">
+                                  Payments are temporarily unavailable while we finish
+                                  setting up. Check back shortly!
+                                </p>
+                              </div>
+                            ) : paypalError ? (
                               <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-sm flex items-start gap-3">
                                 <AlertCircle className="shrink-0 mt-0.5" size={16} />
                                 <span>{paypalError}</span>
@@ -608,9 +651,11 @@ const RegisterAddress = () => {
                             )}
                           </div>
 
+                          {!paymentsDisabled && (
                           <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
                             * Note that refunds are available up to 30 days after your purchase.
                           </p>
+                          )}
                         </div>
                       </div>
                     </div>

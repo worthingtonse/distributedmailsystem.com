@@ -10,6 +10,8 @@ const VerifiedAccess = () => {
   useDocumentMeta({ title: 'Send a Private Message', description: 'Send a quantum-safe, priority message through QMail.' });
 
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
+  // Payments are switched on/off server-side (PAYMENTS_ENABLED in server/index.js)
+  const paymentsDisabled = !paypalConfig?.paymentsEnabled;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
@@ -153,7 +155,8 @@ const VerifiedAccess = () => {
                     lastName,
                     amountPaid: 20, // .byte stake (free with purchase)
                     inboxFee: 1,   // Fixed inbox fee for new users
-                    description: 'QMail'
+                    description: 'QMail',
+                    paypalOrderID: data.orderID
                   })
                 }
               );
@@ -167,7 +170,7 @@ const VerifiedAccess = () => {
 
               emailData = {
                 email: mailboxResult.email,
-                lockerCode: mailboxResult.lockerCode
+                walletDownloadUrl: mailboxResult.walletDownloadUrl || null
               };
             }
 
@@ -180,7 +183,8 @@ const VerifiedAccess = () => {
                 body: JSON.stringify({
                   dollarAmount: paymentAmount,
                   firstName,
-                  lastName
+                  lastName,
+                  paypalOrderID: data.orderID
                 })
               }
             );
@@ -237,6 +241,7 @@ const VerifiedAccess = () => {
                 // Email data (if they wanted an address)
                 email: emailData?.email || null,
                 emailLockerCode: emailData?.lockerCode || null,
+                walletDownloadUrl: emailData?.walletDownloadUrl || null,
                 // CloudCoins data
                 cloudCoins: cloudCoinsData.cloudCoins,
                 cloudCoinsLockerCode: cloudCoinsData.cloudCoinsLockerCode
@@ -506,7 +511,17 @@ const VerifiedAccess = () => {
 
             {/* PayPal Buttons */}
             <div className="min-h-[120px] flex items-center justify-center">
-              {verifyStatus === "unverified" ? (
+              {paymentsDisabled ? (
+                <div className="text-center py-6 w-full">
+                  <div className="text-2xl font-black text-yellow-400 uppercase tracking-widest mb-3">
+                    Coming Soon
+                  </div>
+                  <p className="text-xs text-gray-500 leading-relaxed">
+                    Payments are temporarily unavailable while we finish
+                    setting up. Check back shortly!
+                  </p>
+                </div>
+              ) : verifyStatus === "unverified" ? (
                 <div className="text-red-400 bg-red-400/10 p-4 rounded-xl border border-red-500/20 text-xs flex items-center gap-2 w-full">
                   <AlertCircle size={14} className="shrink-0" />
                   <span>Payments are disabled — this page could not be verified as an official influencer page.</span>

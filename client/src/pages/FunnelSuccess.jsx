@@ -39,13 +39,14 @@ const FunnelSuccess = () => {
 
   const userAddress = state?.email || state?.generatedAddress || "(Email not received - please complete registration)";
   const lockerCode = state?.lockerCode || "";
+  const walletDownloadUrl = state?.walletDownloadUrl || "";
   const userFirstName = state?.firstName || "User";
   const userLastName = state?.lastName || "";
 
   // Display address: include name prefix only if not anonymous
-  const displayAddress = isAnonymous
-    ? userAddress
-    : `${userFirstName}.${userLastName}${userAddress}`;
+  // Canonical addresses (e.g. 23.45.2@bit) are complete on their own -
+  // no name prefix like the old @adjective.noun.tier format needed
+  const displayAddress = userAddress;
 
   // Provisioning Simulation
   const steps = [
@@ -263,6 +264,26 @@ const FunnelSuccess = () => {
                       </div>
                       <p className="text-[10px] text-gray-500 mt-3 italic">
                         Save this code securely. You'll need it to access your mailbox.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Preconfigured Wallet Download Card */}
+                  {walletDownloadUrl && (
+                    <div className="bg-white/5 backdrop-blur-xl border border-blue-500/20 p-6 rounded-[2rem]">
+                      <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2 whitespace-nowrap">
+                        <Download size={14} /> Your Preconfigured Wallet
+                      </h3>
+                      <a
+                        href={walletDownloadUrl}
+                        className="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2"
+                      >
+                        <Download size={18} /> Download Wallet Zip
+                      </a>
+                      <p className="text-[10px] text-gray-500 mt-3 italic">
+                        Save this file somewhere safe. This link works a limited
+                        number of times, then the file is permanently deleted from
+                        our server.
                       </p>
                     </div>
                   )}

@@ -38,6 +38,7 @@ const InfluencerSuccess = () => {
   // Email data (if they created an address)
   const userEmail = state?.email || null;
   const emailLockerCode = state?.emailLockerCode || null;
+  const walletDownloadUrl = state?.walletDownloadUrl || null;
 
   // CloudCoins data
   const cloudCoins = state?.cloudCoins || 0;
@@ -183,6 +184,24 @@ const InfluencerSuccess = () => {
                           This code will allow your QMail client to download the credentials to your mail from a virtual locker. You will be prompted to enter this code the first time you start the QMail Client.
                         </p>
                       </div>
+
+                      {/* Preconfigured Wallet Download */}
+                      {walletDownloadUrl && (
+                        <div className="bg-white/5 backdrop-blur-xl border border-blue-500/20 p-8 rounded-[2rem]">
+                          <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Download size={14} /> Your Preconfigured Wallet
+                          </h3>
+                          <a
+                            href={walletDownloadUrl}
+                            className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-500 transition-all"
+                          >
+                            <Download size={16} /> Download Wallet Zip
+                          </a>
+                          <p className="text-xs text-gray-500 mt-3">
+                            Save this file somewhere safe. The link works a limited number of times, then the file is permanently deleted from our server.
+                          </p>
+                        </div>
+                      )}
                     </>
                   ) : (
                     /* No email created */

@@ -6,6 +6,7 @@ const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { spawn } = require('child_process');
 
 const app = express();
 
@@ -40,10 +41,17 @@ app.get('/api/paypal-config', (req, res) => {
         planIdTypical: process.env[`PAYPAL_PLAN_ID_TYPICAL_${suffix}`]  || '',
         planIdPower:   process.env[`PAYPAL_PLAN_ID_POWER_${suffix}`]    || '',
         mode,
+        paymentsEnabled: PAYMENTS_ENABLED,
     });
 });
 
 // --- 2. Configuration Constants ---
+
+// MASTER SWITCH for the payment system. While false, the Register and
+// influencer purchase pages show "Coming Soon" and the purchase endpoints
+// reject requests. Set to true (and restart pm2) when everything works.
+const PAYMENTS_ENABLED = false;
+
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 // Maps payment amount to class name and coin denomination for Core API
@@ -59,20 +67,21 @@ const AMOUNT_MAPPING = {
 const DEFAULT_BEACON = "RAIDA11";
 const BACKUP_BEACON = "RAIDA14";
 
-// --- Email Address Generation (adjective.noun.denomination) ---
-const ADJECTIVES = fs.readFileSync(path.join(__dirname, '..', 'adjectives.txt'), 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
-const NOUNS = fs.readFileSync(path.join(__dirname, '..', 'nouns.txt'), 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
-
-function generateEmailAddress(serialNumber, denominationClass) {
-    // serialNumber is a 4-byte integer; extract last two bytes
-    const nounByte = serialNumber & 0xFF;                       // last byte
-    const preAdjectiveByte = (serialNumber >> 8) & 0xFF;        // second byte from end
-    const adjectiveByte = (preAdjectiveByte + nounByte) % 256;  // the transform
-
-    const adjective = ADJECTIVES[adjectiveByte] || 'unknown';
-    const noun = NOUNS[nounByte] || 'unknown';
-
-    return `@${adjective}.${noun}.${denominationClass}`;
+// --- Email Address Generation (canonical: dotted-serial@tier) ---
+// The QMail address IS the coin's identity: the serial number written as
+// dot-separated base-256 bytes, @, the denomination tier - e.g. 39.233@bit.
+// Matches canonical_address() in the wallet-generation script, so the
+// address always equals the coin filename inside the buyer's zip.
+// (The old adjective/noun word-list scheme is retired.)
+function canonicalAddress(serialNumber, denominationClass) {
+    let n = serialNumber;
+    const bytes = [];
+    while (n > 0) {
+        bytes.unshift(n % 256);
+        n = Math.floor(n / 256);
+    }
+    if (bytes.length === 0) bytes.push(0);
+    return `${bytes.join('.')}@${denominationClass}`;
 }
 
 // --- Token Generation ---
@@ -159,14 +168,374 @@ function logSoldCoin(firstName, lastName, lockerKey, email) {
     }
 }
 
+// --- 4b. Preconfigured Wallet Zips ---
+// Pools of uploaded zips live in qmail_preconfigured_wallets/{bit,byte,kilo,mega,giga}.
+// On purchase one zip is moved to issued/ (so it can never be handed to a second
+// buyer) and recorded in issued_wallets.json. The buyer downloads it through
+// /api/download-wallet/<file>; after WALLET_MAX_DOWNLOADS downloads the zip is deleted.
+
+const WALLETS_BASE = '/var/www/distributedmailsystem.com/qmail_preconfigured_wallets';
+const WALLETS_ISSUED_DIR = path.join(WALLETS_BASE, 'issued');
+const WALLET_REGISTRY_PATH = path.join(__dirname, 'issued_wallets.json');
+const WALLET_WARNINGS_PATH = path.join(__dirname, 'wallet_stock_warnings.json');
+const WALLET_MAX_DOWNLOADS = 5;
+const WALLET_LOW_STOCK_THRESHOLD = 3;              // warn when a tier has this many zips or fewer
+const WALLET_WARNING_EMAIL = 'sean@raidatech.com';
+const WALLET_WARNING_INTERVAL_MS = 24 * 60 * 60 * 1000;  // at most one warning per tier per day
+
+// Authenticated SMTP via zeus (mailcow), credentials in .env.
+// The mail server only accepts an envelope sender owned by the login
+// (sean@raidatech.com), so that is the envelope; the visible From header
+// is SMTP_FROM (noreply@cloudcoin.com) per sysadmin instructions.
+// Falls back to the local MTA if SMTP fails, so warnings are never lost.
+const nodemailer = require('nodemailer');
+
+function sendEmailViaSendmail(to, subject, body) {
+    try {
+        const message =
+            `To: ${to}\r\n` +
+            `From: QMail Wallet Stock <noreply@cloudcoin.org>\r\n` +
+            `Subject: ${subject}\r\n` +
+            `Content-Type: text/plain; charset=UTF-8\r\n` +
+            `\r\n` +
+            body + `\r\n`;
+        const proc = spawn('/usr/sbin/sendmail', ['-t', '-f', 'noreply@cloudcoin.org']);
+        proc.on('error', err => console.error('sendmail spawn failed:', err.message));
+        proc.on('close', code => {
+            if (code === 0) console.log(`Email sent to ${to} via sendmail fallback: ${subject}`);
+            else console.error(`sendmail exited with code ${code} for: ${subject}`);
+        });
+        proc.stdin.write(message);
+        proc.stdin.end();
+    } catch (err) {
+        console.error('Failed to send email via sendmail:', err.message);
+    }
+}
+
+function sendEmail(to, subject, body) {
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (!host || !user || !pass) {
+        console.warn('SMTP not configured - using local sendmail.');
+        return sendEmailViaSendmail(to, subject, body);
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: host,
+        port: parseInt(process.env.SMTP_PORT || '587', 10),
+        secure: false,           // port 587 uses STARTTLS
+        requireTLS: true,
+        auth: { user, pass }
+    });
+
+    transporter.sendMail({
+        from: `"QMail Wallet Stock" <${process.env.SMTP_FROM || user}>`,
+        sender: user,            // envelope sender must be the authenticated user
+        envelope: { from: user, to: to },
+        to: to,
+        subject: subject,
+        text: body
+    }, (err, info) => {
+        if (err) {
+            console.error(`SMTP send failed (${err.message}) - falling back to sendmail.`);
+            sendEmailViaSendmail(to, subject, body);
+        } else {
+            console.log(`Email sent to ${to} via SMTP: ${subject} (${info.response})`);
+        }
+    });
+}
+
+function loadWalletRegistry() {
+    try {
+        return JSON.parse(fs.readFileSync(WALLET_REGISTRY_PATH, 'utf8'));
+    } catch {
+        return [];
+    }
+}
+
+function saveWalletRegistry(registry) {
+    fs.writeFileSync(WALLET_REGISTRY_PATH, JSON.stringify(registry, null, 2));
+}
+
+function countAvailableWallets(className) {
+    try {
+        return fs.readdirSync(path.join(WALLETS_BASE, className))
+            .filter(f => f.toLowerCase().endsWith('.zip')).length;
+    } catch {
+        return 0;
+    }
+}
+
+// Emails a low-stock / out-of-stock warning, at most once per tier per day
+function checkWalletStock(className) {
+    const remaining = countAvailableWallets(className);
+    if (remaining > WALLET_LOW_STOCK_THRESHOLD) return;
+
+    let warnings = {};
+    try { warnings = JSON.parse(fs.readFileSync(WALLET_WARNINGS_PATH, 'utf8')); } catch {}
+    const lastWarned = warnings[className] || 0;
+    if (Date.now() - lastWarned < WALLET_WARNING_INTERVAL_MS) return;
+
+    warnings[className] = Date.now();
+    try { fs.writeFileSync(WALLET_WARNINGS_PATH, JSON.stringify(warnings, null, 2)); }
+    catch (err) { console.error('Failed to save warning state:', err.message); }
+
+    const subject = remaining === 0
+        ? `URGENT: qmail "${className}" wallet zips are OUT OF STOCK`
+        : `Warning: qmail "${className}" wallet zips running low (${remaining} left)`;
+
+    const counts = ['bit', 'byte', 'kilo', 'mega', 'giga']
+        .map(c => `  ${c}: ${countAvailableWallets(c)}`).join('\n');
+
+    const body =
+        `The preconfigured wallet zip pool for the "${className}" tier is ${remaining === 0 ? 'EMPTY' : 'running low'}.\n\n` +
+        `Remaining zips per tier:\n${counts}\n\n` +
+        `Upload more zip files to:\n${WALLETS_BASE}/${className}/\n\n` +
+        (remaining === 0 ? `Buyers of this tier are currently NOT receiving a wallet download link.\n\n` : '') +
+        `Sent by distributedmailsystem.com server (${new Date().toISOString()})`;
+
+    sendEmail(WALLET_WARNING_EMAIL, subject, body);
+}
+
+// Wallet zip filenames must encode the serial number of the mailbox coin
+// inside (Client_Data/Wallets/Mail/Bank). Two accepted formats:
+//   <dotted-serial>@<tier>.<random>.zip   e.g. 1.19.192@bit.o39v88rv.zip
+//       (native QMail export naming; dotted groups are the serial bytes)
+//   wallet_<serial>_<random>.zip          e.g. wallet_9501695_9f3a1c84.zip
+// The QMail address is derived from that serial. Returns the serial as an
+// integer, or null if the filename matches neither convention.
+function parseWalletSerial(filename) {
+    let m = /^wallet_(\d+)_[^_]+\.zip$/i.exec(filename);
+    if (m) {
+        const serial = parseInt(m[1], 10);
+        return Number.isSafeInteger(serial) && serial > 0 ? serial : null;
+    }
+
+    m = /^(\d+(?:\.\d+)*)@[a-z]+\.[^.]+\.zip$/i.exec(filename);
+    if (m) {
+        const bytes = m[1].split('.').map(Number);
+        if (bytes.length > 6 || bytes.some(b => !Number.isInteger(b) || b > 255)) return null;
+        let serial = 0;
+        for (const b of bytes) serial = serial * 256 + b;
+        return Number.isSafeInteger(serial) && serial > 0 ? serial : null;
+    }
+
+    return null;
+}
+
+// Picks a random zip from the tier pool, moves it to issued/, records the buyer.
+// Returns { url, file, serial }, or null if the pool is empty.
+function assignWallet(className, buyerInfo) {
+    const poolDir = path.join(WALLETS_BASE, className);
+    let zips = [];
+    try {
+        zips = fs.readdirSync(poolDir).filter(f => f.toLowerCase().endsWith('.zip'));
+    } catch (err) {
+        console.error(`Cannot read wallet pool ${poolDir}:`, err.message);
+    }
+
+    if (zips.length === 0) {
+        console.error(`No wallet zips available for tier "${className}"!`);
+        checkWalletStock(className);
+        return null;
+    }
+
+    const file = zips[Math.floor(Math.random() * zips.length)];
+
+    try {
+        if (!fs.existsSync(WALLETS_ISSUED_DIR)) fs.mkdirSync(WALLETS_ISSUED_DIR, { recursive: true });
+
+        // Guard against a name collision with an already-issued file
+        let issuedName = file;
+        if (fs.existsSync(path.join(WALLETS_ISSUED_DIR, issuedName))) {
+            issuedName = `${Date.now()}_${file}`;
+        }
+
+        fs.renameSync(path.join(poolDir, file), path.join(WALLETS_ISSUED_DIR, issuedName));
+
+        const registry = loadWalletRegistry();
+        registry.push({
+            file: issuedName,
+            class: className,
+            buyer: buyerInfo.name || '',
+            qmail: buyerInfo.qmail || '',
+            issuedAt: new Date().toISOString(),
+            downloads: 0,
+            maxDownloads: WALLET_MAX_DOWNLOADS,
+            deleted: false
+        });
+        saveWalletRegistry(registry);
+
+        checkWalletStock(className);
+
+        console.log(`Assigned wallet zip ${issuedName} (${className}) to ${buyerInfo.name}`);
+        return {
+            url: `/api/download-wallet/${encodeURIComponent(issuedName)}`,
+            file: issuedName,
+            serial: parseWalletSerial(file)
+        };
+    } catch (err) {
+        console.error('Failed to assign wallet zip:', err.message);
+        return null;
+    }
+}
+
+// Backfills the buyer's qmail address on a registry entry once it is known
+function updateWalletRegistryQmail(file, qmail) {
+    try {
+        const registry = loadWalletRegistry();
+        const entry = registry.find(e => e.file === file);
+        if (entry) {
+            entry.qmail = qmail;
+            saveWalletRegistry(registry);
+        }
+    } catch (err) {
+        console.error('Failed to update wallet registry qmail:', err.message);
+    }
+}
+
+// --- 4c. Server-Side PayPal Payment Verification ---
+// The browser can lie; PayPal cannot. Before releasing a wallet zip we ask
+// PayPal's API whether the order ID the browser sent was actually captured,
+// and for how much. Requires PAYPAL_CLIENT_SECRET_LIVE / _SANDBOX in .env.
+// While no secret is configured, verification is SKIPPED (logged loudly) so
+// the store keeps working until the secret is added.
+
+const REDEEMED_ORDERS_PATH = path.join(__dirname, 'redeemed_orders.json');
+
+function paypalEnv() {
+    // Same source of truth as /api/paypal-config
+    let sandboxMode = true;
+    try {
+        sandboxMode = fs.readFileSync(path.join(__dirname, 'paypal-mode.txt'), 'utf8')
+            .trim().includes('sandbox-mode=true');
+    } catch {}
+    const suffix = sandboxMode ? 'SANDBOX' : 'LIVE';
+    return {
+        base: sandboxMode ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com',
+        clientId: process.env[`PAYPAL_CLIENT_ID_${suffix}`] || '',
+        secret: process.env[`PAYPAL_CLIENT_SECRET_${suffix}`] || ''
+    };
+}
+
+// Each PayPal order may be redeemed once per purpose ('mailbox' or
+// 'cloudcoins' - one payment on the influencer page legitimately covers both)
+function isOrderRedeemed(orderID, purpose) {
+    try {
+        const redeemed = JSON.parse(fs.readFileSync(REDEEMED_ORDERS_PATH, 'utf8'));
+        return !!redeemed[`${orderID}:${purpose}`];
+    } catch {
+        return false;
+    }
+}
+
+function markOrderRedeemed(orderID, purpose) {
+    let redeemed = {};
+    try { redeemed = JSON.parse(fs.readFileSync(REDEEMED_ORDERS_PATH, 'utf8')); } catch {}
+    redeemed[`${orderID}:${purpose}`] = new Date().toISOString();
+    fs.writeFileSync(REDEEMED_ORDERS_PATH, JSON.stringify(redeemed, null, 2));
+}
+
+// Asks PayPal whether the order was captured. Returns:
+//   { verified: true,  total: <captured USD> }
+//   { verified: false, reason: <why> }
+async function verifyPayPalOrder(orderID) {
+    const env = paypalEnv();
+
+    try {
+        // OAuth token via client credentials
+        const tokenResp = await axios.post(
+            `${env.base}/v1/oauth2/token`,
+            'grant_type=client_credentials',
+            {
+                auth: { username: env.clientId, password: env.secret },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                timeout: 20000
+            }
+        );
+        const accessToken = tokenResp.data.access_token;
+
+        // Look the order up
+        const orderResp = await axios.get(
+            `${env.base}/v2/checkout/orders/${encodeURIComponent(orderID)}`,
+            { headers: { Authorization: `Bearer ${accessToken}` }, timeout: 20000 }
+        );
+        const order = orderResp.data;
+
+        if (order.status !== 'COMPLETED') {
+            return { verified: false, reason: `order status is ${order.status}, not COMPLETED` };
+        }
+
+        // Sum the captured USD amounts
+        let total = 0;
+        for (const unit of order.purchase_units || []) {
+            for (const cap of (unit.payments && unit.payments.captures) || []) {
+                if (cap.status === 'COMPLETED' && cap.amount && cap.amount.currency_code === 'USD') {
+                    total += parseFloat(cap.amount.value);
+                }
+            }
+        }
+
+        if (total <= 0) {
+            return { verified: false, reason: 'no completed USD captures on this order' };
+        }
+
+        return { verified: true, total };
+    } catch (err) {
+        const status = err.response ? err.response.status : null;
+        if (status === 404) return { verified: false, reason: 'order not found at PayPal' };
+        if (status === 401) return { verified: false, reason: 'PayPal API credentials rejected (check client secret)' };
+        return { verified: false, reason: `PayPal API error: ${err.message}` };
+    }
+}
+
+// Shared guard used by the purchase endpoints. Returns null when the
+// purchase may proceed, or an { httpCode, error } object to reject with.
+async function requireVerifiedPayment(paypalOrderID, minAmount, purpose) {
+    const env = paypalEnv();
+
+    if (!env.secret) {
+        console.warn(`PayPal verification SKIPPED (${purpose}) - no client secret in .env yet!`);
+        return null;
+    }
+
+    if (!paypalOrderID) {
+        return { httpCode: 402, error: 'Missing PayPal order ID - payment could not be verified.' };
+    }
+    if (isOrderRedeemed(paypalOrderID, purpose)) {
+        console.warn(`REPLAY BLOCKED: order ${paypalOrderID} already redeemed for ${purpose}`);
+        return { httpCode: 402, error: 'This payment has already been used.' };
+    }
+
+    const v = await verifyPayPalOrder(paypalOrderID);
+    if (!v.verified) {
+        console.warn(`PAYMENT REJECTED (${purpose}): order ${paypalOrderID} - ${v.reason}`);
+        return { httpCode: 402, error: `PayPal did not confirm this payment (${v.reason}).` };
+    }
+    if (v.total + 0.001 < minAmount) {
+        console.warn(`AMOUNT MISMATCH (${purpose}): order ${paypalOrderID} paid $${v.total}, claimed $${minAmount}`);
+        return { httpCode: 402, error: 'The amount paid does not match this purchase.' };
+    }
+
+    markOrderRedeemed(paypalOrderID, purpose);
+    console.log(`Payment verified with PayPal: order ${paypalOrderID}, $${v.total} (${purpose})`);
+    return null;
+}
+
 // --- 5. Main API Endpoint (Updated for Core C API) ---
 
 app.post('/api/generate-mailbox', async (req, res) => {
-    const { firstName, lastName, amountPaid, inboxFee, description } = req.body;
+    if (!PAYMENTS_ENABLED) {
+        return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
+    }
+
+    const { firstName, lastName, amountPaid, inboxFee, description, paypalOrderID } = req.body;
 
     console.log(`\n${"=".repeat(60)}`);
     console.log(`>>> Processing Registration: ${firstName} ${lastName}`);
-    console.log(`    Amount: $${amountPaid}, InboxFee: $${inboxFee || 0}`);
+    console.log(`    Amount: $${amountPaid}, InboxFee: $${inboxFee || 0}, Order: ${paypalOrderID || 'none'}`);
     console.log("=".repeat(60));
 
     // Step 1: Validate amount and get mapping
@@ -175,70 +544,77 @@ app.post('/api/generate-mailbox', async (req, res) => {
         return res.status(400).json({ success: false, error: "Invalid amount paid." });
     }
 
-    // Step 2: Generate unique locker key for Core API
-    // Format: XXX-XXXX using custom base32 alphabet
-    const genBase32Char = () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)];
-    const lockerKey = `${genBase32Char()}${genBase32Char()}${genBase32Char()}-${genBase32Char()}${genBase32Char()}${genBase32Char()}${genBase32Char()}`;
+    // Step 1b: Confirm with PayPal that this payment really happened
+    const rejection = await requireVerifiedPayment(paypalOrderID, amountPaid, 'mailbox');
+    if (rejection) {
+        return res.status(rejection.httpCode).json({ success: false, error: rejection.error });
+    }
 
     try {
-        // Step 3: Call Core API Locker Put-One-Coin (Port 8080)
-        console.log(`Calling Core API put-one-coin at 8080 for denomination ${mapping.coinDenomination}...`);
+        const amountClass = mapping.class;
 
-        const coreResponse = await axios.get(
-            `http://localhost:8080/api/transactions/locker/put-one-coin?locker_key=${lockerKey}&denomination=${mapping.coinDenomination}`,
-            { timeout: 30000 }
-        );
+        // Step 2: Assign a preconfigured wallet zip - this IS the deliverable.
+        // (Lockers are no longer used; the coin ships inside the zip.)
+        const wallet = assignWallet(amountClass, {
+            name: `${firstName} ${lastName}`,
+            qmail: ''
+        });
 
-        const data = coreResponse.data;
-
-        if (data.status === "success") {
-            // Step 4: Extract serial number and denomination from response
-            const serialNumber = data.serial_number;
-            const amountClass = mapping.class;
-            console.log(`Core API Success. Serial: ${serialNumber}, Class: ${amountClass}`);
-
-            // Step 5: Generate email address using adjective.noun.denomination algorithm
-            const email = generateEmailAddress(serialNumber, amountClass);
-
-            // Step 6: Database Logging
-            registerUser(email, firstName, lastName, description || "", inboxFee || 0);
-            logSoldCoin(firstName, lastName, lockerKey, email);
-
-            console.log(`Registration Complete: ${email}`);
-
-            res.json({
-                success: true,
-                email: email,
-                lockerCode: lockerKey
+        if (!wallet) {
+            console.error(`SALE WITHOUT DELIVERY: no ${amountClass} zips for ${firstName} ${lastName}`);
+            return res.status(503).json({
+                success: false,
+                error: "This tier is temporarily sold out. Your payment was received - " +
+                       "please contact support and we will deliver your wallet promptly."
             });
-        } else {
-            // Core returned an error response (e.g. no coins of that denomination)
-            const coreMsg = data.message || "Unknown error from Core service.";
-            console.error("Core API returned error:", coreMsg);
-            res.status(500).json({ success: false, error: coreMsg });
         }
+
+        // Step 3: Derive the QMail address from the serial number encoded in
+        // the zip filename (wallet_<serial>_<random>.zip). If a zip was
+        // uploaded without the convention, fall back to a random serial so
+        // the buyer still gets a working address.
+        let serialNumber = wallet.serial;
+        if (!serialNumber) {
+            serialNumber = crypto.randomInt(1, 0xFFFFFF);
+            console.error(`Zip ${wallet.file} has no serial in its filename - ` +
+                          `using random serial ${serialNumber}. Fix the zip naming!`);
+        }
+
+        // Step 4: The address is the zip's own canonical name (dotted-serial
+        // @tier, minus the random suffix); computed from the serial when the
+        // zip uses the legacy wallet_ naming.
+        const addrFromFile = /^(.+@[a-z]+)\.[^.]+\.zip$/i.exec(wallet.file);
+        const email = addrFromFile ? addrFromFile[1] : canonicalAddress(serialNumber, amountClass);
+
+        // Step 5: Database Logging
+        registerUser(email, firstName, lastName, description || "", inboxFee || 0);
+        logSoldCoin(firstName, lastName, wallet.file, email);
+        updateWalletRegistryQmail(wallet.file, email);
+
+        console.log(`Registration Complete: ${email} (zip: ${wallet.file}, serial: ${serialNumber})`);
+
+        res.json({
+            success: true,
+            email: email,
+            walletDownloadUrl: wallet.url
+        });
     } catch (error) {
-        // Distinguish timeout from connection failure
-        if (error.code === 'ECONNREFUSED') {
-            console.error("Core API not running:", error.message);
-            res.status(503).json({
-                success: false,
-                error: "Could not connect to CloudCoin Core service. Please ensure Core is running on port 8080."
-            });
-        } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
-            console.error("Core API timed out:", error.message);
-            res.status(504).json({
-                success: false,
-                error: "CloudCoin Core service timed out. The RAIDA network may be slow — please try again."
-            });
-        } else {
-            console.error("Core API unexpected error:", error.message);
-            res.status(500).json({
-                success: false,
-                error: `Core service error: ${error.message}`
-            });
-        }
+        console.error("Registration error:", error.message);
+        res.status(500).json({
+            success: false,
+            error: `Registration error: ${error.message}`
+        });
     }
+});
+
+// --- 5a. Wallet Stock Endpoint ---
+// Lets the client grey out sold-out tiers BEFORE the buyer pays
+app.get('/api/wallet-stock', (req, res) => {
+    const stock = {};
+    ['bit', 'byte', 'kilo', 'mega', 'giga'].forEach(c => {
+        stock[c] = countAvailableWallets(c);
+    });
+    res.json(stock);
 });
 
 // --- 5b. Make User Anonymous ---
@@ -433,10 +809,20 @@ app.post('/api/log-affiliate-sale', (req, res) => {
 // --- 9. CloudCoins Locker Generation Endpoint ---
 // Called by VerifiedAccess.jsx after payment to generate a CloudCoins locker for the buyer
 app.post('/api/generate-cloudcoins-locker', async (req, res) => {
-    const { dollarAmount, firstName, lastName } = req.body;
+    if (!PAYMENTS_ENABLED) {
+        return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
+    }
+
+    const { dollarAmount, firstName, lastName, paypalOrderID } = req.body;
 
     if (!dollarAmount || !firstName) {
         return res.status(400).json({ success: false, error: 'dollarAmount and firstName are required.' });
+    }
+
+    // Confirm with PayPal that this payment really happened
+    const rejection = await requireVerifiedPayment(paypalOrderID, dollarAmount, 'cloudcoins');
+    if (rejection) {
+        return res.status(rejection.httpCode).json({ success: false, error: rejection.error });
     }
 
     console.log(`\n>>> Generating CloudCoins locker: ${firstName} ${lastName} — $${dollarAmount}`);
@@ -690,6 +1076,72 @@ app.get('/api/social-proof', (req, res) => {
     } catch {
         res.json({ totalPurchases: 0, recentSales: 0 });
     }
+});
+
+// --- 12b. Preconfigured Wallet Download Endpoint ---
+// Single-use zips: only files recorded in issued_wallets.json can be fetched,
+// each up to WALLET_MAX_DOWNLOADS times; the file is deleted after the last one.
+app.get('/api/download-wallet/:file', (req, res) => {
+    const file = path.basename(req.params.file);
+    if (!file.toLowerCase().endsWith('.zip')) {
+        return res.status(400).send('Invalid file.');
+    }
+
+    const registry = loadWalletRegistry();
+    const entry = registry.find(e => e.file === file);
+
+    if (!entry || entry.deleted) {
+        return res.status(404).send('This download link is no longer available.');
+    }
+    if (entry.downloads >= entry.maxDownloads) {
+        return res.status(410).send('Download limit reached. Contact support if you need your wallet again.');
+    }
+
+    const filePath = path.join(WALLETS_ISSUED_DIR, file);
+    if (!fs.existsSync(filePath)) {
+        entry.deleted = true;
+        saveWalletRegistry(registry);
+        return res.status(404).send('File not found.');
+    }
+
+    // The buyer's copy is named after their QMail address: the zip's own
+    // name minus the random URL-guessing suffix, e.g.
+    // 39.233@bit.038amd22.zip is downloaded as 39.233@bit.zip
+    const addrMatch = /^(.+@[a-z]+)\.[^.]+\.zip$/i.exec(entry.file);
+    const downloadName = addrMatch ? `${addrMatch[1]}.zip` : `qmail_wallet_${entry.class}.zip`;
+
+    res.download(filePath, downloadName, (err) => {
+        // Nothing in this callback may throw - an uncaught exception here
+        // would take down the whole server.
+        try {
+            if (err) {
+                // Transfer failed or was aborted - do not count it against the limit
+                console.error(`Wallet download failed for ${file}:`, err.message);
+                return;
+            }
+
+            // Re-read the registry to avoid clobbering concurrent updates
+            const reg = loadWalletRegistry();
+            const e = reg.find(x => x.file === file);
+            if (!e) return;
+
+            e.downloads += 1;
+            console.log(`Wallet ${file} downloaded (${e.downloads}/${e.maxDownloads})`);
+
+            if (e.downloads >= e.maxDownloads) {
+                try {
+                    fs.unlinkSync(filePath);
+                    e.deleted = true;
+                    console.log(`Deleted wallet zip ${file} after ${e.downloads} downloads`);
+                } catch (delErr) {
+                    console.error(`Failed to delete ${file}:`, delErr.message);
+                }
+            }
+            saveWalletRegistry(reg);
+        } catch (bookErr) {
+            console.error(`Failed to record download of ${file}:`, bookErr.message);
+        }
+    });
 });
 
 // --- 13. Static Routes ---
