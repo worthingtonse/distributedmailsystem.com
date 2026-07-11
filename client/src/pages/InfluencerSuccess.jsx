@@ -338,21 +338,20 @@ const InfluencerSuccess = () => {
                       Get the desktop client to send your message and manage your CloudCoins.
                     </p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex flex-col items-center gap-3">
                     <a
                       href="/downloads/qmail.for.windows.zip"
                       download
                       className="bg-white text-black px-8 py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all flex items-center gap-3"
                     >
-                      <Download size={20} /> Windows
+                      <Download size={20} /> Download for Windows
                     </a>
-                    <a
-                      href="/downloads/qmail.for.macs.zip"
-                      download
-                      className="bg-white text-black px-8 py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all flex items-center gap-3"
-                    >
-                      <Download size={20} /> Mac
-                    </a>
+                    <p className="text-xs text-gray-500">
+                      Windows 10+ only. Mac and other platforms are coming later.
+                    </p>
+                    <Link to="/download" className="text-xs text-blue-400 hover:text-blue-300 underline">
+                      All platforms / roadmap
+                    </Link>
                   </div>
                 </div>
               </div>
