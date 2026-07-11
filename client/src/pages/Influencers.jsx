@@ -152,19 +152,19 @@ const EarningsCalculator = memo(() => {
 EarningsCalculator.displayName = "EarningsCalculator";
 
 function Influencers() {
-  useDocumentMeta({ title: 'Get Paid to Receive Emails', description: 'Turn your audience into revenue. Share one link, earn 50% every time a follower messages you through QMail.' });
+  useDocumentMeta({ title: 'Get Paid to Receive Emails', description: 'Turn your audience into revenue. Share your QLink, earn 50% every time a follower messages you through QMail.' });
 
   const steps = [
     {
       icon: Zap,
-      title: "Create Your Link",
-      description: "Sign up for free. We verify your identity via a $0 PayPal transaction, then instantly generate your custom link.",
+      title: "Create Your QLink",
+      description: "Sign up for free. We verify your identity via a $0 PayPal transaction, then instantly generate your custom QLink.",
       gradient: "from-blue-500 to-cyan-500",
     },
     {
       icon: Share2,
-      title: "Share It Everywhere",
-      description: "Post your link on social media, your website, YouTube descriptions, email signatures — anywhere your audience is.",
+      title: "Share Your QLink Everywhere",
+      description: "Post your QLink on social media, your website, YouTube descriptions, email signatures — anywhere your audience is.",
       gradient: "from-purple-500 to-pink-500",
     },
     {
@@ -207,7 +207,7 @@ function Influencers() {
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
-                  Turn your audience into revenue. Share one link, and every follower who wants to reach you pays a small fee — you keep 50%.
+                  Turn your audience into revenue. Share your QLink, and every follower who wants to reach you pays a small fee — you keep 50%.
                 </p>
 
                 <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
@@ -339,7 +339,7 @@ function Influencers() {
                   Ready to Get Started?
                 </h2>
                 <p className="text-gray-300 text-lg mb-4 max-w-xl mx-auto">
-                  It costs you nothing. Create your link in minutes and start earning from your very next post.
+                  It costs you nothing. Create your QLink in minutes and start earning from your very next post.
                 </p>
                 <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-8">
                   Influencer sign-ups open in Phase II — coming soon
@@ -349,7 +349,7 @@ function Influencers() {
                   onClick={() => track('influencer_cta_click', { location: 'bottom' })}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all active:scale-95"
                 >
-                  Create Your Link Now
+                  Create Your QLink Now
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <p className="text-gray-500 text-sm mt-4">

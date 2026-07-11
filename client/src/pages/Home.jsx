@@ -467,7 +467,7 @@ function Home() {
                       for Every Message
                     </h2>
                     <p className="text-gray-300 mb-6 leading-relaxed">
-                      Share one link with your audience. Every follower who wants to reach you pays a small fee — you keep 50%. Zero setup cost, earnings from day one.
+                      Share your QLink with your audience. Every follower who wants to reach you pays a small fee — you pay 12 to 15% platform fee. Zero setup cost, earnings from day one.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Link
@@ -486,8 +486,8 @@ function Home() {
                   </div>
                   <div className="space-y-4">
                     {[
-                      { step: "1", title: "Create your link", desc: "Free signup — verified via PayPal in seconds" },
-                      { step: "2", title: "Share it everywhere", desc: "Social media, bio links, email signatures" },
+                      { step: "1", title: "Create your QLink", desc: "Free signup — verified via PayPal in seconds" },
+                      { step: "2", title: "Share your QLink everywhere", desc: "Social media, bio links, email signatures" },
                       { step: "3", title: "Get paid", desc: "50% of every purchase goes to your PayPal" },
                     ].map((item) => (
                       <div key={item.step} className="flex items-start gap-4 p-4 bg-black/30 rounded-xl border border-green-500/10">
