@@ -21,6 +21,7 @@ import {
   HelpCircle,
   HardDrive
 } from 'lucide-react'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 
 // Reusable Card Component
 const Card = memo(({ children, delay = 0 }) => {
@@ -282,6 +283,12 @@ const FloatingQuestionsAnimation = memo(() => {
 FloatingQuestionsAnimation.displayName = 'FloatingQuestionsAnimation'
 
 function FAQ() {
+  useDocumentMeta({
+    title: 'QMail FAQ',
+    description: 'Answers about QMail addresses, pricing, privacy, CloudCoin tips, and influencer earnings. Get started from $10.',
+    path: '/faq',
+  })
+
   const [openItems, setOpenItems] = useState(new Set([0]))
 
   const toggleItem = (index) => {

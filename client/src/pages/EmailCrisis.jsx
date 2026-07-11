@@ -20,6 +20,7 @@ import {
   ShieldAlert,
   Database
 } from 'lucide-react'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 
 // Three.js Background Component - Network Under Attack
 const ThreeBackground = () => {
@@ -239,6 +240,12 @@ const StatCard = ({ icon: Icon, value, label, delay = 0 }) => {
 }
 
 function EmailCrisis() {
+  useDocumentMeta({
+    title: 'Why Traditional Email Is Broken',
+    description: 'Spoofing, spam, and surveillance are baked into SMTP. See why QMail rebuilds mail from first principles — claim an address from $10.',
+    path: '/email-crisis',
+  })
+
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({
     target: heroRef,

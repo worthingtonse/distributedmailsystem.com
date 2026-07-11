@@ -27,8 +27,16 @@ import {
   RefreshCw,
   FileText,
 } from "lucide-react";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const FunnelSuccess = () => {
+  useDocumentMeta({
+    title: "Registration Complete",
+    description: "Your QMail registration is complete. Download the Windows client to get started.",
+    path: "/success",
+    noindex: true,
+  });
+
   const { state } = useLocation();
   const [isProvisioning, setIsProvisioning] = useState(true);
   const [provisionStep, setProvisionStep] = useState(0);
@@ -51,11 +59,11 @@ const FunnelSuccess = () => {
   // no name prefix like the old @adjective.noun.tier format needed
   const displayAddress = userAddress;
 
-  // Provisioning Simulation
+  // Brief loading steps after payment (address already created server-side)
   const steps = [
-    "Generating Quantum-Safe Keys...",
-    "Sharding Identity across 32 Global Nodes...",
-    "Syncing Distributed Resource Directory (DRD)...",
+    "Confirming your registration...",
+    "Preparing your address details...",
+    "Almost ready...",
     "Finalizing Decentralized Inbox...",
   ];
 

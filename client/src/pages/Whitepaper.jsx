@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { Link } from "react-router-dom";
 import { LazyMotion, domAnimation, m } from "framer-motion";
 import {
   FileText,
@@ -17,7 +18,9 @@ import {
   Binary,
   Network,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 // Enhanced Card Component with animations
 const Card = memo(({ children, delay = 0, className = "" }) => {
@@ -238,6 +241,13 @@ const SpecRow = memo(({ spec, index, delay = 0 }) => {
 SpecRow.displayName = "SpecRow";
 
 function Whitepaper() {
+  useDocumentMeta({
+    title: "QMail Whitepaper Summary",
+    description:
+      "Technical overview of QMail: distributed striping, encryption, and paid postage. Claim your mailbox or read the full architecture.",
+    path: "/whitepaper",
+  });
+
   const architectures = [
     {
       icon: Server,
@@ -507,6 +517,33 @@ function Whitepaper() {
                   </tbody>
                 </table>
               </m.div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 md:py-24 relative">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center bg-blue-600/10 border border-blue-600/30 rounded-3xl p-10">
+              <h2 className="text-3xl font-bold text-white mb-4">
+                Put the design to work
+              </h2>
+              <p className="text-gray-400 mb-8">
+                Claim your QMail address from $10, or dig deeper into the live product pages.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors"
+                >
+                  Claim Your Address <ArrowRight className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/technology"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-gray-600 hover:border-blue-500 text-white font-bold rounded-xl transition-colors"
+                >
+                  Explore Technology
+                </Link>
+              </div>
             </div>
           </div>
         </section>

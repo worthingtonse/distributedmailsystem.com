@@ -32,7 +32,11 @@ import { track } from "../utils/analytics";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const RegisterAddress = () => {
-  useDocumentMeta({ title: 'Get Started', description: 'Claim your unique decentralized QMail address. Register as a user or sign up free as an influencer.' });
+  useDocumentMeta({
+    title: 'Claim Your QMail Address',
+    description: 'Register a permanent QMail mailbox from $10. 30-day money-back on address registration. Windows client available now.',
+    path: '/register',
+  });
 
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   // Payments are switched on/off server-side (PAYMENTS_ENABLED in server/index.js)

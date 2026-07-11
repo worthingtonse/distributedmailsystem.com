@@ -14,7 +14,7 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 export default function Terms() {
-  useDocumentMeta({ title: 'Terms of Service', description: 'Terms of Service for QMail, the Distributed Mail System.' });
+  useDocumentMeta({ title: 'Terms of Service', description: 'Terms of Service for QMail, the Distributed Mail System.', path: '/terms' });
 
   return (
     <div className="min-h-screen pt-28 pb-20 bg-[#0a0a1a]">

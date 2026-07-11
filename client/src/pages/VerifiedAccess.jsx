@@ -7,7 +7,7 @@ import { track } from '../utils/analytics';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
 
 const VerifiedAccess = () => {
-  useDocumentMeta({ title: 'Send a Private Message', description: 'Send a quantum-safe, priority message through QMail.' });
+  useDocumentMeta({ title: 'Send a Private Message', description: 'Send a priority paid message through QMail.', path: '/access', noindex: true });
 
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   // Payments are switched on/off server-side (PAYMENTS_ENABLED in server/index.js)

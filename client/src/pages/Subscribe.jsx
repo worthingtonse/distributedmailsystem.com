@@ -10,6 +10,7 @@ const Subscribe = () => {
     title: "QMail Credits Subscription",
     description:
       "Subscribe for monthly QMail tip credits to pay server capacity and inbox fees. Manage billing in PayPal.",
+    path: "/subscribe",
   });
 
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();

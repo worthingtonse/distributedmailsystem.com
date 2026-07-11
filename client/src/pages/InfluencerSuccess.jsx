@@ -18,8 +18,16 @@ import {
   RefreshCw,
   FileText,
 } from "lucide-react";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const InfluencerSuccess = () => {
+  useDocumentMeta({
+    title: "Payment Complete",
+    description: "Your QMail purchase is complete. Download the Windows client and follow the on-screen steps.",
+    path: "/success-influencer",
+    noindex: true,
+  });
+
   const { state } = useLocation();
   const [isProvisioning, setIsProvisioning] = useState(true);
   const [provisionStep, setProvisionStep] = useState(0);
@@ -47,12 +55,12 @@ const InfluencerSuccess = () => {
   const cloudCoins = state?.cloudCoins || 0;
   const cloudCoinsLockerCode = state?.cloudCoinsLockerCode || "";
 
-  // Provisioning Steps
+  // Brief post-payment confirmation steps (payment already completed)
   const steps = [
-    "Generating Quantum-Safe Keys...",
-    "Securing CloudCoins in Locker...",
-    "Syncing with RAIDA Network...",
-    "Finalizing Your Account...",
+    "Confirming your payment...",
+    "Preparing your credits and codes...",
+    "Almost ready...",
+    "Finalizing...",
   ];
 
   useEffect(() => {

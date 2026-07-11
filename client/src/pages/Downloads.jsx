@@ -11,6 +11,7 @@ const Downloads = () => {
     title: "Download QMail for Windows",
     description:
       "Download the QMail client for Windows. Claim your mailbox address and start using spam-resistant, private email.",
+    path: "/download",
   });
 
   const platforms = [

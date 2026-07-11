@@ -7,6 +7,7 @@ const NotFound = () => {
   useDocumentMeta({
     title: "Page Not Found",
     description: "This page does not exist. Return home or claim a QMail address.",
+    path: "/404",
     noindex: true,
   });
 

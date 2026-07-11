@@ -18,6 +18,7 @@ import {
   DollarSign,
   Mail
 } from 'lucide-react'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 
 // Reusable Card Component
 const Card = memo(({ children, delay = 0 }) => {
@@ -74,6 +75,12 @@ const StepCard = memo(({ step, title, description, icon: Icon, details, delay = 
 StepCard.displayName = 'StepCard'
 
 function HowItWorks() {
+  useDocumentMeta({
+    title: 'How QMail Works',
+    description: 'See how QMail shreds, encrypts, and distributes mail for spam-resistant private messaging. Claim your address from $10.',
+    path: '/how-it-works',
+  })
+
   const steps = [
     {
       step: 1,
@@ -86,8 +93,8 @@ function HowItWorks() {
       step: 2,
       icon: Lock,
       title: 'The Lock (Encryption)',
-      description: 'Before these pieces leave your device, each one is locked inside a digital vault using AES-128 bit encryption. Even if someone managed to intercept a stripe, all they would see is scrambled noise.',
-      details: 'Military-grade encryption ensures that even with quantum computers, your data remains secure.'
+      description: 'Before these pieces leave your device, each one is locked inside a digital vault using AES-256 encryption. Even if someone managed to intercept a stripe, all they would see is scrambled noise.',
+      details: 'Strong symmetric encryption protects each stripe so intercepted pieces look like random noise.'
     },
     {
       step: 3,

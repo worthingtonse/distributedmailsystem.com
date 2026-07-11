@@ -43,7 +43,7 @@ const StrategyCard = memo(({ title, children, step }) => {
 StrategyCard.displayName = "StrategyCard";
 
 function SalesStrategy() {
-  useDocumentMeta({ title: 'Influencer Dashboard', description: 'Generate your QMail link, customize your landing page, and start earning from your audience.' });
+  useDocumentMeta({ title: 'Influencer Dashboard', description: 'Generate your QMail link, customize your landing page, and earn 85% from your audience when Phase II is live.', path: '/strategy', noindex: true });
 
   const location = useLocation();
   const verifiedData = location.state || {};

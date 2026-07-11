@@ -1,4 +1,5 @@
 import React, { memo } from 'react'
+import { Link } from 'react-router-dom'
 import { LazyMotion, domAnimation, m } from 'framer-motion'
 import { 
   FileCode, 
@@ -13,8 +14,10 @@ import {
   Database,
   CheckCircle2,
   XCircle,
-  Cpu
+  Cpu,
+  ArrowRight
 } from 'lucide-react'
+import { useDocumentMeta } from '../hooks/useDocumentMeta'
 
 const Card = memo(({ children, className = "" }) => (
   <m.div
@@ -359,6 +362,12 @@ const BinaryEncryptionAnimation = memo(() => {
 BinaryEncryptionAnimation.displayName = 'BinaryEncryptionAnimation'
 
 function Technology() {
+  useDocumentMeta({
+    title: 'QMail Technology — Private Distributed Email',
+    description: 'Learn how QMail uses striping, encryption, and distributed servers for private, spam-resistant email. Claim your mailbox from $10.',
+    path: '/technology',
+  })
+
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="min-h-screen pt-20">
@@ -374,10 +383,10 @@ function Technology() {
                 transition={{ duration: 0.6 }}
               >
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6">
-                  <span className="text-white">Technology</span>
+                  <span className="text-white">Quantum-Safe Email</span>
                   <br />
                   <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                    Deep Dive
+                    Technology Deep Dive
                   </span>
                 </h1>
               </m.div>
@@ -658,6 +667,32 @@ function Technology() {
                     </li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Conversion CTA */}
+        <section className="py-16 md:py-24 relative">
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto text-center bg-blue-600/10 border border-blue-600/30 rounded-3xl p-10">
+              <h2 className="text-3xl font-bold text-white mb-4">Ready to use QMail?</h2>
+              <p className="text-gray-400 mb-8">
+                Claim your permanent address (from $10 · 30-day money-back) or stock up on monthly credits.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors"
+                >
+                  Claim Your Address <ArrowRight className="w-5 h-5" />
+                </Link>
+                <Link
+                  to="/subscribe"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 border border-gray-600 hover:border-blue-500 text-white font-bold rounded-xl transition-colors"
+                >
+                  Subscribe for Credits
+                </Link>
               </div>
             </div>
           </div>

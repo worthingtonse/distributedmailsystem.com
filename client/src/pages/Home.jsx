@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ArrowDown,
 } from "lucide-react";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 // Optimized Card Component with React.memo
 const Card = memo(({ children, delay = 0, className = "" }) => {
@@ -244,6 +245,13 @@ const Footer = memo(() => {
 Footer.displayName = "Footer";
 
 function Home() {
+  useDocumentMeta({
+    title: "Spam-Free Private Email",
+    description:
+      "QMail is quantum-safe, spam-resistant email. Claim your mailbox from $10 with a 30-day money-back window. Get paid to receive mail.",
+    path: "/",
+  });
+
   const heroRef = useRef(null);
 
   const { scrollYProgress } = useScroll({
@@ -396,16 +404,19 @@ function Home() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
                 <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-8">
-                  Decentralized. <br />
+                  Spam-Free Email. <br />
                   <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                    Quantum-Safe.
+                    Private by Design.
                   </span>
                   <br />
-                  Built for privacy.
+                  Get paid to receive mail.
                 </h1>
 
-                <p className="text-lg md:text-xl text-gray-300 mb-12 leading-relaxed">
-                  QMail isn't a service; it's an <span className="text-blue-400 font-semibold">open standard, open-source protocol.</span> By removing the client-server architecture, we've removed the spies. No central authority, no metadata trails, and no "backdoors"—just email rebuilt from first principles for the post-quantum age.
+                <p className="text-lg md:text-xl text-gray-300 mb-6 leading-relaxed">
+                  QMail is an <span className="text-blue-400 font-semibold">open standard</span> for decentralized mail — designed so no single company owns your inbox. Claim a permanent address, cut spam with postage, and keep stronger privacy by default.
+                </p>
+                <p className="text-sm text-blue-300/90 mb-10 font-medium">
+                  Mailboxes from $10 · 30-day money-back on registration · Windows client available now
                 </p>
 
                 <div className="flex flex-col gap-3 justify-center items-center pt-4 w-full max-w-sm mx-auto sm:max-w-none sm:flex-row sm:gap-4">
@@ -415,17 +426,24 @@ function Home() {
                     size="large"
                     className="w-full sm:w-auto min-w-[160px]"
                   >
-                    Get Early Access
+                    Claim Your QMail Address
                   </AnimatedButton>
                   <AnimatedButton
-                    to="/influencers"
+                    to="/subscribe"
                     variant="secondary"
                     size="large"
                     className="w-full sm:w-auto min-w-[140px]"
                   >
-                    Influencers Here
+                    Buy Credits
                   </AnimatedButton>
                 </div>
+                <p className="text-xs text-gray-500 mt-4">
+                  Creators:{" "}
+                  <Link to="/influencers" className="text-green-400/90 hover:text-green-300 underline">
+                    earn when fans message you
+                  </Link>{" "}
+                  (Phase II)
+                </p>
 
                 <div className="pt-6 sm:pt-8">
                   <button

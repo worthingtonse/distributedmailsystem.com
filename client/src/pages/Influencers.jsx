@@ -158,6 +158,7 @@ function Influencers() {
   useDocumentMeta({
     title: 'Get Paid to Receive Emails',
     description: 'Turn your audience into revenue. Share your QLink and keep 85% every time a follower messages you through QMail. Influencer sign-ups open in Phase II.',
+    path: '/influencers',
   });
 
   const steps = [

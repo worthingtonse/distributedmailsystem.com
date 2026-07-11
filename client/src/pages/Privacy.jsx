@@ -14,7 +14,7 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 export default function Privacy() {
-  useDocumentMeta({ title: 'Privacy Policy', description: 'How QMail protects your privacy. Architecture is designed so operators cannot read message contents.' });
+  useDocumentMeta({ title: 'Privacy Policy', description: 'How QMail protects your privacy. Architecture is designed so operators cannot read message contents.', path: '/privacy' });
 
   return (
     <div className="min-h-screen pt-28 pb-20 bg-[#0a0a1a]">

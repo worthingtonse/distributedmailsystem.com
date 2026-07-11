@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://distributedmailsystem.com/sitemap.xml
+Sitemap: https://www.distributedmailsystem.com/sitemap.xml
 
-# Internal tools
+# Internal tools and transactional pages
 Disallow: /admin
 Disallow: /button
 Disallow: /access
+Disallow: /success
+Disallow: /success-influencer
