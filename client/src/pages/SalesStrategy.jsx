@@ -169,14 +169,14 @@ function SalesStrategy() {
                   >
                     <Zap className="w-5 h-5 text-blue-400 flex-shrink-0" />
                     <span className="text-blue-300 font-semibold text-sm md:text-base">
-                      Don't have a QMail yet? Verify your identity for $0 to get started.
+                      Don't have a QMail yet? Verify with a $0.01 PayPal micro-charge to get started.
                     </span>
                   </a>
                 )}
               </div>
 
               <p className="text-gray-400 max-w-2xl mx-auto leading-relaxed text-sm md:text-base px-4">
-                Generate your link, share it with your audience, and earn 50% of every sale.
+                Generate your link, share it with your audience, and keep 85% of every sale.
               </p>
             </m.div>
           </div>
@@ -256,7 +256,7 @@ function SalesStrategy() {
                         min="1"
                         className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-blue-500 outline-none transition-all"
                       />
-                      <p className="text-xs text-gray-500 mt-1">How much senders pay to reach you. You keep 50%.</p>
+                      <p className="text-xs text-gray-500 mt-1">How much senders pay to reach you. You keep 85%.</p>
                     </div>
 
                     <div>
@@ -368,7 +368,7 @@ function SalesStrategy() {
             <StrategyCard step="2" title="Step 2: Setup Direct Deposit">
               <div className="space-y-6">
                 <p className="text-gray-300 leading-relaxed">
-                  We need to link our payment system to yours. Just tell us where to send your 50%
+                  We need to link our payment system to yours. Just tell us where to send your 85%
                   share — we already have your name and QMail from your verification, no need to
                   enter them again.
                 </p>
@@ -387,7 +387,7 @@ function SalesStrategy() {
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-yellow-400 mt-0.5 flex-shrink-0">•</span>
-                      <span>Because we are just starting and have huge development costs, we are splitting the revenues with you 50/50. So if you charge $10 for an email, you will get $5.</span>
+                      <span>You keep 85% of each sale; we retain a 15% platform fee. So if you charge $10 for an email, you receive $8.50.</span>
                     </li>
                   </ul>
                 </div>
@@ -490,7 +490,7 @@ function SalesStrategy() {
                           placeholder="your-paypal@email.com"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          We'll send your 50% share here after each payment collected.
+                          We'll send your 85% share here after each payment collected.
                         </p>
                       </div>
 

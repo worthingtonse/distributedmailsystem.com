@@ -53,7 +53,7 @@ export default function Terms() {
               <p><strong className="text-white">Address Registration:</strong> Registration requires a stake payment (ranging from $10 to $1,000) via PayPal. This stake activates your address and signals your commitment to the network.</p>
               <p><strong className="text-white">CloudCoin Purchases:</strong> CloudCoins are digital postage credits. Once purchased, CloudCoins are non-refundable as they are immediately loaded into the RAIDA network.</p>
               <p><strong className="text-white">Refund Policy:</strong> Address registration payments are refundable within 30 days of purchase. Contact support to request a refund.</p>
-              <p><strong className="text-white">Influencer Revenue Share:</strong> Influencers receive 50% of affiliate sales. Payments are made via PayPal. Payment timing may be affected by PayPal's fund holding policies.</p>
+              <p><strong className="text-white">Influencer Revenue Share:</strong> Influencers receive 85% of affiliate sales; the platform retains a 15% fee. Payments are made via PayPal. Payment timing may be affected by PayPal's fund holding policies. Revenue share percentages may change with notice as stated below.</p>
             </Section>
 
             <Section icon={RefreshCw} title="Influencer Program">

@@ -357,14 +357,14 @@ const InfluencerSuccess = () => {
                       Want to Get Paid When People Message YOU?
                     </h3>
                     <p className="text-sm text-gray-400">
-                      Create your own QMail link in 60 seconds. Share it with your followers and earn 50% every time someone pays to message you.
+                      Create your own QMail link when Phase II opens. Share it with your followers and keep 85% every time someone pays to message you.
                     </p>
                   </div>
                   <Link
                     to="/influencers"
                     className="shrink-0 bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:shadow-lg hover:shadow-green-500/25 transition-all flex items-center gap-2"
                   >
-                    Start Earning <ArrowRight size={16} />
+                    Learn About Influencer Program <ArrowRight size={16} />
                   </Link>
                 </div>
               </div>
@@ -372,7 +372,7 @@ const InfluencerSuccess = () => {
               {/* Upsell: Share QMail */}
               <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] text-center">
                 <p className="text-white font-bold mb-2">Know someone who'd love this?</p>
-                <p className="text-sm text-gray-400 mb-4">Tell your friends about QMail — the world's most private messaging system.</p>
+                <p className="text-sm text-gray-400 mb-4">Tell your friends about QMail — private, spam-resistant messaging by design.</p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <a
                     href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`I just sent a quantum-safe private message via QMail! Check it out: https://distributedmailsystem.com`)}`}

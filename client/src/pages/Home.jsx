@@ -455,9 +455,9 @@ function Home() {
               <div className="bg-gradient-to-r from-green-900/20 to-emerald-900/20 backdrop-blur-xl rounded-3xl border border-green-500/20 p-8 md:p-12">
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div>
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-semibold mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-xs font-semibold mb-4">
                       <DollarSign className="w-3 h-3" />
-                      Free to join
+                      Phase II — join the waitlist
                     </div>
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                       Influencers:{" "}
@@ -467,7 +467,7 @@ function Home() {
                       for Every Message
                     </h2>
                     <p className="text-gray-300 mb-6 leading-relaxed">
-                      Share your QLink with your audience. Every follower who wants to reach you pays a small fee — you pay 12 to 15% platform fee. Zero setup cost, earnings from day one.
+                      Share your QLink with your audience. Every follower who wants to reach you pays a small fee — you keep 85% (15% platform fee). Free to join when Phase II opens.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Link
@@ -480,15 +480,15 @@ function Home() {
                         to="/register"
                         className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-green-500/30 text-green-400 font-bold rounded-full hover:bg-green-500/10 transition-all text-sm"
                       >
-                        Start Earning
+                        Claim a Mailbox Now
                       </Link>
                     </div>
                   </div>
                   <div className="space-y-4">
                     {[
-                      { step: "1", title: "Create your QLink", desc: "Free signup — verified via PayPal in seconds" },
+                      { step: "1", title: "Create your QLink", desc: "Free signup — verified via a $0.01 PayPal micro-charge" },
                       { step: "2", title: "Share your QLink everywhere", desc: "Social media, bio links, email signatures" },
-                      { step: "3", title: "Get paid", desc: "50% of every purchase goes to your PayPal" },
+                      { step: "3", title: "Get paid", desc: "85% of every purchase goes to your PayPal" },
                     ].map((item) => (
                       <div key={item.step} className="flex items-start gap-4 p-4 bg-black/30 rounded-xl border border-green-500/10">
                         <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-sm font-bold shrink-0">

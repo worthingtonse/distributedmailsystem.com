@@ -42,7 +42,7 @@ const EarningsCalculator = memo(() => {
   // Average order is inbox fee + $5 balance
   const avgOrder = inboxFee + 5;
   const monthlyRevenue = monthlyBuyers * avgOrder;
-  const yourShare = Math.round(monthlyRevenue * 0.5);
+  const yourShare = Math.round(monthlyRevenue * 0.85);
 
   const formatNumber = (n) => n.toLocaleString();
 
@@ -141,9 +141,12 @@ const EarningsCalculator = memo(() => {
         </div>
 
         <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-2xl p-6 text-center">
-          <p className="text-sm text-green-300 font-semibold mb-1">Your Estimated Monthly Earnings</p>
+          <p className="text-sm text-green-300 font-semibold mb-1">Illustrative Monthly Earnings</p>
           <p className="text-5xl font-black text-white">${formatNumber(yourShare)}</p>
-          <p className="text-xs text-gray-400 mt-2">Based on 50/50 revenue share</p>
+          <p className="text-xs text-gray-400 mt-2">Based on 85% influencer share (15% platform fee)</p>
+          <p className="text-[11px] text-gray-500 mt-3 leading-relaxed max-w-md mx-auto">
+            Example only — not a guarantee. Actual results depend on your audience, pricing, and conversion. Earnings are not guaranteed.
+          </p>
         </div>
       </div>
     </div>
@@ -152,13 +155,16 @@ const EarningsCalculator = memo(() => {
 EarningsCalculator.displayName = "EarningsCalculator";
 
 function Influencers() {
-  useDocumentMeta({ title: 'Get Paid to Receive Emails', description: 'Turn your audience into revenue. Share your QLink, earn 50% every time a follower messages you through QMail.' });
+  useDocumentMeta({
+    title: 'Get Paid to Receive Emails',
+    description: 'Turn your audience into revenue. Share your QLink and keep 85% every time a follower messages you through QMail. Influencer sign-ups open in Phase II.',
+  });
 
   const steps = [
     {
       icon: Zap,
       title: "Create Your QLink",
-      description: "Sign up for free. We verify your identity via a $0 PayPal transaction, then instantly generate your custom QLink.",
+      description: "Sign up free when Phase II opens. We verify identity via a $0.01 PayPal micro-charge, then generate your custom QLink.",
       gradient: "from-blue-500 to-cyan-500",
     },
     {
@@ -170,17 +176,17 @@ function Influencers() {
     {
       icon: DollarSign,
       title: "Get Paid",
-      description: "Every time someone pays to message you, you earn 50%. Payments go directly to your PayPal account.",
+      description: "Every time someone pays to message you, you keep 85%. Payments go to your PayPal account.",
       gradient: "from-green-500 to-emerald-500",
     },
   ];
 
   const benefits = [
-    { text: "Completely free to set up", icon: CheckCircle2 },
+    { text: "Free to set up when Phase II opens", icon: CheckCircle2 },
     { text: "You set your own inbox price", icon: DollarSign },
-    { text: "50% of every sale goes to you", icon: TrendingUp },
-    { text: "Eliminates spam and time-wasters", icon: Shield },
-    { text: "Your followers get quantum-safe privacy", icon: Mail },
+    { text: "85% of every sale goes to you", icon: TrendingUp },
+    { text: "Designed to cut spam and time-wasters", icon: Shield },
+    { text: "Followers get stronger privacy by design", icon: Mail },
     { text: "Works with any social media platform", icon: Users },
   ];
 
@@ -194,9 +200,9 @@ function Influencers() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-4xl mx-auto text-center">
               <m.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/30 text-green-400 text-sm font-semibold mb-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-semibold mb-6">
                   <DollarSign className="w-4 h-4" />
-                  Free to join — earn from day one
+                  Phase II — keep 85% when you join
                 </div>
 
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
@@ -207,7 +213,7 @@ function Influencers() {
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
-                  Turn your audience into revenue. Share your QLink, and every follower who wants to reach you pays a small fee — you keep 50%.
+                  Turn your audience into revenue. Share your QLink, and every follower who wants to reach you pays a small fee — you keep 85% (15% platform fee).
                 </p>
 
                 <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
@@ -220,7 +226,7 @@ function Influencers() {
                     onClick={() => track('influencer_cta_click', { location: 'hero' })}
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all active:scale-95"
                   >
-                    Start Earning — It's Free
+                    Learn More &amp; Join Waitlist
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                   <button
@@ -248,10 +254,10 @@ function Influencers() {
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
                 Three Steps to{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  Start Earning
+                  Earn When Phase II Opens
                 </span>
               </h2>
-              <p className="text-gray-400 text-lg">No technical skills required. Set up in under 5 minutes.</p>
+              <p className="text-gray-400 text-lg">No technical skills required. Setup takes minutes once sign-ups open.</p>
             </m.div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
@@ -336,10 +342,10 @@ function Influencers() {
             >
               <div className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 backdrop-blur-xl rounded-3xl p-8 md:p-12 border border-gray-700/50 text-center">
                 <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                  Ready to Get Started?
+                  Ready for Phase II?
                 </h2>
                 <p className="text-gray-300 text-lg mb-4 max-w-xl mx-auto">
-                  It costs you nothing. Create your QLink in minutes and start earning from your very next post.
+                  Influencer QLinks open in Phase II. Meanwhile, claim a personal QMail mailbox today (from $10) so you are ready when affiliate tools launch.
                 </p>
                 <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-8">
                   Influencer sign-ups open in Phase II — coming soon
@@ -349,13 +355,13 @@ function Influencers() {
                   onClick={() => track('influencer_cta_click', { location: 'bottom' })}
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold text-lg rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all active:scale-95"
                 >
-                  Create Your QLink Now
+                  Claim a QMail Mailbox
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <p className="text-gray-500 text-sm mt-4">
-                  Already signed up?{" "}
-                  <Link to="/strategy" className="text-blue-400 hover:text-blue-300 underline">
-                    Go to your dashboard
+                  Want the product details first?{" "}
+                  <Link to="/how-it-works" className="text-blue-400 hover:text-blue-300 underline">
+                    See how QMail works
                   </Link>
                 </p>
               </div>
