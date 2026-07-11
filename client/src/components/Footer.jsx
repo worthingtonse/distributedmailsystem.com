@@ -19,19 +19,19 @@ function Footer() {
               <h4 className="text-white font-semibold mb-3">Support</h4>
               <div className="space-y-2">
                 <Link
-                  to="/register"
+                  to="/faq"
                   className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
                 >
-                  Contact Support
+                  Help Center / FAQ
                 </Link>
                 <p className="text-gray-500 text-xs break-all">
                   Giga~RaidaTech.Customer.Support#0F39
                 </p>
                 <Link
-                  to="/support"
+                  to="/register"
                   className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
                 >
-                  Help Center
+                  Claim a QMail Address
                 </Link>
               </div>
             </div>

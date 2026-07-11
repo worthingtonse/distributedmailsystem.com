@@ -26,6 +26,7 @@ const Downloads = lazy(() => import('./pages/Downloads.jsx'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'))
 const Privacy = lazy(() => import('./pages/Privacy.jsx'))
 const Terms = lazy(() => import('./pages/Terms.jsx'))
+const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
 /**
  * AnimatedRoutes Component
@@ -74,6 +75,9 @@ const AnimatedRoutes = () => {
             {/* Internal Tools */}
             <Route path="/button" element={<AdminLinkGen />} />
             <Route path="/admin" element={<AdminDashboard />} />
+
+            {/* Soft-404 catch-all */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </AnimatePresence>

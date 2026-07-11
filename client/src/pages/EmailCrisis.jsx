@@ -368,10 +368,10 @@ function EmailCrisis() {
                 </div>
 
                 <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
-                  <h4 className="text-xl font-semibold text-yellow-500 mb-3">Emotional Hook:</h4>
+                  <h4 className="text-xl font-semibold text-yellow-500 mb-3">Why it hits so hard</h4>
                   <p className="text-gray-400 leading-relaxed">
                     Imagine receiving an "urgent" message from your child's school. You click the link. 
-                    Your identity is stolen. <span className="text-red-400 font-medium">This happens thousands of times every single day.</span>
+                    Your identity is stolen. <span className="text-red-400 font-medium">Phishing of this kind is still a daily risk on traditional email.</span>
                   </p>
                 </div>
               </div>
@@ -464,7 +464,7 @@ function EmailCrisis() {
                   </p>
 
                   <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-6">
-                    <h4 className="text-xl font-semibold text-purple-400 mb-3">The Visual Analogy:</h4>
+                    <h4 className="text-xl font-semibold text-purple-400 mb-3">A simple picture</h4>
                     <p className="text-gray-400 text-lg">
                       Sending email today is like <span className="text-red-400 font-medium">mailing postcards</span>. 
                       Anyone who handles them can read them.
@@ -647,10 +647,10 @@ function EmailCrisis() {
                     The cost of sending becomes prohibitive for mass mailers, while remaining negligible for real humans.
                   </p>
                   <Link 
-                    to="/get-paid"
+                    to="/register"
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
-                    See How QMail Eliminates Spam Forever →
+                    Claim Your QMail Address →
                   </Link>
                 </div>
               </div>
@@ -760,10 +760,10 @@ function EmailCrisis() {
                     ))}
                   </ul>
                   <Link 
-                    to="/qmail-architecture"
+                    to="/technology"
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
-                    Learn About QMAIL Architecture →
+                    Learn About QMail Architecture →
                   </Link>
                 </div>
               </div>
@@ -863,7 +863,7 @@ function EmailCrisis() {
                 QMail flips the model: <span className="text-white font-medium">you get paid</span>, 
                 spammers pay you, and your attention becomes valuable again.
               </p>
-              <Link to="/get-paid">
+              <Link to="/register">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -939,13 +939,13 @@ function EmailCrisis() {
                   <p className="text-2xl font-semibold text-blue-400 mb-8">
                     That's exactly what we built.
                   </p>
-                  <Link to="/quantum-safe">
+                  <Link to="/register">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="px-10 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold text-lg transition-colors"
                     >
-                      See the QMail Solution →
+                      Claim Your QMail Address →
                     </motion.button>
                   </Link>
                 </div>

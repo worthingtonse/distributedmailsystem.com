@@ -184,10 +184,10 @@ const Footer = memo(() => {
                   Giga~RaidaTech.Customer.Support#0F39
                 </p>
                 <Link
-                  to="/support"
+                  to="/faq"
                   className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
                 >
-                  Help Center
+                  Help Center / FAQ
                 </Link>
               </div>
             </div>

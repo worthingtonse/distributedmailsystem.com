@@ -421,24 +421,24 @@ const FunnelSuccess = () => {
                     </h3>
                     <div className="space-y-4">
                       {discoveryLinks.map((link, i) => (
-                        <motion.a
+                        <div
                           key={i}
-                          href="#"
-                          whileHover={{
-                            x: 5,
-                            backgroundColor: "rgba(255,255,255,0.05)",
-                          }}
-                          className="flex items-start gap-4 p-4 rounded-2xl border border-white/5 transition-all group"
+                          className="flex items-start gap-4 p-4 rounded-2xl border border-white/5 bg-white/[0.02]"
                         >
                           <div
-                            className={`p-3 rounded-xl bg-white/5 ${link.color} group-hover:bg-white/10`}
+                            className={`p-3 rounded-xl bg-white/5 ${link.color}`}
                           >
                             <link.icon size={20} />
                           </div>
-                          <span className="text-sm text-gray-400 group-hover:text-white transition-colors leading-relaxed">
-                            {link.title}
-                          </span>
-                        </motion.a>
+                          <div className="min-w-0">
+                            <span className="text-sm text-gray-400 leading-relaxed block">
+                              {link.title}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-widest text-yellow-400/80 mt-1 inline-block">
+                              Coming in Phase II
+                            </span>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   </div>

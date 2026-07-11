@@ -1,0 +1,28 @@
+GPT AUDIT + IMPLEMENTATION TRACKER - distributedmailsystem.com
+Date: 2026-07-10 (updated with owner decisions + execution plan)
+
+Owner decisions
+- Revenue share: 85% influencer / 15% platform (update all 50% copy + calculator)
+- /subscribe: keep PayPal live; honest copy only (no auto top-up claims)
+- Downloads: Windows only; other platforms Coming Soon
+- Subscription automation: NEXT sprint (webhooks/entitlements)
+
+Independent confirmation of Claude audit.md
+- Broken routes: /support, /get-paid, /qmail-architecture, /quantum-safe — CONFIRMED
+- href="#" on Downloads + FunnelSuccess Phase II — CONFIRMED
+- Revenue contradiction 50% vs 12-15% — CONFIRMED; resolving to 85/15
+- Register $0 vs $0.01 charge — CONFIRMED
+- Subscribe onApprove local-only — CONFIRMED; keep live, fix copy this sprint
+- SPA meta gaps, apex sitemap, no 404 — CONFIRMED
+- Emotional Hook / Visual Analogy labels — CONFIRMED
+- Absolute security claims on payment-adjacent UI — CONFIRMED
+
+Execution order (git push after each batch)
+1. Links + 404 + Downloads Windows-only
+2. Revenue share 85/15 site-wide + Terms
+3. Checkout honesty + EmailCrisis labels + soften scam language
+4. Subscribe honest copy
+5. SEO: www sitemap/robots, useDocumentMeta everywhere, canonical
+6. Funnel CTAs + Phase II framing + register trust block
+
+See Audit.md for full detail and definition of done.
