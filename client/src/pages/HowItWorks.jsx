@@ -108,7 +108,7 @@ function HowItWorks() {
       icon: Puzzle,
       title: 'Perfect Reassembly',
       description: 'When you (or your recipient) open the email, the client pulls the pieces from around the world, uses your private key to unlock them, and stitches them back together in milliseconds.',
-      details: 'The result: A 100% private message that lived nowhere and everywhere at the same time.'
+      details: 'The result: A private message designed so no single server holds the full content.'
     }
   ]
 
@@ -370,7 +370,7 @@ function HowItWorks() {
                         </li>
                         <li className="flex items-start gap-2">
                           <Globe className="w-4 h-4 text-blue-400 flex-shrink-0 mt-1" />
-                          <span>Distributed globally (unhackable)</span>
+                          <span>Distributed globally (no single point of failure)</span>
                         </li>
                       </ul>
                     </div>

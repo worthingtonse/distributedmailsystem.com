@@ -558,7 +558,7 @@ function Technology() {
                   <tr>
                     <td className="py-4 px-6 text-white">Rendering</td>
                     <td className="py-4 px-6 text-gray-400">Unpredictable (Varies by client)</td>
-                    <td className="py-4 px-6 text-blue-300 font-semibold">100% Consistent</td>
+                    <td className="py-4 px-6 text-blue-300 font-semibold">Deterministic</td>
                   </tr>
                   <tr>
                     <td className="py-4 px-6 text-white">Security</td>
@@ -627,7 +627,7 @@ function Technology() {
                   
                   <Card className="bg-yellow-500/5 border-yellow-500/20">
                     <p className="text-yellow-200/80">
-                      <strong>Why it is Quantum Safe:</strong> Even if a hacker intercepts the traffic from the London server, they only get one fragment. Without the other fragments (which traveled via completely different routes), the key is mathematically impossible to reconstruct.
+                      <strong>Why fragmentation helps:</strong> Even if an attacker intercepts traffic from one route, they only get one fragment. Reconstructing the full key requires enough fragments from independent paths — which is designed to be impractical.
                     </p>
                   </Card>
                 </div>

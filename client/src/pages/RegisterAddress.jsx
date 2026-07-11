@@ -174,7 +174,7 @@ const RegisterAddress = () => {
                 amount: { value: isInfluencerMode ? "0.01" : totalPrice.toString() },
                 description: isInfluencerMode
                   ? "QMail Influencer Identity Verification"
-                  : `DMS Registration: .${selectedTier?.name} + ${selectedEdition} edition`,
+                  : `QMail Registration: .${selectedTier?.name} + ${selectedEdition} edition`,
               }],
             }),
             onApprove: async (data, actions) => {
@@ -203,7 +203,7 @@ const RegisterAddress = () => {
                 } else {
                   navigate("/success", { state: { email: result.email, walletDownloadUrl: result.walletDownloadUrl || null, firstName: order.payer.name.given_name, lastName: order.payer.name.surname } });
                 }
-              } catch { setPaypalError("Payment capture mein error aaya hai."); }
+              } catch { setPaypalError("We could not complete payment capture. Please try again or contact support."); }
             },
           }).render(retryRef.current);
         }
@@ -224,7 +224,7 @@ const RegisterAddress = () => {
                   amount: { value: isInfluencerMode ? "0.01" : totalPrice.toString() },
                   description: isInfluencerMode
                     ? "QMail Influencer Identity Verification"
-                    : `DMS Registration: .${selectedTier.name} + ${selectedEdition} edition`,
+                    : `QMail Registration: .${selectedTier.name} + ${selectedEdition} edition`,
                 },
               ],
             });
@@ -274,7 +274,7 @@ const RegisterAddress = () => {
                 });
               }
             } catch (err) {
-              setPaypalError("Payment capture mein error aaya hai.");
+              setPaypalError("We could not complete payment capture. Please try again or contact support.");
             }
           },
         })
@@ -441,11 +441,11 @@ const RegisterAddress = () => {
                       <div className="pt-8 border-t border-gray-800">
                         <div className="max-w-md mx-auto space-y-6 bg-black p-8 rounded-3xl border border-purple-500/20 shadow-2xl">
                           <div className="flex justify-between items-center font-black text-2xl text-white">
-                            <span>Registration Fee:</span>
-                            <span className="text-green-400">$0</span>
+                            <span>Identity verification:</span>
+                            <span className="text-green-400">$0.01</span>
                           </div>
                           <p className="text-xs text-gray-400 leading-relaxed text-center">
-                            When influencer sign-ups open, PayPal will verify your identity at $0 and your verified PayPal name will be used to create your unique address.
+                            When influencer sign-ups open, PayPal verifies your identity with a $0.01 micro-charge. Your verified PayPal name is used to create your unique address.
                           </p>
 
                           {/* Influencer sign-ups are closed until the client software
@@ -492,7 +492,7 @@ const RegisterAddress = () => {
                           Choose Your Stake Level & Status Indicator:
                         </h2>
                         <p className="text-sm text-gray-400 leading-relaxed">
-                          DMS requires a refundable stake to activate your address. This incentive makes high-volume abuse impractical while proving you are serious. Higher stakes = higher trust. Legitimate professionals won't risk their reputation on spam.
+                          DMS requires a one-time registration fee (stake) to activate your address. Higher stakes signal higher trust and help make high-volume abuse impractical. Address registration is refundable within 30 days — see Terms.
                         </p>
                         <p className="text-xs text-yellow-300/90 font-bold flex items-center gap-2">
                           <Monitor size={14} className="shrink-0" />
@@ -634,16 +634,26 @@ const RegisterAddress = () => {
                           </div>
 
                           {!paymentsDisabled && (
-                          <p className="text-[10px] text-gray-500 text-center leading-relaxed italic">
-                            * Note that refunds are available up to 30 days after your purchase.
-                          </p>
+                          <div className="space-y-3 pt-2 border-t border-gray-800">
+                            <ul className="text-left text-xs text-gray-400 space-y-1.5">
+                              <li>• Unique QMail address tied to your verified PayPal name</li>
+                              <li>• Windows desktop client access</li>
+                              <li>• 30-day money-back on address registration (see Terms)</li>
+                            </ul>
+                            <p className="text-[11px] text-gray-500 text-center leading-relaxed">
+                              Secure checkout via PayPal.{" "}
+                              <a href="/terms" className="text-blue-400 hover:text-blue-300 underline">Terms of Service</a>
+                              {" · "}
+                              <a href="/privacy" className="text-blue-400 hover:text-blue-300 underline">Privacy</a>
+                            </p>
+                          </div>
                           )}
                         </div>
                       </div>
                     </div>
 
                     {/* --- ACTION BUTTONS --- */}
-                    <div className="flex justify-center gap-6">
+                    <div className="flex flex-wrap justify-center gap-4 mt-4">
                       <button
                         onClick={() => { if (!isInfluencerMode) track('influencer_signup_start'); setIsInfluencerMode(!isInfluencerMode); }}
                         className={`flex items-center gap-2 font-bold px-6 py-3 rounded-full border transition-all ${
@@ -657,19 +667,23 @@ const RegisterAddress = () => {
                           ? "Influencer Preview Active"
                           : "Influencers: Free Sign-Up (Phase II — Coming Soon)"}
                       </button>
+                    </div>
+                    <div className="flex flex-wrap justify-center gap-4 opacity-80">
                       <a
                         href="https://t.me/+9YVOgaobizw5NjEx"
                         target="_blank"
-                        className="flex items-center gap-2 text-blue-400 hover:text-blue-300 font-bold bg-blue-500/10 px-4 py-2 rounded-full border border-blue-500/20 transition-all"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-gray-400 hover:text-blue-300 text-sm font-medium px-3 py-2 transition-all"
                       >
-                        <Smartphone size={18} /> Join Telegram
+                        <Smartphone size={16} /> Telegram community
                       </a>
                       <a
                         href="https://support.cloudcoin.com/en/"
                         target="_blank"
-                        className="flex items-center gap-2 text-gray-400 hover:text-white font-bold bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 transition-all"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-gray-400 hover:text-blue-300 text-sm font-medium px-3 py-2 transition-all"
                       >
-                        <Shield size={18} /> Support Center
+                        <Shield size={16} /> CloudCoin support
                       </a>
                     </div>
 

@@ -341,7 +341,7 @@ function Whitepaper() {
                 </span>
               </h2>
               <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-                Three fundamental innovations that make QMail mathematically impossible to compromise
+                Three fundamental innovations designed to make QMail far harder to compromise
               </p>
             </m.div>
             <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">

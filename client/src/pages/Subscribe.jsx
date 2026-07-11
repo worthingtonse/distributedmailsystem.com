@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Zap, Star, Crown, Check, ShieldCheck } from "lucide-react";
 import { usePaypalConfig } from "../hooks/usePaypalConfig";
+import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 const Subscribe = () => {
+  useDocumentMeta({
+    title: "QMail Credits Subscription",
+    description:
+      "Subscribe for monthly QMail tip credits to pay server capacity and inbox fees. Manage billing in PayPal.",
+  });
+
   const { config: paypalConfig, loading: paypalConfigLoading, error: paypalConfigError } = usePaypalConfig();
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isPaypalLoaded, setIsPaypalLoaded] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [subscriptionId, setSubscriptionId] = useState(null);
   const buttonRef = useRef(null);
 
   const plans = [
@@ -17,11 +26,11 @@ const Subscribe = () => {
       price: "5",
       capacity: "50 MB/Month",
       bestFor: "Pure text communication and occasional photos.",
-      description: "Establish your presence in the Distributed Mail System. This plan provides 50 MB-Months of capacity—perfect for the privacy-conscious user who values lean, secure communication.",
+      description: "Monthly tip credits for the Distributed Mail System — about 50 MB-Months of capacity for lean, private messaging.",
       icon: Zap,
       bullets: [
-        { title: "How it works", text: "Your tips are loaded into your DMS client and automatically distributed to your preferred server arrays." },
-        { title: "The Promise", text: "Your tips never expire. They roll over monthly, building your private archive at your own pace." }
+        { title: "How it works", text: "After payment, your subscription is recorded in PayPal. Credits are applied to your QMail usage according to your plan." },
+        { title: "Rollover", text: "Unused tip capacity is intended to roll over month to month while your subscription remains active." }
       ]
     },
     {
@@ -30,12 +39,12 @@ const Subscribe = () => {
       price: "10",
       capacity: "300 MB/Month",
       bestFor: "Everyday personal use, family photos, and document sharing.",
-      description: "Our most popular tier for the modern digital citizen. With 300 MB-Months of data weight, you have the freedom to move beyond simple text into high-resolution media and active file sharing.",
+      description: "A balanced monthly plan with about 300 MB-Months of capacity for text, photos, and light file sharing.",
       icon: Star,
       bullets: [
-        { title: "Sovereign Control", text: "You decide the lifespan of every attachment. High-priority documents can be set to 'Persistent,' while casual files can be 'Self-Destructing'." },
-        { title: "Array Distribution", text: "Your tips act as the 'fuel' that ensures your data is prioritized and mirrored across the QMail server network." },
-        { title: "Rollover Advantage", text: "Unused capacity compounds, ensuring you always have a surplus for when life gets busy." }
+        { title: "Everyday capacity", text: "Room for documents and media beyond pure text." },
+        { title: "Network tips", text: "Tips help pay the operators who store and forward your mail." },
+        { title: "Manage anytime", text: "Cancel or change plans from your PayPal subscription settings." }
       ]
     },
     {
@@ -44,11 +53,11 @@ const Subscribe = () => {
       price: "20",
       capacity: "1,000 MB/Month",
       bestFor: "Professionals, small businesses, and marketers.",
-      description: "Maximum throughput for the power user. This plan delivers 1 Gigabyte-Month of storage capacity every billing cycle, designed for those who treat their email as a major tool for life.",
+      description: "Higher monthly throughput — about 1 GB-Month of capacity for heavier sending needs.",
       icon: Crown,
       bullets: [
-        { title: "Heavy Lifting", text: "Ideal for sending large files that other email systems cannot handle without worrying about 'Inbox Full' warnings." },
-        { title: "Network Authority", text: "Higher token volume signals your commitment to the nodes in your array, ensuring your mail is processed with the highest priority." }
+        { title: "Heavy lifting", text: "Better fit when you send larger files more often." },
+        { title: "Billing clarity", text: "Recurring charge handled by PayPal; keep your receipt for support." }
       ]
     },
   ];
@@ -69,7 +78,8 @@ const Subscribe = () => {
               plan_id: selectedPlan.id,
             });
           },
-          onApprove: (data, actions) => {
+          onApprove: (data) => {
+            setSubscriptionId(data.subscriptionID || null);
             setSubscribed(true);
           },
           onError: (err) => {
@@ -114,14 +124,19 @@ const Subscribe = () => {
         {/* Header Section */}
         <div className="text-center mb-16">
           <span className="inline-block py-1 px-3 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-widest mb-4 border border-blue-500/20">
-            Receivers Get Paid & Senders Pay
+            Monthly QMail credits
           </span>
           <h1 className="text-4xl md:text-6xl font-black text-white mb-6">
-            Tip Your Server Admins
+            Subscribe for Sending Credits
           </h1>
           <p className="text-xl text-gray-400 max-w-3xl mx-auto">
-            Sending emails costs tips unless you're on the receiver's whitelist. 
-            Server administrators need to be paid a micropayment based on how many megabytes you send.
+            Sending mail costs tips unless you are on the receiver&apos;s whitelist.
+            These plans fund monthly capacity (MB-Months) on the network.
+          </p>
+          <p className="text-sm text-yellow-300/90 mt-4 max-w-2xl mx-auto leading-relaxed">
+            Automatic locker top-up is still being finished. After you subscribe in PayPal, keep your subscription ID —
+            support will help apply credits until full automation ships. Need a mailbox first?{" "}
+            <Link to="/register" className="underline hover:text-yellow-200">Claim an address</Link>.
           </p>
         </div>
 
@@ -237,19 +252,35 @@ const Subscribe = () => {
               <Check size={48} />
             </div>
             <h2 className="text-3xl font-bold text-white mb-4">
-              Subscription Active!
+              Payment received — thank you
             </h2>
-            <p className="text-gray-300 text-lg mb-8">
-              Your CloudCoin locker will now be automatically topped up every month.
-              <br />
-              You can manage your subscription in your PayPal dashboard.
+            <p className="text-gray-300 text-lg mb-4">
+              Your PayPal subscription is active. Manage or cancel anytime in your PayPal account.
             </p>
-            <button
-              onClick={() => setSubscribed(false)}
-              className="text-gray-500 hover:text-white underline"
-            >
-              Return to Plans
-            </button>
+            {subscriptionId && (
+              <p className="text-sm text-blue-300 font-mono mb-4 break-all">
+                Subscription ID: {subscriptionId}
+              </p>
+            )}
+            <p className="text-sm text-gray-400 mb-8 leading-relaxed">
+              Fully automatic monthly credit delivery is coming soon. Please save this confirmation and contact support
+              (or use your QMail support address) if credits are not applied promptly. CloudCoin postage purchases are
+              non-refundable per our Terms.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/download"
+                className="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-500 transition-colors"
+              >
+                Download QMail Client
+              </Link>
+              <button
+                onClick={() => { setSubscribed(false); setSubscriptionId(null); }}
+                className="text-gray-500 hover:text-white underline"
+              >
+                Return to Plans
+              </button>
+            </div>
           </motion.div>
         )}
       </div>

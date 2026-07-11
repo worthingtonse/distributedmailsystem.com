@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck, Users, Clock } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck, Users } from 'lucide-react';
 import { usePaypalConfig } from '../hooks/usePaypalConfig';
 import { track } from '../utils/analytics';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
@@ -37,7 +37,7 @@ const VerifiedAccess = () => {
     ).join(' ');
   };
 
-  const recipientRaw = searchParams.get('recipient') || 'Connie Willis';
+  const recipientRaw = searchParams.get('recipient') || 'QMail User';
   const recipientName = toTitleCase(recipientRaw.replace(/%20/g, ' '));
   const firstName = recipientName.split(' ')[0];
   const inboxFee = parseInt(searchParams.get('cost') || '10', 10);
@@ -48,7 +48,7 @@ const VerifiedAccess = () => {
   // Get the address from the 'addr' URL parameter
   const influencerAddress = searchParams.get('addr')
     ? decodeURIComponent(searchParams.get('addr'))
-    : `${recipientName.replace(/\s+/g, '.')}@Example.Giga`;
+    : 'Recipient@QMail.Example';
 
   // Token from URL
   const linkToken = searchParams.get('token') || '';
@@ -361,34 +361,30 @@ const VerifiedAccess = () => {
 
           <div className="space-y-6 text-gray-300 text-lg leading-relaxed">
             <p>
-              <span className="text-white font-bold">{recipientName} uses Distributed Mail.</span> This is an open standard for sending 100% private, quantum-safe messages.
+              <span className="text-white font-bold">{recipientName} uses Distributed Mail (QMail).</span> Messages are designed for strong privacy with postage that helps filter spam.
             </p>
 
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
               <p className="text-lg">
-                <span className="text-white font-bold">{firstName}</span> charges <span className="text-white font-bold">${inboxFee}</span> per email to read messages from people not on their contact list.
+                <span className="text-white font-bold">{firstName}</span> charges <span className="text-white font-bold">${inboxFee}</span> per email to accept messages from people not on their contact list.
               </p>
             </div>
 
             <div className="pt-4">
               <h3 className="text-white font-bold mb-2">Why is there a cost?</h3>
               <p>
-                {firstName} receives thousands of messages. To ensure they read yours, they use the "Postage Guarantee." This keeps spam out and real messages in.
+                Paid postage makes mass spam expensive and helps real messages stand out. It does not guarantee a reply — response times vary by person.
               </p>
             </div>
 
             <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
               <p className="text-sm italic">
-                <span className="text-white font-bold not-italic">Zero Spam:</span> Because postage is required, spammers cannot afford to email them. Your message lands in their <strong className="text-white">"Priority Inbox."</strong>
+                <span className="text-white font-bold not-italic">Less spam by design:</span> Because postage is required, bulk spam is far less profitable. Your message is delivered as a paid priority message.
               </p>
             </div>
 
-            {/* Social Proof */}
+            {/* Social Proof — only real API data */}
             <div className="flex flex-col gap-2 pt-2">
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Clock size={14} className="text-green-400 shrink-0" />
-                <span>{firstName} typically responds within <strong className="text-white">24 hours</strong></span>
-              </div>
               {socialProof && socialProof.totalPurchases > 0 && (
                 <div className="flex items-center gap-2 text-sm text-gray-400">
                   <Users size={14} className="text-blue-400 shrink-0" />
@@ -408,8 +404,8 @@ const VerifiedAccess = () => {
               <div className="inline-flex p-3 rounded-2xl bg-white/5 mb-4">
                 <Mail size={28} style={{ color: customBtn }} />
               </div>
-              <h2 className="text-xl font-bold text-white mb-1">The Most Private Email System In The World</h2>
-              <p className="text-gray-500 text-xs">Send {firstName} a quantum-safe message</p>
+              <h2 className="text-xl font-bold text-white mb-1">Private, Paid-Access Messaging</h2>
+              <p className="text-gray-500 text-xs">Send {firstName} a priority QMail message</p>
             </div>
 
             {/* Purchase Credits */}

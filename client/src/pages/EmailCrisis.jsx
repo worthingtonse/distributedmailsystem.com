@@ -382,20 +382,20 @@ function EmailCrisis() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-12">
             <StatCard
               icon={DollarSign}
-              value="$43B"
-              label="Lost to email fraud in 2023"
+              value="BEC"
+              label="Business email compromise remains a top cybercrime loss category (FBI IC3)"
               delay={0.1}
             />
             <StatCard
               icon={Target}
-              value="1 in 4"
-              label="People targeted by phishing"
+              value="Phishing"
+              label="Still one of the most common ways accounts get compromised"
               delay={0.15}
             />
             <StatCard
               icon={AlertTriangle}
-              value="90%"
-              label="Cyber attacks start with spoofed email"
+              value="SMTP"
+              label="Traditional email was not designed with strong sender authentication"
               delay={0.2}
             />
           </div>
@@ -416,7 +416,7 @@ function EmailCrisis() {
                   <h3 className="text-2xl font-semibold text-blue-400 mb-3">QMail Solution:</h3>
                   <p className="text-gray-400 text-lg leading-relaxed mb-4">
                     With QMail, every sender is <span className="text-blue-400 font-medium">cryptographically verified</span> through QMAIL. 
-                    Spoofing is <span className="text-white font-medium">mathematically impossible</span>.
+                    Spoofing is <span className="text-white font-medium">far harder by design</span> — addresses are cryptographically bound to real identity.
                   </p>
                   <Link 
                     to="/how-it-works"

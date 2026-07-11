@@ -401,7 +401,7 @@ function Home() {
                     Quantum-Safe.
                   </span>
                   <br />
-                  Unsurveillable.
+                  Built for privacy.
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-300 mb-12 leading-relaxed">

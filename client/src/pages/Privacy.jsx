@@ -14,7 +14,7 @@ const Section = ({ icon: Icon, title, children }) => (
 );
 
 export default function Privacy() {
-  useDocumentMeta({ title: 'Privacy Policy', description: 'How QMail protects your privacy. We cannot read your messages — our architecture makes surveillance technically impossible.' });
+  useDocumentMeta({ title: 'Privacy Policy', description: 'How QMail protects your privacy. Architecture is designed so operators cannot read message contents.' });
 
   return (
     <div className="min-h-screen pt-28 pb-20 bg-[#0a0a1a]">
@@ -27,7 +27,7 @@ export default function Privacy() {
 
             <Section icon={Shield} title="Our Privacy Philosophy">
               <p>
-                QMail (the Distributed Mail System) is built on a fundamental belief: your communications are yours alone. Unlike traditional email providers, we cannot read your messages, scan your attachments, or profile your behavior — because our architecture makes that technically impossible.
+                QMail (the Distributed Mail System) is built on a fundamental belief: your communications are yours alone. Unlike traditional email providers, we design the architecture so operators cannot read your message contents or build content-based profiles of your behavior.
               </p>
               <p>
                 This policy explains what minimal data we do collect and why.
