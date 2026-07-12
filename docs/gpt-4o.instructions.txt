@@ -1,0 +1,26 @@
+PayPal sandbox subscription diagnostics and fixes (do not change app code):
+
+1) Supply real sandbox credentials
+- In PayPal developer dashboard, get your sandbox app Client ID; in project root create .env with:
+  VITE_PAYPAL_CLIENT_ID=<sandbox_client_id>
+  VITE_PAYPAL_PLAN_ID_BASIC=<real_plan_id_for_$10_plan>
+  VITE_PAYPAL_PLAN_ID_PRO=<real_plan_id_for_$20_plan>
+- Create the $10 and $20 subscription plans in Sandbox (Products & Plans) and use their IDs (format P-XXXXXXXX). Restart Vite after adding .env.
+- Test with a sandbox BUYER account (not the business/merchant account).
+
+2) Verify SDK/script loading in DevTools
+- Network tab filter “paypal”: confirm the SDK URL includes client-id=<your_id>&currency=USD&components=buttons&vault=true&intent=subscription on Subscribe page.
+- If SDK fails to load, console will show client ID or CSP/adblock issues; button containers will stay empty.
+
+3) Capture the failing call
+- Click Subscribe, log in with sandbox buyer, then in Network tab find the failing request (often smart/buttons or /api/paypal). Open its Response: look for names like RESOURCE_NOT_FOUND or INVALID_PLAN_ID and the debug_id.
+- Console tab: watch for “client ID is invalid”, “Expected intent to be subscription”, or plan-related errors.
+
+4) Common causes of the generic “Things don’t appear to be working” popup
+- Missing/placeholder client ID (“sb”) or missing plan IDs → PayPal rejects createSubscription.
+- Using mock plan IDs (P-MOCK-10/20) or inactive plan IDs.
+- Trying to pay with the merchant account instead of a buyer account.
+
+5) Quick validation after fixes
+- Reload page; ensure PayPal popup shows your merchant name.
+- Approve with sandbox buyer; onApprove should fire and no error banner should appear.

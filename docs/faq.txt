@@ -1,0 +1,159 @@
+QMAIL FREQUENTLY ASKED QUESTIONS
+=================================
+
+GENERAL
+-------
+
+Q: What is QMail?
+A: QMail is a decentralized, quantum-safe email protocol. Unlike traditional email where your messages live on a company's server, QMail shreds your messages into encrypted fragments and distributes them across multiple independent servers. No single server can read your mail or know who you're talking to.
+
+
+Q: Who develops QMail?
+A: QMail is developed by the Perfect Money Foundation, an organization dedicated to building distributed information systems that protect user privacy and promote a decentralized internet economy.
+
+
+Q: Is QMail free?
+A: The protocol is open-standard open-source (Phase II). However, sending emails requires small CloudCoin micropayments to compensate server operators and (optionally) recipients. This economic model eliminates spam while creating a sustainable ecosystem. It allows VIPs to profit for giving emails their attention.  
+
+
+Q: How is QMail different from ProtonMail or Tutanota?
+A: Services like ProtonMail encrypt your messages but still store them on central servers. Those servers expose critical meta data and can be dectypted by quantum computers. QMail has no central server—your message fragments are distributed across multiple independent operators, and no single party can reconstruct your messages.
+
+
+SECURITY & PRIVACY
+------------------
+
+Q: What does "quantum-safe" mean?
+A: Current encryption can theoretically be broken by future quantum computers. Intelligence agencies are known to harvest encrypted communications today, planning to decrypt them when quantum computers mature ("harvest now, decrypt later"). QMail uses post-quantum cryptographic algorithms designed to resist attacks from both classical and quantum computers.
+
+
+Q: How does message "shredding" work?
+A: Your message is split into 2-32 encrypted fragments called "stripes." Each stripe is encrypted with a unique AES-256 key, then distributed to different mail servers. The servers don't know which other servers hold the remaining stripes, what order they go in, or how to decrypt them. Only the intended recipient has all the keys and metadata needed for reassembly.
+
+
+Q: What can mail servers see about my messages?
+A: Server operators can see:
+- In Phase I, a special server called a Beacon server can see your pseudo-anonymous 7-byte user ID (like a Bitcoin address). 
+- Your IP address (unless you use a VPN)
+- Timestamps
+- Approximate message size
+- How many attachments there are.
+
+QMails servers that actually store your email data can see your:
+- Your IP address (unless you use a VPN)
+- Timestamps
+- How many attachments there are.
+
+They cannot see: message content, recipient identity, subject lines, attachments, or how to reassemble the message.
+
+
+
+
+Q: What would it take to hack a QMail message?
+A: An attacker would need to:
+1. Intercept up to 32 stripes from potentially different networks worldwide
+3. Break 32 separate AES-256 encryptions
+4. Solve a transposition cipher with over 2.6 × 10^35 possible combinations
+
+This is computationally infeasible with any known or foreseeable technology.
+
+Q: Can governments force QMail to hand over my data?
+A: There is no "QMail company" that holds your data. Your message fragments are distributed across independent servers in various jurisdictions, operated by different parties. However, it is possible that multiple Qmail servers could be subpoenaed and the data brought together assuming the data has not been deleted. The time that emails and attachments are kept on the Qmail servers is determined by the sender. 
+
+
+USING QMAIL
+-----------
+
+Q: How do I get a QMail address?
+A: Your QMail address is derived from a cryptographic key pair that you generate locally. You don't register with any central authority. Your address is yours by mathematical proof, not by permission (Phase II). In Phase I, addresses are generated on the DistributedMailSystem.com website. Phase II will explain how a person can do this themselves.
+
+
+Q: Can I change my QMail address?
+A: You can generate new addresses at any time. However, contacts who know your old address would need to be informed of the new one. Many users maintain multiple addresses for different purposes.
+
+
+Q: How do people find my QMail address?
+A: You can share it directly, or optionally publish it in the Distributed Resource Directory (Phase II). Unlike traditional email, your address isn't tied to any company or domain name.
+
+
+Q: Can I use QMail on multiple devices?
+A: Yes (Phase III as we only have desktop apps at this time). Each device connects to your Beacon server and receives real-time notifications when new messages arrive. All devices can access the same mailbox.
+
+
+Q: What happens if a mail server goes offline?
+A: QMail uses parity stripes (similar to RAID storage) for redundancy. If some servers become unavailable, your message can still be reconstructed from the remaining stripes and parity data.
+
+
+SPAM & PAYMENTS
+---------------
+
+Q: How does QMail prevent spam?
+A: You set a "tip" amount that unknown senders must pay to reach your inbox. Friends and family on your whitelist send for free. Spammers find it economically unviable to pay real money for each recipient.
+
+
+Q: What are CloudCoins?
+A: CloudCoins are a digital currency used for QMail micropayments. They enable tiny transactions (fractions of a cent) without credit card fees, making pay-per-message economically practical.
+
+
+Q: Can I make money running a QMail server?
+A: Yes. Server operators earn a percentage of the CloudCoin payments processed through their servers. You can compete on price, speed, reliability, jurisdiction, or trust to attract users.
+
+
+Q: What if someone sends me a message but I don't want their tip?
+A: You can return the payment if you wish (Phase III), or simply accept it. The tip system is designed to make senders consider whether their message is worth the recipient's attention.
+
+
+TECHNICAL
+---------
+
+Q: What is CBDF?
+A: Compact Binary Document Format is QMail's replacement for HTML/CSS in emails. By using binary codes instead of verbose markup, QMail messages can be 99% smaller than traditional emails. For example, instead of creating large amounts of HTML and CSS to create an email's format, senders can choose from 256 present formats. Thus one byte can accomplish the same thing as more than 100 bytes in standad email format. 
+
+
+Q: What encryption does QMail use?
+A: Each message stripe uses AES-256 encryption. Session keys are exchanged using a post-quantum key exchange protocol. The combination provides both current security and future-proofing against quantum attacks.
+
+
+Q: Can I host my own QMail server?
+A: Absolutely. Because CBDF makes messages extremely small, you can run a QMail server on consumer-grade hardware. You can serve yourself, your family, your community, or the public.
+
+
+Q: Is QMail open source?
+A: Yes. QMail is an open protocol with open-source reference implementations. Anyone can audit the code, build compatible clients, or run servers. Note that the publishing of the final documentation for this is part of Phase II. 
+
+
+Q: What are Beacon servers?
+A: Beacon servers handle real-time notifications. When someone sends you a message, a "Tell" command alerts your Beacon server, which immediately notifies your client. This provides instant delivery notification without polling.
+
+
+Q: Can I send large attachments?
+A: Yes. QMail supports attachments up to several gigabytes* in size. Like messages, attachments are shredded and distributed, with each fragment stored across multiple servers. *This has not been tested in practice but is theorectically possible. QMail severs get paid for each megabyte the store so there is no incentive to limit the amount. If 32 QMail servers allowed 100MB each, then the total could be over 3GB.  
+
+
+COMPARISON
+----------
+
+Q: QMail vs. Traditional Email (Gmail, Outlook)
+- Traditional: Centralized servers, company reads your mail for ads, subject to attacks
+- QMail: Distributed, no single point of access, mathematically private
+
+
+Q: QMail vs. Encrypted Email (ProtonMail, Tutanota)
+- Encrypted: Messages encrypted but stored centrally, metadata exposed, server can be compelled
+- QMail: No central storage, metadata distributed, no single point of compulsion
+
+
+Q: QMail vs. Signal/Messaging Apps
+- Signal: Real-time messaging, requires phone number, single company operates servers
+- QMail: No logins or 2F authentication. Asynchronous email replacement, cryptographic identity, decentralized infrastructure
+
+
+FUTURE DEVELOPMENT
+------------------
+
+Q: What features are coming?
+A: Phase II includes the Distributed Resource Directory for address discovery, advanced CBDF formatting with rich layouts, and semantic AI encoding for even smaller messages. Phase III brings full GUI clients for all platforms.
+
+
+Q: How can I contribute?
+A: QMail is open source. Developers can contribute code, security researchers can audit the protocol, and anyone can run servers to strengthen the network (Phase II). The code is pretty disorganized at this time: https://github.com/worthingtonse/client-prompts

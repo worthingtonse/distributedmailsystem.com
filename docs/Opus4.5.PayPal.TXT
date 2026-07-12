@@ -1,0 +1,188 @@
+================================================================================
+                    PAYPAL INTEGRATION TROUBLESHOOTING REPORT
+                    Model: Claude Opus 4.5
+                    Date: 2026-01-02
+================================================================================
+
+ERROR OBSERVED:
+---------------
+PayPal sandbox popup shows: "We're sorry. Things don't appear to be working
+at the moment. Try again."
+
+This error occurs AFTER the user enters sandbox credentials, indicating the
+PayPal SDK loaded correctly but the subscription creation request failed.
+
+================================================================================
+                           ROOT CAUSE ANALYSIS
+================================================================================
+
+CRITICAL ISSUE #1: INVALID/MOCK SUBSCRIPTION PLAN IDs
+------------------------------------------------------
+Location: src/pages/Subscribe.jsx (lines 38-40)
+
+The code uses MOCK plan IDs that don't exist in PayPal:
+
+    plan_id: selectedPlan.price === '10'
+      ? (import.meta.env.VITE_PAYPAL_PLAN_ID_BASIC || 'P-MOCK-10')   // INVALID
+      : (import.meta.env.VITE_PAYPAL_PLAN_ID_PRO || 'P-MOCK-20'),    // INVALID
+
+The fallback values 'P-MOCK-10' and 'P-MOCK-20' are placeholder strings,
+NOT real PayPal subscription plan IDs.
+
+Real PayPal plan IDs look like: P-5ML4271244454362WXNWU5NQ
+
+
+CRITICAL ISSUE #2: NO ENVIRONMENT CONFIGURATION FILE
+-----------------------------------------------------
+No .env file exists in the project root directory.
+
+Without a .env file, all PayPal configuration falls back to mock values:
+  - Client ID falls back to: 'sb' (generic sandbox)
+  - Plan IDs fall back to: 'P-MOCK-10' and 'P-MOCK-20' (non-existent)
+
+
+CRITICAL ISSUE #3: SUBSCRIPTION PLANS NOT CREATED IN PAYPAL
+-----------------------------------------------------------
+Even if you add a .env file, you must first CREATE the subscription plans
+in the PayPal Developer Dashboard. The plan IDs in your code must match
+actual plans created in your PayPal sandbox business account.
+
+================================================================================
+                         CODE ANALYSIS SUMMARY
+================================================================================
+
+FILE: src/pages/Subscribe.jsx
+
+PayPal SDK Loading (lines 50-64):
+- Loads PayPal SDK with subscription components
+- Uses client-id from VITE_PAYPAL_CLIENT_ID or 'sb' fallback
+- SDK URL includes: &vault=true&intent=subscription (correct for subscriptions)
+
+Subscription Creation (lines 35-41):
+- Calls actions.subscription.create() with plan_id
+- Plan ID comes from environment variables OR mock fallbacks
+- Mock fallback IDs ('P-MOCK-10', 'P-MOCK-20') cause the error
+
+Button Rendering (lines 30-48):
+- PayPal buttons render correctly
+- Style and layout configuration is valid
+- onApprove handler exists but never fires due to creation failure
+
+================================================================================
+                      BROWSER DEVTOOLS DEBUGGING
+================================================================================
+
+To capture detailed error information, open Browser DevTools:
+
+1. NETWORK TAB:
+   - Open DevTools (F12) > Network tab
+   - Filter by "paypal" or "XHR/Fetch"
+   - Click subscribe button and enter sandbox credentials
+   - Look for failed requests (red entries)
+   - Check Response tab for error details from PayPal API
+
+   Expected error in response:
+   {
+     "name": "RESOURCE_NOT_FOUND",
+     "message": "The specified resource does not exist.",
+     "debug_id": "...",
+     "details": [{
+       "issue": "INVALID_PLAN_ID",
+       "description": "Plan ID is invalid"
+     }]
+   }
+
+2. CONSOLE TAB:
+   - Look for PayPal SDK errors
+   - May show: "Error: Plan not found" or similar
+   - Check for CORS errors (unlikely but possible)
+
+3. APPLICATION TAB:
+   - Check Local Storage for any PayPal state
+   - Verify no conflicting cached data
+
+================================================================================
+                           SOLUTION STEPS
+================================================================================
+
+STEP 1: Create PayPal Sandbox Business Account
+----------------------------------------------
+1. Go to: https://developer.paypal.com/
+2. Log in with your PayPal developer account
+3. Navigate to: Dashboard > Sandbox > Accounts
+4. Create a Business sandbox account if you don't have one
+
+STEP 2: Create Subscription Products and Plans
+----------------------------------------------
+1. Go to: https://developer.paypal.com/dashboard/applications/sandbox
+2. Navigate to: Products & Plans (or use REST API)
+3. Create a Product:
+   - Name: "QMail Subscription"
+   - Type: SERVICE
+4. Create Plans under that Product:
+   - Plan 1: "Starter Top-up" - $10/month
+   - Plan 2: "Power User" - $20/month
+5. Copy the Plan IDs (format: P-XXXXXXXXXXXXXXXXXXXXX)
+
+STEP 3: Get Sandbox Client ID
+-----------------------------
+1. Go to: https://developer.paypal.com/dashboard/applications/sandbox
+2. Click on your sandbox app (or create Default Application)
+3. Copy the "Client ID" from the sandbox credentials
+
+STEP 4: Create .env File
+------------------------
+Create file: .env in project root with:
+
+    VITE_PAYPAL_CLIENT_ID=your-sandbox-client-id-here
+    VITE_PAYPAL_PLAN_ID_BASIC=P-xxxxx-your-10-dollar-plan-id
+    VITE_PAYPAL_PLAN_ID_PRO=P-xxxxx-your-20-dollar-plan-id
+
+STEP 5: Restart Development Server
+----------------------------------
+After creating .env file, restart Vite:
+    npm run dev
+
+================================================================================
+                         ADDITIONAL NOTES
+================================================================================
+
+PAYPAL SANDBOX TEST ACCOUNTS:
+- Use sandbox buyer account to test purchases
+- Do NOT use real credentials in sandbox
+- Sandbox buyer accounts can be created in PayPal Developer Dashboard
+
+COMMON SANDBOX LOGIN ISSUES:
+- Sandbox can be slow; wait for full page load
+- Clear browser cache if seeing stale errors
+- Try incognito/private window
+- Check PayPal sandbox status: https://www.paypal-status.com/
+
+PLAN ID vs CLIENT ID:
+- Client ID: Identifies YOUR app (merchant)
+- Plan ID: Identifies a specific subscription plan you created
+- Both are required for subscriptions to work
+
+ENVIRONMENT VARIABLE PREFIX:
+- Vite requires VITE_ prefix for client-side env vars
+- Variables without VITE_ prefix won't be exposed to the browser
+
+================================================================================
+                           QUICK VERIFICATION
+================================================================================
+
+After setup, verify in browser console:
+
+    // Check if env vars are loaded (run in DevTools console after page load)
+    // Note: This won't work directly, but you can add a temp console.log in code
+
+In the code (temporary debug):
+    console.log('Client ID:', import.meta.env.VITE_PAYPAL_CLIENT_ID);
+    console.log('Basic Plan:', import.meta.env.VITE_PAYPAL_PLAN_ID_BASIC);
+    console.log('Pro Plan:', import.meta.env.VITE_PAYPAL_PLAN_ID_PRO);
+
+Values should NOT show 'sb', 'P-MOCK-10', or 'P-MOCK-20'.
+
+================================================================================
+                              END OF REPORT
+================================================================================

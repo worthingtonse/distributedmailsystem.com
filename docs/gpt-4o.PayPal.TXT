@@ -1,0 +1,11 @@
+Findings from code review (no code changed):
+- PayPal client ID defaults to "sb" if VITE_PAYPAL_CLIENT_ID is missing in .env; using the default placeholder will trigger "Things don't appear to be working" in sandbox. Set your actual sandbox client ID and restart dev server.
+- Subscription buttons in src/pages/Subscribe.jsx use fallback plan IDs P-MOCK-10/P-MOCK-20 when env vars VITE_PAYPAL_PLAN_ID_BASIC/PRO are missing; PayPal rejects non-existent plan IDs with the same generic error. Create real sandbox plans and supply their IDs.
+- RegisterAddress.jsx and VerifiedAccess.jsx load the PayPal JS SDK without checking for load errors; if the SDK fails (bad client ID, adblock, CSP), buttons stay empty and the PayPal popup can error. VerifiedAccess has a redundant "script.src = script.src =" assignment—likely harmless but worth cleaning later.
+
+Things to check in the browser (DevTools):
+- Console: look for PayPal JS SDK errors (e.g., "client ID is invalid", "Expected intent to be subscription").
+- Network tab, filter by "paypal": inspect responses for "smart/buttons" and "api/paypal" calls; failed 4xx/5xx will include an error "name" and "message" JSON detailing the cause.
+- Verify the loaded SDK URL matches your environment: should include client-id=<your sandbox id>&currency=USD&components=buttons&vault=true&intent=subscription for the Subscribe page.
+- Confirm the createSubscription call is using the sandbox plan IDs you created; mismatched live-vs-sandbox plans or IDs with status INACTIVE will fail at approval.
+- Ensure you are logging in with a sandbox buyer account in the popup (not the merchant account); wrong account type also causes generic "not working" errors.

@@ -1,0 +1,15 @@
+Headline: Decentralized. Quantum-Safe. Unsurveillable.
+
+Sub-headline: QMail isn't a service; it's an open standard, open-source protocol. By removing the client-server architecture, we've removed the spies. No central authority, no metadata trails, and no "backdoors"—just email rebuilt from first principles for the post-quantum age.
+
+The Server Problem:
+If your email lives on a server, it can be subpoenaed, hacked, or scanned. Even if the message is encrypted, "They" know who you talked to and when. Modern encryption has a shelf life. "Harvest now, decrypt later" is a real threat.
+
+Shredded Delivery:
+Messages are shredded, encrypted with AES encryption, dispersed among tens of mail servers including those owned by you, your friends and family. There is no "Post Office" in the middle to tap.
+
+Post-Quantum Cryptography (PQC):
+We use a newly invented quantum-safe key exchange system that stays secure even when quantum computers arrive.
+
+Sovereign Identity:
+Your address is tied to a cryptographic key, not a central registrar or DNS provider. You can publish yourself in the Distributed Resource Director (Phase II) so others can find you or not. Own your identity.

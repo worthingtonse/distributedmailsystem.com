@@ -1,0 +1,127 @@
+QMAIL TECHNICAL WHITEPAPER SUMMARY
+===================================
+
+Executive Summary
+-----------------
+QMail is the first of 256 Top Level Domains in a decentralized, quantum-safe email protocol developed by the Perfect Money Foundation called DMS(Distributed Mail Protcol). This is an open standard with open source client and server software (Phase II). By eliminating the traditional client-server architecture, QMail removes centralized points of surveillance, data exposure, and attack. Messages are cryptographically shredded, distributed across independent servers, and protected by post-quantum cryptography—creating an email system designed for the surveillance age.
+
+
+Core Architecture
+-----------------
+
+1. RAID-Style Message Distribution ("Striping")
+
+   Unlike traditional email where messages reside on a single server, QMail splits each message into 2-32 encrypted fragments called "stripes." These stripes are distributed across independent mail servers, optionally operated by users, friends, or commercial providers.
+
+   - Data Stripes: Contain encrypted message fragments
+   - Parity Stripes: Enable message recovery if servers become unavailable
+   - Transposition Layer: Stripe ordering is randomized, adding an additional cryptographic barrier (32! possible combinations)
+
+   Reassembly requires access to all stripes AND knowledge of their correct ordering—neither of which any single server possesses.
+
+
+2. Encryption Stack
+
+   Layer 1: Per-Stripe AES-256 Encryption
+   Each stripe is independently encrypted with a unique AES-256 key, creating 32 separate cryptographic barriers.
+
+   Layer 2: Quantum-Safe Key Exchange (QKE)
+   Session keys are established using a post-quantum key exchange protocol, designed to remain secure against both classical and quantum computing attacks.
+
+   Layer 3: Transposition Cipher
+   Even with all stripes decrypted, an attacker must determine the correct ordering from over 2.6 × 10^35 possible permutations.
+
+
+3. Compact Binary Document Format (CBDF)
+
+   QMail replaces HTML/CSS with CBDF, a binary encoding that reduces message sizes by up to 99%. Key optimizations:
+
+   - 255 pre-defined layouts (1 byte vs. hundreds of bytes of HTML)
+   - 16-byte panel descriptors
+   - 65,535 colors (2 bytes vs. 6 bytes for hex codes)
+   - 65K standardized fonts
+
+   Result: Individuals can host mail servers on consumer hardware as a $4K DMS server acts as a $40K SMTP server.
+
+
+4. Beacon Notification System
+
+   Rather than polling servers, QMail uses persistent TCP connections to "Beacon Servers" for real-time notification. When a sender transmits a message:
+
+   1. Stripes are uploaded to the sender's chosen QMail servers
+   2. A "Tell" command notifies the recipient's Beacon server
+   3. The Beacon pushes notification to the recipient's client
+   4. Recipient downloads and reassembles stripes on-demand
+
+
+Economic Model: Attention Payments
+----------------------------------
+QMail introduces CloudCoin micropayments to solve spam:
+
+- Recipients set a "tip" price for receiving messages from unknown senders
+- Whitelisted contacts (friends, family) bypass payment requirements
+- Server operators earn a percentage of transaction fees
+- High-profile individuals can set prohibitive fees to filter low-value messages
+
+This creates a self-regulating marketplace where attention has measurable value.
+
+
+Threat Model Analysis
+---------------------
+To compromise a QMail message, an attacker must:
+
+1. Intercept up to 32 stripes traveling across potentially different networks (satellite, cellular, cable)
+2. Break post-quantum public key encryption to obtain session keys
+3. Break 32 independent AES-256 encryptions (2^256 key space each)
+4. Solve the transposition cipher (32! permutations)
+5. Repeat for every message
+
+Metadata Exposure:
+- Beacon Server administrators: Sender/receiver IDs, IP addresses, timestamps, approximate message size but this Beacon Server issue should be solved in Phase III of DMS development.
+
+No server operator can read message content or determine stripe ordering (Phase III).
+
+
+Identity & Addressing
+---------------------
+QMail addresses are cryptographic identifiers, not DNS-based hostnames:
+
+- 2-byte Coin ID
+- 1-byte Denomination
+- 4-byte Serial Number
+- Optional 1-byte Device ID
+
+Users can optionally publish themselves in the Distributed Resource Directory (Phase II) for discoverability—or remain unlisted for maximum privacy.
+
+
+Client Security
+---------------
+The QMail client is designed as a portable USB application:
+
+- All keys and CloudCoins stored on removable media
+- Local data encrypted with user password
+- Auto-logout and USB ejection after inactivity
+- No persistent data on host machine
+
+
+Development Phases
+------------------
+Phase I (Current): Core protocol, plain-text messaging, basic CBDF
+Phase II: Distributed Resource Directory, Distributed Key Exchange, advanced CBDF formatting, semantic AI encoding
+Phase III: Full GUI integration, cross-platform native clients
+
+
+Technical Specifications
+------------------------
+- Encryption: AES-256 (stripes), Post-Quantum KE (session keys)
+- Stripe Count: 2-32 configurable
+- Local Storage: SQLite 
+- API: RESTful endpoints (headless core)
+- Payment: CloudCoin micropayment integration
+- Protocol: Binary TCP (ports 50000-50024 for RAIDA but QMail servers can choose their own ports)
+- Message Format: CBDF (Compact Binary Document Format)
+
+
+Conclusion
+----------
+QMail represents a fundamental reimagining of email architecture. By distributing trust across independent servers, eliminating central authorities, and implementing defense-in-depth cryptography, QMail provides a communication system where privacy is guaranteed by mathematics—not policy.

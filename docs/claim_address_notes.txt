@@ -1,0 +1,66 @@
+# Claim Your Unique Decentralized Email Address
+
+### Example Addresses
+Here are some real-world-inspired examples of DMS addresses:
+
+- **Giga~CEO-VivaTech.John.Doe#8D2P**
+- **Bit~Go-49ers!.Laura.Croft#UYV4**
+- **Mega~Developer.Ron.Wagner#CA93**
+- **Kilo~的我大个.Wo.Chang#89RE**
+
+### How DMS Addresses Work
+Each address follows this format:  
+**Allegiance Level ~ Self-Describer . First Word . Second Word # Mailbox ID**
+
+- **Allegiance Level**: Your "domain" that signals commitment (more below).
+- **~ Self-Describer**: Optional! Express your identity, role, or personality (e.g., "CEO-VivaTech" or "Go-49ers!"). No periods, spaces, or quotes allowed.
+- **. First Word . Second Word**: Automatically pulled from the name on your payment method (e.g., first and last name on your credit/debit card).
+- **# Mailbox ID**: A unique random code assigned to your address.
+
+### Break Free from Big Tech Email
+Tired of centralized providers like Gmail or Outlook scanning your inbox, owning your data, and controlling your communication?
+
+The **Distributed Mail System (DMS)** is fully decentralized — no single company controls it. Your address lives in the **Distributed Resource Directory (DRD)**, a public, distributed "host file" that anyone can access and verify.
+
+### How DMS Prevents Spam and Abuse
+To stop anyone from claiming thousands of addresses and spamming, every DMS address requires a **refundable stake**.
+
+You deposit funds to "activate" your address — proving you're serious. If you stop using it, you get your money back. This economic incentive makes high-volume abuse expensive and impractical.
+
+Higher stakes = higher trust. That's why we have **Allegiance Levels**:
+
+| Level  | Stake Required | Status & Trust Signal                          | Best For                          |
+|--------|----------------|-----------------------------------------------|-----------------------------------|
+| **Bit**   | $10           | Entry level                                   | Casual users, testing             |
+| **Byte**  | $20           | Basic commitment                              | Everyday personal email           |
+| **Kilo**  | $50           | Moderate stake                                | Freelancers, small creators       |
+| **Mega**  | $100          | Strong signal of legitimacy                   | Professionals, businesses         |
+| **Giga**  | $1,000        | Highest trust — serious users only            | Executives, high-profile individuals |
+
+A Giga-level user has far more "skin in the game" than a Bit-level one, making them much more trustworthy. Legitimate professionals are unlikely to risk a $1,000 stake (and their reputation) on spam.
+
+While DMS has no built-in reputation system yet, third parties can easily build tools (e.g., open-rate boosters or filters) based on allegiance levels.
+
+### Craft Your Phase I Address Today
+In **Phase I**, your address is automatically published in the DRD. The First/Second Words come directly from your payment card name for verification.
+
+In **Phase II** (coming soon), you'll be able to edit your profile and add more details.
+
+It's easy to get started:
+
+1. **Choose Your Allegiance Level** (higher stake = higher status)
+2. **Enter Your Optional Self-Describer** (make it unique!)
+3. **Make the Refundable* Payment** (via credit/debit card)
+
+**Get started now — claim your decentralized email before someone else takes your perfect address!**
+
+*(Button: Start Claiming My Address)*
+Tabeen: We should have a radio selector that says "Use Free Edition of Desktop Client" or "Purchase Pro Edtion (Runs on USB Drives) for $10, or Mobile versions (Comming Soon) 
+
+
+
+This system empowers you with privacy, ownership, and real anti-spam protection through economics — not just filters. Join the future of email.
+
+* Note that refunds are available up to 30 days after your purchase. Refunds may take a few weeks to process due to payment systems holding money.  
+
+
