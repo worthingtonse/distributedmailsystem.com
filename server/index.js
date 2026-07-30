@@ -8,6 +8,10 @@ const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
+const fulfillment = require('./fulfillment');
+const subscriptions = require('./subscriptions');
+const { withLock } = require('./locks');
+
 const app = express();
 
 // --- 1. Middleware ---
@@ -183,12 +187,13 @@ const WALLET_WARNINGS_PATH = path.join(__dirname, 'wallet_stock_warnings.json');
 const WALLET_MAX_DOWNLOADS = 5;
 const WALLET_LOW_STOCK_THRESHOLD = 3;              // warn when a tier has this many zips or fewer
 const WALLET_WARNING_EMAIL = 'sean@raidatech.com';
+const OWNER_EMAIL = 'sean@raidatech.com';
 const WALLET_WARNING_INTERVAL_MS = 24 * 60 * 60 * 1000;  // at most one warning per tier per day
 
 // Authenticated SMTP via zeus (mailcow), credentials in .env.
 // The mail server only accepts an envelope sender owned by the login
 // (sean@raidatech.com), so that is the envelope; the visible From header
-// is SMTP_FROM (noreply@cloudcoin.com) per sysadmin instructions.
+// is SMTP_FROM (support@cloudcoin.com) per sysadmin instructions.
 // Falls back to the local MTA if SMTP fails, so warnings are never lost.
 const nodemailer = require('nodemailer');
 
@@ -196,12 +201,13 @@ function sendEmailViaSendmail(to, subject, body) {
     try {
         const message =
             `To: ${to}\r\n` +
-            `From: QMail Wallet Stock <noreply@cloudcoin.org>\r\n` +
+            `From: QMail Wallet Stock <support@cloudcoin.com>\r\n` +
+            `Reply-To: sean@raidatech.com\r\n` +
             `Subject: ${subject}\r\n` +
             `Content-Type: text/plain; charset=UTF-8\r\n` +
             `\r\n` +
             body + `\r\n`;
-        const proc = spawn('/usr/sbin/sendmail', ['-t', '-f', 'noreply@cloudcoin.org']);
+        const proc = spawn('/usr/sbin/sendmail', ['-t', '-f', 'sean@raidatech.com']);
         proc.on('error', err => console.error('sendmail spawn failed:', err.message));
         proc.on('close', code => {
             if (code === 0) console.log(`Email sent to ${to} via sendmail fallback: ${subject}`);
@@ -234,6 +240,7 @@ function sendEmail(to, subject, body) {
 
     transporter.sendMail({
         from: `"QMail Wallet Stock" <${process.env.SMTP_FROM || user}>`,
+        replyTo: 'sean@raidatech.com',
         sender: user,            // envelope sender must be the authenticated user
         envelope: { from: user, to: to },
         to: to,
@@ -248,6 +255,10 @@ function sendEmail(to, subject, body) {
         }
     });
 }
+
+// Locker-key inventory module needs the mailer for low-stock / low-balance alerts
+fulfillment.init({ sendEmail });
+subscriptions.init({ sendEmail, paypalEnv });
 
 function loadWalletRegistry() {
     try {
@@ -407,6 +418,64 @@ function updateWalletRegistryQmail(file, qmail) {
 
 const REDEEMED_ORDERS_PATH = path.join(__dirname, 'redeemed_orders.json');
 
+// Admin-managed data: influencer waitlist, bug-report dismissals, and the
+// cross-site bug-report feed written by cloudcoin.org/bugs-submit.php.
+const WAITLIST_PATH = path.join(__dirname, 'waitlist.json');
+const BUG_DISMISSED_PATH = path.join(__dirname, 'bug_dismissed.json');
+const BUG_REPORTS_PATH = '/var/www/cloudcoin.org/bug_reports.jsonl';
+
+// Tiny JSON array store helpers (atomic write via temp+rename).
+function loadJsonArray(file) {
+    try { const v = JSON.parse(fs.readFileSync(file, 'utf8')); return Array.isArray(v) ? v : []; }
+    catch { return []; }
+}
+function saveJsonArray(file, arr) {
+    const tmp = `${file}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(arr, null, 2));
+    fs.renameSync(tmp, file);
+}
+
+// Admin gate for the management endpoints. Returns true when authorized;
+// otherwise writes the response and returns false. Fail-closed like
+// /api/admin/stats: no ADMIN_KEY in .env means nobody gets in.
+function requireAdmin(req, res) {
+    const adminKey = process.env.ADMIN_KEY;
+    const provided = (req.body && req.body.key) || req.query.key;
+    if (!adminKey) {
+        res.status(503).json({ error: 'Admin access is not configured on this server.' });
+        return false;
+    }
+    if (provided !== adminKey) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return false;
+    }
+    return true;
+}
+
+// Reads stored bug reports (JSON-lines appended by cloudcoin.org's
+// bugs-submit.php) minus any the admin has dismissed. Newest first.
+function readBugReports() {
+    let dismissed = [];
+    try { dismissed = JSON.parse(fs.readFileSync(BUG_DISMISSED_PATH, 'utf8')); } catch { dismissed = []; }
+    const dismissedSet = new Set(dismissed);
+    let reports = [];
+    try {
+        const lines = fs.readFileSync(BUG_REPORTS_PATH, 'utf8').trim().split('\n').filter(Boolean);
+        for (const line of lines) {
+            try {
+                const r = JSON.parse(line);
+                if (r && r.id && !dismissedSet.has(r.id)) reports.push(r);
+            } catch { /* skip malformed line */ }
+        }
+    } catch { /* file may not exist yet */ }
+    return reports.reverse();
+}
+
+// Reads the influencer waitlist (newest first).
+function readWaitlist() {
+    return loadJsonArray(WAITLIST_PATH).slice().reverse();
+}
+
 function paypalEnv() {
     // Same source of truth as /api/paypal-config
     const { sandboxMode } = readPaymentConfig();
@@ -434,6 +503,20 @@ function markOrderRedeemed(orderID, purpose) {
     try { redeemed = JSON.parse(fs.readFileSync(REDEEMED_ORDERS_PATH, 'utf8')); } catch {}
     redeemed[`${orderID}:${purpose}`] = new Date().toISOString();
     fs.writeFileSync(REDEEMED_ORDERS_PATH, JSON.stringify(redeemed, null, 2));
+}
+
+// Rolls back a redemption when fulfillment delivered NOTHING, so a buyer who
+// paid but got zero addresses (Core down, pools empty) can safely retry
+// instead of being permanently replay-blocked.
+function unmarkOrderRedeemed(orderID, purpose) {
+    if (!orderID) return;
+    let redeemed = {};
+    try { redeemed = JSON.parse(fs.readFileSync(REDEEMED_ORDERS_PATH, 'utf8')); } catch {}
+    if (redeemed[`${orderID}:${purpose}`]) {
+        delete redeemed[`${orderID}:${purpose}`];
+        fs.writeFileSync(REDEEMED_ORDERS_PATH, JSON.stringify(redeemed, null, 2));
+        console.warn(`Rolled back redemption for order ${orderID} (${purpose}) - nothing delivered, buyer may retry.`);
+    }
 }
 
 // Asks PayPal whether the order was captured. Returns:
@@ -605,18 +688,158 @@ app.post('/api/generate-mailbox', async (req, res) => {
     }
 });
 
-// --- 5a. Wallet Stock Endpoint ---
-// Lets the client grey out sold-out tiers BEFORE the buyer pays
+// --- 5aa. Multi-Address Order Fulfillment (locker-key delivery) ---
+// The /register cart posts here after PayPal capture. Each unit consumes a
+// pre-minted locker key (its coin's serial was recorded at mint time),
+// derives the QMail address from that serial, and ships with its own
+// 200 CC bonus locker. Pools are refilled in the background afterwards.
+app.post('/api/fulfill-order', async (req, res) => {
+    if (!readPaymentConfig().paymentsEnabled) {
+        return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
+    }
+
+    const { firstName, lastName, items, paypalOrderID, buyerEmail } = req.body;
+
+    // Price the cart from server-side prices - the browser total is never trusted
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ success: false, error: 'Cart is empty.' });
+    }
+    let totalUSD = 0, totalUnits = 0;
+    for (const item of items) {
+        const cls = fulfillment.CLASSES[item.class];
+        const qty = parseInt(item.quantity, 10);
+        if (!cls || !Number.isInteger(qty) || qty < 1) {
+            return res.status(400).json({ success: false, error: 'Invalid cart item.' });
+        }
+        totalUSD += cls.priceUSD * qty;
+        totalUnits += qty;
+    }
+    if (totalUnits > 20) {
+        return res.status(400).json({ success: false, error: 'A single order is limited to 20 addresses.' });
+    }
+
+    // Serialize the whole verify-then-consume sequence per order ID so a
+    // duplicate/replayed POST for one payment cannot pass the redemption
+    // check twice and hand out two sets of keys.
+    let result;
+    try {
+        result = await withLock(`order:${paypalOrderID || 'none'}`, async () => {
+            const rejection = await requireVerifiedPayment(paypalOrderID, totalUSD, 'mailbox');
+            if (rejection) return { httpCode: rejection.httpCode, body: { success: false, error: rejection.error } };
+
+            console.log(`\n>>> Fulfilling order ${paypalOrderID || '(no id)'}: ${firstName} ${lastName}, ${totalUnits} address(es), $${totalUSD}`);
+
+            const addresses = [];
+            const consumedByClass = {};
+            let bonusConsumed = 0;
+
+            for (const item of items) {
+                const qty = parseInt(item.quantity, 10);
+                for (let i = 0; i < qty; i++) {
+                    try {
+                        const key = await fulfillment.getAddressKey(item.class);
+                        // A missing bonus must not sink the address delivery
+                        let bonusLockerKey = null;
+                        try {
+                            bonusLockerKey = await fulfillment.getBonusKey();
+                        } catch (bonusErr) {
+                            console.error(`Bonus key unavailable (${item.class} unit):`, bonusErr.message);
+                        }
+                        const qmail = canonicalAddress(key.serial, item.class);
+
+                        addresses.push({ qmail, class: item.class, lockerKey: key.lockerKey, bonusLockerKey });
+                        consumedByClass[item.class] = (consumedByClass[item.class] || 0) + 1;
+                        if (bonusLockerKey) bonusConsumed++;
+
+                        fulfillment.logIssued({
+                            orderID: paypalOrderID || '', firstName, lastName,
+                            qmail, class: item.class, lockerKey: key.lockerKey,
+                            serial: key.serial, bonusLockerKey: bonusLockerKey || ''
+                        });
+                        logSoldCoin(firstName, lastName, key.lockerKey, qmail);
+                    } catch (err) {
+                        console.error(`SALE WITHOUT FULL DELIVERY: ${item.class} unit failed (order ${paypalOrderID}):`, err.message);
+                        // Nothing delivered at all -> roll the redemption back so
+                        // the buyer isn't paid-but-blocked; they can retry.
+                        if (addresses.length === 0) unmarkOrderRedeemed(paypalOrderID, 'mailbox');
+                        sendEmail('sean@raidatech.com',
+                            'URGENT: DMS sale with incomplete delivery',
+                            `Order ${paypalOrderID} (${firstName} ${lastName}) paid for ${totalUnits} address(es) ` +
+                            `but only ${addresses.length} were delivered.\n\n` +
+                            `Failed at: ${item.class} (${err.message})\n\n` +
+                            `Delivered so far:\n${addresses.map(a => `  ${a.qmail}  key=${a.lockerKey}`).join('\n') || '  (none)'}\n\n` +
+                            `Buyer email: ${buyerEmail || '(not provided)'}\n\n` +
+                            `Deliver the remainder manually and reply to the buyer.`);
+                        fulfillment.scheduleReplenish(consumedByClass, bonusConsumed);
+                        if (addresses.length) emailOrderKeys(buyerEmail, addresses, true);
+                        return {
+                            httpCode: addresses.length ? 207 : 503,
+                            body: {
+                                success: addresses.length > 0,
+                                partial: true,
+                                addresses,
+                                error: `We could only deliver ${addresses.length} of ${totalUnits} addresses. ` +
+                                       `Your payment was received - please contact support and we will deliver the rest promptly.`
+                            }
+                        };
+                    }
+                }
+            }
+
+            fulfillment.scheduleReplenish(consumedByClass, bonusConsumed);
+            emailOrderKeys(buyerEmail, addresses, false);
+            sendEmail(OWNER_EMAIL,
+                'DMS QMail purchase completed - order ' + (paypalOrderID || '(no PayPal ID)'),
+                'A QMail purchase was completed and delivered.\n\n' +
+                'Buyer: ' + (firstName || '') + ' ' + (lastName || '') + '\n' +
+                'Buyer email: ' + (buyerEmail || '(not provided)') + '\n' +
+                'PayPal order: ' + (paypalOrderID || '(not provided)') + '\n' +
+                'Total: $' + totalUSD + ' USD\n' +
+                'Addresses and locker keys:\n' +
+                addresses.map(a => '  ' + a.qmail + ' (' + a.class + ') - mailbox=' + a.lockerKey +
+                    (a.bonusLockerKey ? ', bonus=' + a.bonusLockerKey : '')).join('\n'));
+            console.log(`Order fulfilled: ${addresses.map(a => a.qmail).join(', ')}`);
+            return { httpCode: 200, body: { success: true, addresses } };
+        });
+    } catch (err) {
+        console.error('fulfill-order failed unexpectedly:', err.message);
+        return res.status(500).json({ success: false, error: 'Order processing error. Your payment was received - contact support.' });
+    }
+
+    res.status(result.httpCode).json(result.body);
+});
+
+// Emails the buyer their locker keys as an out-of-band backup, so a dropped
+// HTTP response never strands them without the keys they paid for. PayPal
+// supplies the payer email; if the buyer opted out or it's missing, skip.
+function emailOrderKeys(buyerEmail, addresses, partial) {
+    if (!buyerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail) || addresses.length === 0) return;
+    const lines = addresses.map(a =>
+        `  ${a.qmail}  (.${a.class})\n` +
+        `     Mailbox Locker Key: ${a.lockerKey}\n` +
+        (a.bonusLockerKey ? `     Bonus Coins Locker Key: ${a.bonusLockerKey}\n` : ''));
+    sendEmail(buyerEmail,
+        'Your QMail address keys',
+        `Thank you for your purchase. Here are your QMail address${addresses.length > 1 ? 'es' : ''} and locker keys:\n\n` +
+        lines.join('\n') +
+        `\nEnter each Mailbox Locker Key in the QMail software to claim your address coin, and put each\n` +
+        `Bonus Coins Locker Key into the Wallet part of the software (200 CloudCoins each).\n\n` +
+        (partial ? `NOTE: part of your order is still being prepared - support will deliver the rest shortly.\n\n` : '') +
+        `Download QMail: https://CloudCoinConsortium.com/use.php\n` +
+        `Getting started: https://www.distributedmailsystem.com/getting-started\n` +
+        `Support: 20.123@giga or CloudCoin@Protonmail.com`);
+}
+
+// --- 5a. Stock Endpoint ---
+// Lets the client grey out sold-out tiers BEFORE the buyer pays.
+// Counts come from the pre-minted locker-key pools (plus "bonus").
 app.get('/api/wallet-stock', (req, res) => {
-    const stock = {};
-    ['bit', 'byte', 'kilo', 'mega', 'giga'].forEach(c => {
-        stock[c] = countAvailableWallets(c);
-    });
-    res.json(stock);
+    res.json(fulfillment.stockCounts());
 });
 
 // --- 5b. Make User Anonymous ---
-// Removes FirstName and LastName from users.csv for the given email address
+// Strips FirstName/LastName from the issued-keys ledger (current sales) and
+// from users.csv (legacy rows) for the given qmail address.
 app.post('/api/make-anonymous', (req, res) => {
     const { email } = req.body;
     if (!email) {
@@ -624,32 +847,33 @@ app.post('/api/make-anonymous', (req, res) => {
     }
 
     try {
-        if (!fs.existsSync(USERS_CSV_PATH)) {
-            return res.status(404).json({ success: false, error: 'Users file not found.' });
-        }
+        let found = fulfillment.anonymizeIssued(email);
 
-        const content = fs.readFileSync(USERS_CSV_PATH, 'utf8');
-        const lines = content.split('\n');
-        let found = false;
-
-        const updated = lines.map((line, i) => {
-            if (i === 0) return line; // keep header
-            if (!line.trim()) return line; // keep empty lines
-            const cols = line.split(',');
-            if (cols[0] === email || cols[0] === `"${email}"`) {
+        if (fs.existsSync(USERS_CSV_PATH)) {
+            const lines = fs.readFileSync(USERS_CSV_PATH, 'utf8').split('\n');
+            let foundLegacy = false;
+            const updated = lines.map((line, i) => {
+                if (i === 0) return line; // keep header
+                if (!line.trim()) return line; // keep empty lines
+                const cols = line.split(',');
+                if (cols[0] === email || cols[0] === `"${email}"`) {
+                    foundLegacy = true;
+                    cols[1] = ''; // FirstName
+                    cols[2] = ''; // LastName
+                    return cols.join(',');
+                }
+                return line;
+            });
+            if (foundLegacy) {
+                fs.writeFileSync(USERS_CSV_PATH, updated.join('\n'));
                 found = true;
-                cols[1] = ''; // FirstName
-                cols[2] = ''; // LastName
-                return cols.join(',');
             }
-            return line;
-        });
+        }
 
         if (!found) {
             return res.status(404).json({ success: false, error: 'Email not found in records.' });
         }
 
-        fs.writeFileSync(USERS_CSV_PATH, updated.join('\n'));
         console.log(`Made anonymous: ${email}`);
         res.json({ success: true });
     } catch (err) {
@@ -668,6 +892,16 @@ app.post('/api/register-influencer', (req, res) => {
 
     if (!fullName || !qmailAddress || !paypalEmail) {
         return res.status(400).json({ success: false, error: 'fullName, qmailAddress, and paypalEmail are required.' });
+    }
+
+    // Policy: only high-stake .Giga or .Epic address holders may receive money
+    // as an influencer. The stake cost ($1,000 / $10,000) is the anti-abuse
+    // gate that keeps bad actors out until per-influencer KYC lands.
+    if (!/@(giga|epic)$/i.test(String(qmailAddress).trim())) {
+        return res.status(400).json({
+            success: false,
+            error: 'Influencer payouts require a .Giga or .Epic QMail address. Please register with a Giga or Epic address.'
+        });
     }
 
     const csvPath = '/var/www/distributedmailsystem.com/influencer_payments.csv';
@@ -754,54 +988,225 @@ app.get('/api/verify-influencer', (req, res) => {
 
 // --- 8. Affiliate Sale Logging Endpoint ---
 // Called by VerifiedAccess.jsx after successful payment
-app.post('/api/log-affiliate-sale', (req, res) => {
+function logAffiliateSale(data) {
     const {
         influencerName, influencerAddress, influencerInboxFee,
         buyerFirstName, buyerLastName, buyerEmail,
         paymentAmount, cloudCoinsPurchased,
         createdEmailAddress, emailAddressCreated
-    } = req.body;
-
-    if (!influencerName || !buyerFirstName || !paymentAmount) {
-        return res.status(400).json({ success: false, error: 'Missing required fields.' });
-    }
+    } = data;
 
     const csvPath = path.join(__dirname, 'affiliate_sales.csv');
     const headers = 'Timestamp,InfluencerName,InfluencerAddress,InfluencerInboxFee,BuyerFirstName,BuyerLastName,BuyerEmail,PaymentAmount,CloudCoinsPurchased,CreatedEmailAddress,EmailAddressCreated';
 
+    if (!fs.existsSync(csvPath)) {
+        fs.writeFileSync(csvPath, headers + '\n');
+    }
+
+    const escapeField = (field) => {
+        const str = String(field || '').replace(/"/g, '""');
+        return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
+    };
+
+    const row = [
+        escapeField(new Date().toISOString()),
+        escapeField(influencerName),
+        escapeField(influencerAddress),
+        escapeField(influencerInboxFee),
+        escapeField(buyerFirstName),
+        escapeField(buyerLastName),
+        escapeField(buyerEmail),
+        escapeField(paymentAmount),
+        escapeField(cloudCoinsPurchased),
+        escapeField(createdEmailAddress),
+        escapeField(emailAddressCreated)
+    ].join(',') + '\n';
+
+    fs.appendFileSync(csvPath, row);
+    console.log(`Affiliate sale logged: ${buyerFirstName} ${buyerLastName} -> ${influencerName} ($${paymentAmount})`);
+}
+
+app.post('/api/log-affiliate-sale', (req, res) => {
+    const { influencerName, buyerFirstName, paymentAmount } = req.body;
+    if (!influencerName || !buyerFirstName || !paymentAmount) {
+        return res.status(400).json({ success: false, error: 'Missing required fields.' });
+    }
     try {
-        if (!fs.existsSync(csvPath)) {
-            fs.writeFileSync(csvPath, headers + '\n');
-        }
-
-        const escapeField = (field) => {
-            const str = String(field || '').replace(/"/g, '""');
-            return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str}"` : str;
-        };
-
-        const timestamp = new Date().toISOString();
-        const row = [
-            escapeField(timestamp),
-            escapeField(influencerName),
-            escapeField(influencerAddress),
-            escapeField(influencerInboxFee),
-            escapeField(buyerFirstName),
-            escapeField(buyerLastName),
-            escapeField(buyerEmail),
-            escapeField(paymentAmount),
-            escapeField(cloudCoinsPurchased),
-            escapeField(createdEmailAddress),
-            escapeField(emailAddressCreated)
-        ].join(',') + '\n';
-
-        fs.appendFileSync(csvPath, row);
-        console.log(`Affiliate sale logged: ${buyerFirstName} ${buyerLastName} -> ${influencerName} ($${paymentAmount})`);
-
+        logAffiliateSale(req.body);
         res.json({ success: true });
     } catch (err) {
         console.error("Failed to log affiliate sale:", err.message);
         res.status(500).json({ success: false, error: 'Failed to log sale.' });
     }
+});
+
+// --- 8b. Influencer Combined Fulfillment ---
+// One PayPal payment on the /access page can cover (a) CloudCoins to message
+// the influencer, (b) any address cart the visitor chose to buy, and (c) a
+// free bonus .byte address. The payment is verified ONCE against the combined
+// total (coins + paid addresses), so the same dollars can never be counted
+// twice across purposes. Attribution is logged server-side.
+app.post('/api/fulfill-influencer', async (req, res) => {
+    if (!readPaymentConfig().paymentsEnabled) {
+        return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
+    }
+
+    const {
+        firstName, lastName, buyerEmail, paypalOrderID,
+        coinsDollars, items, wantBonusAddress,
+        influencerName, influencerAddress, influencerInboxFee
+    } = req.body;
+
+    const coins$ = Number(coinsDollars) || 0;
+    if (coins$ < 0 || coins$ > 1000) {
+        return res.status(400).json({ success: false, error: 'Invalid coins amount.' });
+    }
+
+    // Price any paid address cart from server-side prices
+    const cartItems = Array.isArray(items) ? items : [];
+    let cartTotal = 0, cartUnits = 0;
+    for (const item of cartItems) {
+        const cls = fulfillment.CLASSES[item.class];
+        const qty = parseInt(item.quantity, 10);
+        if (!cls || !Number.isInteger(qty) || qty < 1) {
+            return res.status(400).json({ success: false, error: 'Invalid address in cart.' });
+        }
+        cartTotal += cls.priceUSD * qty;
+        cartUnits += qty;
+    }
+    if (cartUnits > 20) {
+        return res.status(400).json({ success: false, error: 'A single order is limited to 20 addresses.' });
+    }
+
+    const grandTotal = coins$ + cartTotal;
+    if (grandTotal <= 0) {
+        return res.status(400).json({ success: false, error: 'Nothing to purchase.' });
+    }
+
+    let result;
+    try {
+        result = await withLock(`order:${paypalOrderID || 'none'}`, async () => {
+            // Single verification against the combined total, single redemption
+            const rejection = await requireVerifiedPayment(paypalOrderID, grandTotal, 'influencer');
+            if (rejection) return { httpCode: rejection.httpCode, body: { success: false, error: rejection.error } };
+
+            console.log(`\n>>> Influencer fulfill ${paypalOrderID || '(no id)'}: ${firstName} ${lastName}, $${coins$} coins + ${cartUnits} paid addr + ${wantBonusAddress ? '1 bonus' : 'no bonus'}`);
+
+            const buyer = { firstName, lastName };
+            let cloudCoins = 0, cloudCoinsLockerCode = null;
+            const addresses = [];
+            let delivered = false;
+            let stuck = null;
+
+            // 1. CloudCoins to message the influencer (amount-mode deposits the
+            //    real coin count, unlike the single-coin legacy endpoint).
+            if (coins$ > 0) {
+                try {
+                    cloudCoins = coins$ * 10;
+                    cloudCoinsLockerCode = await fulfillment.mintAmountLocker(cloudCoins);
+                    delivered = true;
+                } catch (err) {
+                    console.error('Influencer coins mint failed:', err.message);
+                    stuck = `CloudCoins (${err.message})`;
+                    cloudCoins = 0;
+                }
+            }
+
+            // 2. Any paid addresses the visitor bought
+            for (const item of cartItems) {
+                const qty = parseInt(item.quantity, 10);
+                for (let i = 0; i < qty && !stuck; i++) {
+                    try {
+                        const a = await fulfillment.issueAddressUnit(item.class, buyer, paypalOrderID);
+                        logSoldCoin(firstName, lastName, a.lockerKey, a.qmail);
+                        addresses.push(a);
+                        delivered = true;
+                    } catch (err) {
+                        console.error(`Influencer paid address failed (${item.class}):`, err.message);
+                        stuck = `${item.class} address (${err.message})`;
+                    }
+                }
+            }
+
+            // 3. Free bonus .byte address (the "get your own address free" perk)
+            if (wantBonusAddress && !stuck) {
+                try {
+                    const a = await fulfillment.issueAddressUnit('byte', buyer, paypalOrderID);
+                    logSoldCoin(firstName, lastName, a.lockerKey, a.qmail);
+                    addresses.push({ ...a, free: true });
+                    delivered = true;
+                } catch (err) {
+                    console.error('Influencer bonus address failed:', err.message);
+                    stuck = `bonus address (${err.message})`;
+                }
+            }
+
+            // Nothing delivered at all -> roll back so the buyer can retry
+            if (!delivered) {
+                unmarkOrderRedeemed(paypalOrderID, 'influencer');
+                return { httpCode: 503, body: { success: false, error: 'We could not complete your order. Your payment was received - please contact support.' } };
+            }
+
+            // Attribution (server-side, reliable)
+            try {
+                logAffiliateSale({
+                    influencerName, influencerAddress, influencerInboxFee,
+                    buyerFirstName: firstName, buyerLastName: lastName, buyerEmail,
+                    paymentAmount: grandTotal,
+                    cloudCoinsPurchased: cloudCoins,
+                    createdEmailAddress: addresses.length > 0,
+                    emailAddressCreated: addresses.map(a => a.qmail).join('; ')
+                });
+            } catch (err) {
+                console.error('Affiliate logging failed (non-fatal):', err.message);
+            }
+
+            fulfillment.scheduleReplenish(
+                addresses.reduce((m, a) => { m[a.class] = (m[a.class] || 0) + 1; return m; }, {}),
+                addresses.filter(a => a.bonusLockerKey).length
+            );
+            if (addresses.length && buyerEmail) emailOrderKeys(buyerEmail, addresses, !!stuck);
+
+            if (stuck) {
+                sendEmail('sean@raidatech.com',
+                    'URGENT: DMS influencer sale partially delivered',
+                    `Order ${paypalOrderID} (${firstName} ${lastName}) via ${influencerName}: ` +
+                    `delivered coins=${cloudCoins} CC and ${addresses.length} address(es), ` +
+                    `but failed at ${stuck}. Buyer email: ${buyerEmail || '(none)'}. Deliver the rest manually.`);
+            }
+
+            if (!stuck) {
+                sendEmail(OWNER_EMAIL,
+                    'DMS influencer purchase completed - order ' + (paypalOrderID || '(no PayPal ID)'),
+                    'An influencer QMail/CloudCoin purchase was completed and delivered.\n\n' +
+                    'Buyer: ' + (firstName || '') + ' ' + (lastName || '') + '\n' +
+                    'Buyer email: ' + (buyerEmail || '(not provided)') + '\n' +
+                    'PayPal order: ' + (paypalOrderID || '(not provided)') + '\n' +
+                    'Total: $' + grandTotal + ' USD\n' +
+                    'CloudCoins: ' + cloudCoins + '\n' +
+                    'Addresses:\n' +
+                    addresses.map(a => '  ' + a.qmail + ' (' + a.class + ') - mailbox=' + a.lockerKey +
+                        (a.bonusLockerKey ? ', bonus=' + a.bonusLockerKey : '')).join('\n'));
+            }
+
+            return {
+                httpCode: stuck ? 207 : 200,
+                body: {
+                    success: true,
+                    partial: !!stuck,
+                    cloudCoins,
+                    cloudCoinsLockerCode,
+                    addresses,
+                    error: stuck ? 'Part of your order is still being prepared - your payment was received and support will deliver the rest promptly.' : undefined
+                }
+            };
+        });
+    } catch (err) {
+        console.error('fulfill-influencer failed unexpectedly:', err.message);
+        return res.status(500).json({ success: false, error: 'Order processing error. Your payment was received - contact support.' });
+    }
+
+    res.status(result.httpCode).json(result.body);
 });
 
 // --- 9. CloudCoins Locker Generation Endpoint ---
@@ -844,8 +1249,15 @@ app.post('/api/generate-cloudcoins-locker', async (req, res) => {
 
     try {
         const coreResponse = await axios.get(
-            `http://localhost:8080/api/transactions/locker/put-one-coin?locker_key=${lockerKey}&denomination=${bestDenom.coinDenomination}`,
-            { timeout: 30000 }
+            `http://localhost:8080/api/transactions/locker/put-one-coin`,
+            {
+                params: {
+                    locker_key: lockerKey,
+                    denomination: bestDenom.coinDenomination,
+                    wallet_path: fulfillment.FUNDING_WALLET
+                },
+                timeout: 30000
+            }
         );
 
         const data = coreResponse.data;
@@ -873,6 +1285,151 @@ app.post('/api/generate-cloudcoins-locker', async (req, res) => {
             res.status(500).json({ success: false, error: `Core service error: ${error.message}` });
         }
     }
+});
+
+// --- 9b. Subscription Recording Endpoint ---
+// Called by Subscribe.jsx right after PayPal approves the subscription in
+// the browser. Persists who gets topped up, where, and the backup email.
+app.post('/api/record-subscription', async (req, res) => {
+    // Same kill-switch as the address store — payments-enabled=false closes
+    // subscription sales too, not just /register.
+    if (!readPaymentConfig().paymentsEnabled) {
+        return res.status(503).json({ success: false, error: "Payments are temporarily disabled - coming soon." });
+    }
+
+    const { subscriptionID, planKey, addresses, backupEmail, allowSubscriptionQmails } = req.body;
+
+    if (!subscriptionID || typeof subscriptionID !== 'string' || subscriptionID.length > 64) {
+        return res.status(400).json({ success: false, error: 'A valid subscriptionID is required.' });
+    }
+    if (!subscriptions.PLAN_DOLLARS[planKey]) {
+        return res.status(400).json({ success: false, error: 'Unknown plan.' });
+    }
+    if (!Array.isArray(addresses) || addresses.length === 0 ||
+        addresses.length > subscriptions.MAX_ADDRESSES_PER_SUB ||
+        addresses.some(a => typeof a !== 'string' || !subscriptions.QMAIL_ADDRESS_RE.test(a.trim()))) {
+        return res.status(400).json({ success: false, error: 'One or more QMail addresses are invalid.' });
+    }
+    // Email is no longer collected on the subscribe page — PayPal supplies the
+    // buyer's email at purchase. If a backupEmail is ever passed, it must still
+    // be well-formed, but it is optional.
+    if (backupEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(backupEmail)) {
+        return res.status(400).json({ success: false, error: 'If provided, the backup email must be valid.' });
+    }
+
+    const v = await subscriptions.verifySubscription(subscriptionID);
+    if (!v.verified) {
+        console.warn(`SUBSCRIPTION REJECTED: ${subscriptionID} - ${v.reason}`);
+        return res.status(402).json({ success: false, error: `PayPal did not confirm this subscription (${v.reason}).` });
+    }
+
+    try {
+        const outcome = await subscriptions.recordSubscription({
+            subscriptionID,
+            planKey,
+            addresses: addresses.map(a => a.trim()),
+            backupEmail: backupEmail ? backupEmail.trim() : '',
+            allowSubscriptionQmails: allowSubscriptionQmails !== false,
+            // Captured from PayPal so a later self-service cancellation can be
+            // matched by cardholder name + card last-four.
+            subscriberName: (v.subscriber && v.subscriber.name) || '',
+            subscriberEmail: (v.subscriber && v.subscriber.email) || '',
+            cardLastDigits: (v.subscriber && v.subscriber.cardLastDigits) || ''
+        });
+        if (!outcome.ok && outcome.conflict) {
+            // Anti-hijack: this ID is already recorded with different details.
+            return res.status(409).json({
+                success: false,
+                error: 'This subscription is already registered. If you need to change its delivery addresses, contact support.'
+            });
+        }
+        if (outcome.created) {
+            sendEmail(OWNER_EMAIL,
+                'DMS subscription started - ' + subscriptionID,
+                'A new DMS subscription was started.\n\n' +
+                'Subscription: ' + subscriptionID + '\n' +
+                'Plan: ' + planKey + '\n' +
+                'Subscriber: ' + ((v.subscriber && v.subscriber.name) || '(not provided)') + '\n' +
+                'Subscriber email: ' + ((v.subscriber && v.subscriber.email) || '(not provided)') + '\n' +
+                'QMail addresses:\n  ' + addresses.join('\n  '));
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Failed to record subscription:', err.message);
+        res.status(500).json({ success: false, error: 'Failed to save the subscription. Keep your subscription ID and contact support.' });
+    }
+});
+
+// --- 9b². Self-service subscription cancellation ---
+// One subscription (one PayPal payment) can cover several qmail addresses, so
+// the customer only needs to enter ANY one of the addresses on it — we cancel
+// the whole subscription (every address on it) at PayPal and drop our record.
+app.post('/api/cancel-subscription', async (req, res) => {
+    const qmail = (req.body && req.body.qmail ? String(req.body.qmail) : '').trim();
+
+    // Permissive shape check (includes 'epic'); the real gate is whether it
+    // matches an address on an active subscription.
+    if (!/^\d{1,3}(\.\d{1,3}){0,2}@(bit|byte|kilo|mega|giga|epic)$/i.test(qmail)) {
+        return res.status(400).json({
+            success: false,
+            error: 'Please enter one of the QMail addresses on your subscription (e.g. 38.88@bit).'
+        });
+    }
+
+    try {
+        const outcome = await subscriptions.cancelByQmailAddress({ qmail });
+        if (outcome.ok) {
+            return res.json({ success: true, addresses: outcome.addresses || [] });
+        }
+        // Found the subscription but PayPal wouldn't cancel it — don't tell the
+        // customer we couldn't find it; point them at support instead.
+        if (outcome.reason === 'paypal-error') {
+            return res.status(502).json({
+                success: false,
+                error: "We found your subscription but couldn't reach PayPal to cancel it just now. Please try again shortly, or email CloudCoin@Protonmail.com and we'll take care of it."
+            });
+        }
+        return res.status(404).json({
+            success: false,
+            error: "We couldn't find an active subscription for that QMail address."
+        });
+    } catch (err) {
+        console.error('Cancel subscription failed:', err.message);
+        return res.status(500).json({ success: false, error: 'Something went wrong while cancelling your subscription.' });
+    }
+});
+
+// --- 9c. PayPal Webhook Receiver ---
+// PayPal calls this on every subscription event. PAYMENT.SALE.COMPLETED is
+// the monthly billing trigger that mints and delivers the coins. Configure
+// the webhook in the PayPal developer dashboard pointing at this URL and put
+// its ID in .env as PAYPAL_WEBHOOK_ID_SANDBOX / PAYPAL_WEBHOOK_ID_LIVE.
+app.post('/api/paypal/webhook', async (req, res) => {
+    const event = req.body || {};
+    const { sandboxMode } = readPaymentConfig();
+
+    const genuine = await subscriptions.verifyWebhookSignature(req.headers, event, sandboxMode);
+    if (!genuine) {
+        return res.status(400).json({ received: false });
+    }
+
+    // Durably record the billing event BEFORE acknowledging, so a crash
+    // between the ACK and fulfillment can't lose it (PayPal never resends an
+    // acknowledged delivery). retryPendingDeliveries then completes it.
+    try {
+        subscriptions.preRecordWebhook(event);
+    } catch (err) {
+        // Persisting failed - do NOT ack; let PayPal retry the delivery.
+        console.error('Failed to persist webhook before ACK:', err.message);
+        return res.status(500).json({ received: false });
+    }
+
+    // Acknowledge; fulfillment (minting + delivery) can take a while.
+    res.json({ received: true });
+
+    subscriptions.handleWebhookEvent(event).catch(err => {
+        console.error(`Webhook handling failed for ${event.event_type}:`, err.message);
+    });
 });
 
 // --- 10. Analytics Event Tracking Endpoint ---
@@ -915,7 +1472,7 @@ app.post('/api/track', (req, res) => {
 
 // --- 11. Analytics Dashboard Data Endpoint ---
 // Returns aggregated stats from all data files for the admin dashboard
-app.get('/api/admin/stats', (req, res) => {
+app.get('/api/admin/stats', async (req, res) => {
     const password = req.query.key;
     const adminKey = process.env.ADMIN_KEY;
 
@@ -1035,6 +1592,24 @@ app.get('/api/admin/stats', (req, res) => {
         // Recent sales (last 10)
         const recentSales = affiliateSales.slice(-10).reverse();
 
+        // --- Operations: live payment-system state (pools, wallet, subs, issued) ---
+        // Each piece is guarded so one failure can't blank the whole dashboard.
+        let pools = null, walletBalance = null, subSummary = null, issued = null;
+        try { pools = fulfillment.stockCounts(); } catch (e) { console.error('stats pools:', e.message); }
+        try { walletBalance = await fulfillment.fundingBalance(); } catch (e) { console.error('stats wallet:', e.message); }
+        try { subSummary = subscriptions.summary(); } catch (e) { console.error('stats subs:', e.message); }
+        try { issued = fulfillment.issuedSummary(); } catch (e) { console.error('stats issued:', e.message); }
+
+        const operations = {
+            pools,                                        // { bit, byte, kilo, mega, giga, bonus }
+            walletBalance,                                // { balance, notes } | null
+            lowBalanceThreshold: parseInt(process.env.WALLET_LOW_BALANCE_THRESHOLD || '25000', 10),
+            subscriptions: subSummary,                    // status counts + MRR + pending deliveries
+            issued,                                       // { total, byClass, lastIssuedAt }
+            paymentsEnabled: readPaymentConfig().paymentsEnabled,
+            sandboxMode: readPaymentConfig().sandboxMode,
+        };
+
         res.json({
             overview: {
                 totalRevenue,
@@ -1049,10 +1624,83 @@ app.get('/api/admin/stats', (req, res) => {
             recentEvents,
             recentSales,
             influencers,
+            operations,
+            waitlist: readWaitlist(),
+            bugs: readBugReports(),
         });
     } catch (err) {
         console.error("Failed to generate stats:", err.message);
         res.status(500).json({ error: 'Failed to generate stats.' });
+    }
+});
+
+// --- Influencer waitlist ---
+// Public: anyone interested in the (Phase II) influencer program can sign up.
+app.post('/api/waitlist', (req, res) => {
+    const name = String(req.body.name || '').trim().slice(0, 120);
+    const email = String(req.body.email || '').trim().slice(0, 200);
+    const social = String(req.body.social || '').trim().slice(0, 300);
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+        return res.status(400).json({ success: false, error: 'A valid email is required.' });
+    }
+    try {
+        const list = loadJsonArray(WAITLIST_PATH);
+        // De-dupe on email (case-insensitive) so repeat clicks don't pile up.
+        if (list.some(e => (e.email || '').toLowerCase() === email.toLowerCase())) {
+            return res.json({ success: true, message: "You're already on the list." });
+        }
+        const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        list.push({ id, timestamp: new Date().toISOString(), name, email, social });
+        saveJsonArray(WAITLIST_PATH, list);
+        res.json({ success: true, message: "You're on the waitlist!" });
+    } catch (err) {
+        console.error('Waitlist save failed:', err.message);
+        res.status(500).json({ success: false, error: 'Could not save your signup.' });
+    }
+});
+
+// Admin: remove a waitlist entry (e.g. after contacting them).
+app.post('/api/admin/waitlist-delete', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const id = String(req.body.id || '');
+    try {
+        const list = loadJsonArray(WAITLIST_PATH);
+        const next = list.filter(e => e.id !== id);
+        saveJsonArray(WAITLIST_PATH, next);
+        res.json({ success: true, removed: list.length - next.length });
+    } catch (err) {
+        console.error('Waitlist delete failed:', err.message);
+        res.status(500).json({ success: false, error: 'Delete failed.' });
+    }
+});
+
+// Admin: dismiss a bug report (hides it from the dashboard; the underlying
+// cloudcoin.org feed is append-only and owned by www-data, so we track
+// dismissals on our side rather than editing that file).
+app.post('/api/admin/bug-dismiss', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const id = String(req.body.id || '');
+    if (!id) return res.status(400).json({ success: false, error: 'id required.' });
+    try {
+        const dismissed = loadJsonArray(BUG_DISMISSED_PATH);
+        if (!dismissed.includes(id)) dismissed.push(id);
+        saveJsonArray(BUG_DISMISSED_PATH, dismissed);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Bug dismiss failed:', err.message);
+        res.status(500).json({ success: false, error: 'Dismiss failed.' });
+    }
+});
+
+// Admin: clear all Conversion Funnel data (resets analytics_events.csv).
+app.post('/api/admin/clear-funnel', (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    try {
+        fs.writeFileSync(path.join(__dirname, 'analytics_events.csv'), 'Timestamp,Event,Props\n');
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Clear funnel failed:', err.message);
+        res.status(500).json({ success: false, error: 'Clear failed.' });
     }
 });
 
@@ -1156,6 +1804,19 @@ app.use(express.static(path.join(__dirname, 'dist')));
 app.get(/^\/(.*)/, (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
+
+// --- 14. Background Maintenance ---
+// Hourly: retry subscription cycles that could not fully mint or deliver
+// (Core or QMail down when the webhook arrived). Also a startup pass a
+// minute after boot so a restart clears the backlog quickly.
+setTimeout(() => {
+    subscriptions.retryPendingDeliveries().catch(err =>
+        console.error('Startup delivery retry failed:', err.message));
+}, 60 * 1000);
+setInterval(() => {
+    subscriptions.retryPendingDeliveries().catch(err =>
+        console.error('Hourly delivery retry failed:', err.message));
+}, 60 * 60 * 1000);
 
 // --- 9. Start Server ---
 const PORT = process.env.PORT || 5000;
