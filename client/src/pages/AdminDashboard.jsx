@@ -39,6 +39,10 @@ const FunnelBar = ({ label, count, max }) => {
 export default function AdminDashboard() {
   const [adminKey, setAdminKey] = useState(() => localStorage.getItem(ADMIN_KEY_STORAGE) || '');
   const [authed, setAuthed] = useState(false);
+  // Username is cosmetic for the server (auth is a single shared key), but a
+  // real username field is what makes browser password managers offer to save
+  // and autofill the login. Defaults to "billy".
+  const [username, setUsername] = useState('billy');
   const [keyInput, setKeyInput] = useState('');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -83,13 +87,26 @@ export default function AdminDashboard() {
         <div className="max-w-sm w-full bg-gray-900 border border-gray-700/50 rounded-3xl p-8 text-center">
           <Lock className="w-12 h-12 text-blue-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white mb-2">Admin Dashboard</h1>
-          <p className="text-gray-400 text-sm mb-6">Enter your admin key to continue</p>
+          <p className="text-gray-400 text-sm mb-6">Sign in to continue</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
+              type="text"
+              name="username"
+              id="username"
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-blue-500 outline-none"
+            />
+            <input
               type="password"
+              name="password"
+              id="password"
+              autoComplete="current-password"
               value={keyInput}
               onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="Admin key"
+              placeholder="Password"
               className="w-full bg-black border border-gray-700 rounded-xl px-4 py-3 text-white placeholder-gray-600 focus:border-blue-500 outline-none"
             />
             {error && <p className="text-red-400 text-sm">{error}</p>}
