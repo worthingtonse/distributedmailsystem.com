@@ -10,6 +10,8 @@ server/dist/
 
 # Security & Logs
 .env
+.env.bak*
+*.env.bak*
 SoldCoins.txt
 npm-debug.log*
 
@@ -29,3 +31,15 @@ qmail_preconfigured_wallets/
 
 # Editor swap files
 *.swp
+
+# Pre-minted locker-key pools + issued ledger - live coin keys, never commit
+server/inventory/
+server/subscriptions.json
+server/subscription_ledger.json
+
+# Deploy rollback snapshots
+server/dist.bak-*
+
+# Waitlist + bug-dismissal state (contains emails/PII)
+server/waitlist.json
+server/bug_dismissed.json

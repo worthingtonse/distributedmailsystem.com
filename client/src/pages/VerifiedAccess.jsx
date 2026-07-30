@@ -1,10 +1,22 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck, Users } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle, CheckCircle2, ShieldCheck, Users, Plus, Minus, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePaypalConfig } from '../hooks/usePaypalConfig';
 import { track } from '../utils/analytics';
 import { useDocumentMeta } from '../hooks/useDocumentMeta';
+
+// Server-authoritative address prices — must match /api/fulfill-influencer.
+// Colors match the class coding used on the register/success pages
+// (bit=blue, byte=green, kilo=purple, mega=yellow, giga=red).
+const ADDRESS_TIERS = [
+  { key: 'bit', label: 'Bit', price: 10, color: 'text-blue-400' },
+  { key: 'byte', label: 'Byte', price: 20, color: 'text-green-400' },
+  { key: 'kilo', label: 'Kilo', price: 50, color: 'text-purple-400' },
+  { key: 'mega', label: 'Mega', price: 100, color: 'text-yellow-400' },
+  { key: 'giga', label: 'Giga', price: 1000, color: 'text-red-400' },
+];
+const CART_KEYS = ADDRESS_TIERS.map((t) => t.key);
 
 const VerifiedAccess = () => {
   useDocumentMeta({ title: 'Send a Private Message', description: 'Send a priority paid message through QMail.', path: '/access', noindex: true });
@@ -29,6 +41,46 @@ const VerifiedAccess = () => {
 
   // Social proof
   const [socialProof, setSocialProof] = useState(null);
+
+  // Optional "buy your own address(es)" cart — collapsed & empty by default.
+  const [showAddressCart, setShowAddressCart] = useState(false);
+  const [walletStock, setWalletStock] = useState(null);
+  const [quantities, setQuantities] = useState({ bit: 0, byte: 0, kilo: 0, mega: 0, giga: 0 });
+  // Mirrored into a ref so PayPal's createOrder/onApprove (memoized in
+  // renderPayPalButtons) can always read the latest cart without needing
+  // the callback recreated — and the buttons torn down — on every +/- click.
+  const quantitiesRef = useRef(quantities);
+
+  const setQuantityFor = (key, updater) => {
+    setQuantities((prev) => {
+      const next = { ...prev, [key]: updater(prev[key]) };
+      quantitiesRef.current = next;
+      return next;
+    });
+  };
+
+  const stockFor = (key) => (walletStock ? walletStock[key] ?? 0 : null);
+
+  const incrementQty = (key) => {
+    const stock = stockFor(key);
+    if (stock !== null && quantities[key] >= stock) return;
+    setQuantityFor(key, (q) => q + 1);
+  };
+
+  const decrementQty = (key) => {
+    setQuantityFor(key, (q) => Math.max(0, q - 1));
+  };
+
+  // Reads the ref (not React state) so it always reflects the cart at the
+  // moment PayPal invokes createOrder/onApprove.
+  const getCartItems = () =>
+    CART_KEYS.filter((k) => quantitiesRef.current[k] > 0).map((k) => ({
+      class: k,
+      quantity: quantitiesRef.current[k],
+    }));
+
+  const getCartTotalFromRef = () =>
+    ADDRESS_TIERS.reduce((sum, t) => sum + quantitiesRef.current[t.key] * t.price, 0);
 
   // Title Case Utility
   const toTitleCase = (str) => {
@@ -60,6 +112,14 @@ const VerifiedAccess = () => {
       .then(r => r.json())
       .then(setSocialProof)
       .catch(() => {});
+  }, []);
+
+  // Sold-out tiers are disabled so nobody can pay for an address we can't deliver
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_BASE_URL}/api/wallet-stock`)
+      .then((r) => r.json())
+      .then(setWalletStock)
+      .catch(() => setWalletStock(null));
   }, []);
 
   // Verify token with backend on page load
@@ -122,113 +182,85 @@ const VerifiedAccess = () => {
   const cloudCoinsPostage = inboxFee * 10;
   const cloudCoinsBalance = balanceAmount * 10;
 
+  // Optional address cart total + grand total charged via PayPal
+  const cartTotal = useMemo(
+    () => ADDRESS_TIERS.reduce((sum, t) => sum + quantities[t.key] * t.price, 0),
+    [quantities]
+  );
+  const cartQuantityTotal = useMemo(
+    () => CART_KEYS.reduce((sum, k) => sum + quantities[k], 0),
+    [quantities]
+  );
+  const grandTotal = paymentAmount + cartTotal;
+
   const renderPayPalButtons = useCallback(() => {
     if (window.paypal && buttonRef.current) {
       buttonRef.current.innerHTML = '';
       window.paypal.Buttons({
         createOrder: (data, actions) => {
+          const cartItems = getCartItems();
+          const cartDescription = cartItems.length
+            ? ` + ${cartItems.map((i) => `${i.quantity}x .${i.class}`).join(', ')}`
+            : '';
           return actions.order.create({
             purchase_units: [{
-              amount: { value: paymentAmount.toString() },
-              description: `QMail: Message to ${recipientName} + CloudCoins`
+              // Cart quantities are read from the ref at call time so
+              // +/- clicks never need this callback recreated.
+              amount: { value: (paymentAmount + getCartTotalFromRef()).toString() },
+              description: `QMail: Message to ${recipientName} + CloudCoins${cartDescription}`
             }]
           });
         },
         onApprove: async (data, actions) => {
-          const order = await actions.order.capture();
+          let order;
+          try {
+            order = await actions.order.capture();
+          } catch (err) {
+            setPaypalError('We could not complete payment capture. Please try again or contact support.');
+            return;
+          }
+
           const firstName = order.payer.name.given_name;
           const lastName = order.payer.name.surname;
-
-          let emailData = null;
-          let cloudCoinsData = null;
+          const buyerEmail = order.payer.email_address || '';
+          const items = getCartItems();
+          const grand = paymentAmount + getCartTotalFromRef();
 
           try {
-            // Step 1: If user wants their own QMail address, register it
-            if (wantEmail) {
-              const mailboxResponse = await fetch(
-                `${import.meta.env.VITE_BASE_URL}/api/generate-mailbox`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    firstName,
-                    lastName,
-                    amountPaid: 20, // .byte stake (free with purchase)
-                    inboxFee: 1,   // Fixed inbox fee for new users
-                    description: 'QMail',
-                    paypalOrderID: data.orderID
-                  })
-                }
-              );
-
-              const mailboxResult = await mailboxResponse.json();
-
-              if (!mailboxResult.success) {
-                setPaypalError(mailboxResult.error || 'Failed to create your QMail address. Please contact support.');
-                return;
-              }
-
-              emailData = {
-                email: mailboxResult.email,
-                walletDownloadUrl: mailboxResult.walletDownloadUrl || null
-              };
-            }
-
-            // Step 2: Always generate CloudCoins locker for the payment amount
-            const cloudCoinsResponse = await fetch(
-              `${import.meta.env.VITE_BASE_URL}/api/generate-cloudcoins-locker`,
+            const response = await fetch(
+              `${import.meta.env.VITE_BASE_URL}/api/fulfill-influencer`,
               {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  dollarAmount: paymentAmount,
                   firstName,
                   lastName,
-                  paypalOrderID: data.orderID
+                  buyerEmail,
+                  paypalOrderID: data.orderID,
+                  coinsDollars: paymentAmount,
+                  items,
+                  wantBonusAddress: wantEmail,
+                  influencerName: recipientName,
+                  influencerAddress,
+                  influencerInboxFee: inboxFee
                 })
               }
             );
 
-            const cloudCoinsResult = await cloudCoinsResponse.json();
+            const result = await response.json();
 
-            if (!cloudCoinsResult.success) {
-              setPaypalError(cloudCoinsResult.error || 'Failed to generate CloudCoins locker. Please contact support.');
+            if (!result.success) {
+              // Payment already captured above — make that unmistakably clear.
+              setPaypalError(
+                `Your payment was received (PayPal order ${data.orderID}), but we ran into a problem fulfilling your order. Please contact support and we will make this right.${
+                  result.error ? ` Details: ${result.error}` : ''
+                }`
+              );
               return;
             }
 
-            cloudCoinsData = {
-              cloudCoins: cloudCoinsResult.cloudCoins,
-              cloudCoinsLockerCode: cloudCoinsResult.cloudCoinsLockerCode
-            };
-
-            // Step 3: Log the affiliate sale
-            try {
-              await fetch(
-                `${import.meta.env.VITE_BASE_URL}/api/log-affiliate-sale`,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    influencerName: recipientName,
-                    influencerAddress,
-                    influencerInboxFee: inboxFee,
-                    buyerFirstName: firstName,
-                    buyerLastName: lastName,
-                    buyerEmail: order.payer.email_address,
-                    paymentAmount,
-                    cloudCoinsPurchased: cloudCoinsData.cloudCoins,
-                    createdEmailAddress: wantEmail,
-                    emailAddressCreated: emailData?.email || ''
-                  })
-                }
-              );
-            } catch (logErr) {
-              // Don't fail the transaction if logging fails
-              console.error('Failed to log affiliate sale:', logErr);
-            }
-
             // Track successful payment
-            track('payment_complete', { influencer: recipientName, amount: paymentAmount, package: selectedPackage });
+            track('payment_complete', { influencer: recipientName, amount: grand, package: selectedPackage });
 
             // Navigate to influencer success page with all data
             navigate('/success-influencer', {
@@ -236,32 +268,31 @@ const VerifiedAccess = () => {
                 userData: { firstName, lastName },
                 recipientName,
                 influencerAddress,
-                paymentAmount,
+                paymentAmount: grand,
                 inboxFee,
-                // Email data (if they wanted an address)
-                email: emailData?.email || null,
-                emailLockerCode: emailData?.lockerCode || null,
-                walletDownloadUrl: emailData?.walletDownloadUrl || null,
-                // CloudCoins data
-                cloudCoins: cloudCoinsData.cloudCoins,
-                cloudCoinsLockerCode: cloudCoinsData.cloudCoinsLockerCode
+                cloudCoins: result.cloudCoins,
+                cloudCoinsLockerCode: result.cloudCoinsLockerCode,
+                addresses: result.addresses,
+                partialError: result.partial ? result.error : undefined
               }
             });
 
           } catch (err) {
-            console.error('Payment processing error:', err);
-            setPaypalError('An error occurred processing your payment. Please contact support.');
+            console.error('Fulfillment error:', err);
+            setPaypalError(
+              `Your payment was received (PayPal order ${data.orderID}), but we could not confirm your order due to a network error. Please contact support — do not pay again.`
+            );
           }
         },
         onError: (err) => {
           console.error("PayPal Error:", err);
-          track('payment_error', { influencer: recipientName, amount: paymentAmount });
+          track('payment_error', { influencer: recipientName, amount: paymentAmount + getCartTotalFromRef() });
           setPaypalError("Payment failed to initialize. Please try again.");
         },
         style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' }
       }).render(buttonRef.current);
     }
-  }, [paymentAmount, recipientName, navigate, wantEmail, cloudCoinsBalance, influencerAddress, inboxFee]);
+  }, [paymentAmount, recipientName, navigate, wantEmail, influencerAddress, inboxFee, selectedPackage]);
 
   useEffect(() => {
     if (paypalConfigLoading) return;
@@ -430,6 +461,75 @@ const VerifiedAccess = () => {
               </label>
             </div>
 
+            {/* Optional: buy additional QMail address(es) */}
+            <div className="py-4 border-b border-white/5">
+              <button
+                type="button"
+                onClick={() => setShowAddressCart((v) => !v)}
+                className="w-full flex items-center justify-between text-xs font-bold text-gray-400 uppercase tracking-widest hover:text-gray-300 transition-colors"
+              >
+                <span>
+                  Buy your own QMail address(es){' '}
+                  <span className="normal-case font-normal text-gray-500">(optional)</span>
+                </span>
+                {showAddressCart ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+
+              {showAddressCart && (
+                <div className="space-y-2 pt-3">
+                  {ADDRESS_TIERS.map((t) => {
+                    const stock = stockFor(t.key);
+                    const soldOut = stock === 0;
+                    const qty = quantities[t.key];
+                    const atStockLimit = stock !== null && qty >= stock;
+                    return (
+                      <div
+                        key={t.key}
+                        className={`flex items-center justify-between gap-2 p-2.5 rounded-lg bg-black/20 ${
+                          soldOut ? 'opacity-50' : ''
+                        } ${qty > 0 ? 'ring-1 ring-white/10' : ''}`}
+                      >
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className={`font-bold ${t.color}`}>.{t.label}</span>
+                          <span className="text-gray-500 text-xs">${t.price}</span>
+                          {soldOut && (
+                            <span className="text-[9px] text-red-400 uppercase font-bold tracking-widest">Sold Out</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => decrementQty(t.key)}
+                            disabled={qty === 0}
+                            aria-label={`Decrease .${t.label} quantity`}
+                            className="w-6 h-6 rounded-md bg-white/10 text-gray-300 flex items-center justify-center hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          >
+                            <Minus size={12} />
+                          </button>
+                          <span className="w-5 text-center font-mono font-bold text-white text-sm">{qty}</span>
+                          <button
+                            type="button"
+                            onClick={() => incrementQty(t.key)}
+                            disabled={soldOut || atStockLimit}
+                            aria-label={`Increase .${t.label} quantity`}
+                            style={{ backgroundColor: customBtn }}
+                            className="w-6 h-6 rounded-md text-white flex items-center justify-center hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          >
+                            <Plus size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {cartQuantityTotal > 0 && (
+                    <p className="text-xs text-gray-500 pt-1">
+                      {cartQuantityTotal} address{cartQuantityTotal > 1 ? 'es' : ''} added — ${cartTotal} total
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Package Selection */}
             <div className="space-y-3">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Choose Your Package</p>
@@ -500,8 +600,18 @@ const VerifiedAccess = () => {
                 <span className="text-white">${balanceAmount} <span className="text-gray-500 text-xs">({cloudCoinsBalance} CC)</span></span>
               </div>
               <div className="flex justify-between text-white font-bold pt-2 border-t border-white/10">
-                <span>Total:</span>
+                <span>Message/Credits Subtotal:</span>
                 <span>${paymentAmount} <span className="text-gray-500 text-xs font-normal">({cloudCoinsTotal} CC)</span></span>
+              </div>
+              {ADDRESS_TIERS.filter((t) => quantities[t.key] > 0).map((t) => (
+                <div key={t.key} className="flex justify-between text-gray-400">
+                  <span>{quantities[t.key]} × .{t.label} address{quantities[t.key] > 1 ? 'es' : ''}:</span>
+                  <span className="text-white">${quantities[t.key] * t.price}</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-white font-bold pt-2 border-t border-white/10 text-base">
+                <span>Total:</span>
+                <span>${grandTotal}</span>
               </div>
             </div>
 

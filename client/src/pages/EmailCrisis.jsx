@@ -11,7 +11,6 @@ import {
   Lock,
   Zap,
   TrendingUp,
-  Users,
   Target,
   Brain,
   FileWarning,
@@ -21,6 +20,31 @@ import {
   Database
 } from 'lucide-react'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
+
+// A person holding a mask up to their face — impersonation / spoofing
+const MaskIcon = ({ className = '' }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    {/* the real head and shoulders behind */}
+    <circle cx="9" cy="6.5" r="3" />
+    <path d="M3.5 20a7 7 0 0 1 11-5.7" />
+    {/* the mask held in front of the face */}
+    <ellipse cx="15.5" cy="10.5" rx="3.6" ry="4.6" />
+    <circle cx="14.3" cy="9.5" r="0.6" />
+    <circle cx="16.7" cy="9.5" r="0.6" />
+    <path d="M14.2 12.4c.8.7 1.8.7 2.6 0" />
+    {/* the hand and arm gripping the mask */}
+    <path d="M13.4 14.2c.4 1.3 1.4 2 2.1 2 .8 0 1.8-.8 2.1-2.1" />
+    <path d="M15.5 16.2v2.4" />
+  </svg>
+)
 
 // Three.js Background Component - Network Under Attack
 const ThreeBackground = () => {
@@ -322,7 +346,7 @@ function EmailCrisis() {
       </motion.section>
 
       {/* Section 1: The Spoofing Epidemic */}
-      <section className="py-20 md:py-32 relative">
+      <section className="pt-6 md:pt-10 pb-20 md:pb-32 relative">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -331,7 +355,7 @@ function EmailCrisis() {
             className="text-center mb-16"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 bg-red-600/20 rounded-xl mb-6">
-              <Users className="w-10 h-10 text-red-400" />
+              <MaskIcon className="w-10 h-10 text-red-400" />
             </div>
             
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
@@ -356,7 +380,7 @@ function EmailCrisis() {
                 </div>
 
                 <div className="bg-gray-800/50 rounded-lg p-6 border border-gray-800">
-                  <h4 className="text-xl font-semibold text-red-400 mb-4">The Technical Reality:</h4>
+                  <h4 className="text-xl font-semibold text-red-400 mb-4">The Phishing Epidemic:</h4>
                   <div className="space-y-3 font-mono text-sm">
                     <div className="flex items-start gap-3">
                       <span className="text-gray-500">From:</span>
@@ -422,15 +446,19 @@ function EmailCrisis() {
                 <div>
                   <h3 className="text-2xl font-semibold text-blue-400 mb-3">QMail Solution:</h3>
                   <p className="text-gray-400 text-lg leading-relaxed mb-4">
-                    With QMail, every sender is <span className="text-blue-400 font-medium">cryptographically verified</span> through QMAIL. 
-                    Spoofing is <span className="text-white font-medium">far harder by design</span> — addresses are cryptographically bound to real identity.
+                    With QMail, every sender's address is <span className="text-blue-400 font-medium">verified as true</span> by QMail servers.
+                    You may associate your address with your name or business and have that <span className="text-white font-medium">certified by independent validators</span>.
                   </p>
-                  <Link 
-                    to="/how-it-works"
+                  <a
+                    href="#plain-text"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('plain-text')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
-                    See How QMail Prevents This →
-                  </Link>
+                    See How Standard Email Can Be Seen By Everyone →
+                  </a>
                 </div>
               </div>
             </div>
@@ -439,7 +467,7 @@ function EmailCrisis() {
       </section>
 
       {/* Section 2: Your Messages Are Wide Open */}
-      <section className="py-20 md:py-32 relative bg-gray-900/30">
+      <section id="plain-text" className="py-20 md:py-32 relative bg-gray-900/30 scroll-mt-24">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -483,9 +511,9 @@ function EmailCrisis() {
                   <h4 className="text-xl font-semibold text-white mb-4">Real-World Impact:</h4>
                   <div className="grid md:grid-cols-2 gap-4">
                     {[
-                      'Cell-site simulators ("Stingrays") capture SMS messages in public areas',
+                      'Email server owners can read your email messages.',
                       'ISPs routinely scan email for advertising data',
-                      'The SS7 network (SMS routing) has been exploited for years',
+                      "Governments around the world capture everyone's emails and catalog them.",
                       'Your "private" messages aren\'t private at all'
                     ].map((impact, i) => (
                       <div key={i} className="flex items-start gap-3 bg-gray-800/30 rounded-lg p-4">
@@ -526,12 +554,16 @@ function EmailCrisis() {
                       </li>
                     ))}
                   </ul>
-                  <Link 
-                    to="/technology"
+                  <a
+                    href="#spam-tax"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document.getElementById('spam-tax')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }}
                     className="text-blue-400 hover:text-blue-300 font-medium inline-flex items-center gap-2 transition-colors"
                   >
-                    Learn About Quantum-Safe Encryption →
-                  </Link>
+                    Learn how Spam Costs You →
+                  </a>
                 </div>
               </div>
             </div>
@@ -540,7 +572,7 @@ function EmailCrisis() {
       </section>
 
       {/* Section 3: The Spam Tax */}
-      <section className="py-20 md:py-32 relative">
+      <section id="spam-tax" className="py-20 md:py-32 relative scroll-mt-24">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}

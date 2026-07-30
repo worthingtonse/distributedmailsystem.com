@@ -15,10 +15,10 @@ import {
   Server,
   Eye,
   Ban,
-  DollarSign,
-  Mail
+  DollarSign
 } from 'lucide-react'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
+import QmailDelivery from '../components/QmailDelivery'
 
 // Reusable Card Component
 const Card = memo(({ children, delay = 0 }) => {
@@ -93,7 +93,7 @@ function HowItWorks() {
       step: 2,
       icon: Lock,
       title: 'The Lock (Encryption)',
-      description: 'Before these pieces leave your device, each one is locked inside a digital vault using AES-256 encryption. Even if someone managed to intercept a stripe, all they would see is scrambled noise.',
+      description: 'Before these pieces leave your device, each one is locked inside a digital vault using AES-256 encryption. Even if someone managed to intercept a stripe, all they would see is scrambled noise. Every stripe has a different encryption key, and this makes it even harder to hack.',
       details: 'Strong symmetric encryption protects each stripe so intercepted pieces look like random noise.'
     },
     {
@@ -128,7 +128,7 @@ function HowItWorks() {
     },
     {
       icon: Ban,
-      title: 'Zero Spam',
+      title: 'Eliminates Spam',
       description: 'Economic barriers eliminate spam by design. Set your price for unknown senders.',
       gradient: 'from-purple-500 to-pink-500'
     },
@@ -187,103 +187,12 @@ function HowItWorks() {
               >
                 <p className="text-lg md:text-xl text-blue-200 leading-relaxed">
                   <span className="font-bold text-blue-300">QMail doesn't store your emails.</span>{' '}
-                  It scatters them across the globe like a jigsaw puzzle. No single server, no single company, no single hacker can ever read your message.
+                  It scatters them across the globe like a jigsaw puzzle. No single server, no single company, no single hacker can ever read your messages, not even the system administrators of those computers either.
                 </p>
               </m.div>
 
-              {/* Animated RAIDA Network Visualization */}
-              <div className="relative w-full max-w-5xl mx-auto h-80 mb-12">
-                {/* Central Message */}
-                <m.div
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.5, duration: 0.5 }}
-                >
-                  <div className="glass-strong rounded-2xl p-6 text-center">
-                    <Mail className="w-12 h-12 text-blue-400 mx-auto mb-2" />
-                    <p className="text-sm font-semibold">Your Email</p>
-                  </div>
-                </m.div>
-
-                {/* RAIDA Nodes in a circle */}
-                {[...Array(8)].map((_, i) => {
-                  const angle = (i * 360) / 8;
-                  const radius = 180;
-                  const x = Math.cos((angle * Math.PI) / 180) * radius;
-                  const y = Math.sin((angle * Math.PI) / 180) * radius;
-                  
-                  return (
-                    <m.div
-                      key={i}
-                      className="absolute left-1/2 top-1/2"
-                      style={{
-                        transform: `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`,
-                      }}
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.7 + i * 0.1, duration: 0.4 }}
-                    >
-                      <div className="glass rounded-xl p-4 text-center">
-                        <Shield className="w-8 h-8 text-purple-400 mx-auto mb-1" />
-                        <p className="text-xs text-gray-400">Server {i + 1}</p>
-                      </div>
-                    </m.div>
-                  );
-                })}
-
-                {/* Animated connection lines */}
-                <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                  {[...Array(8)].map((_, i) => {
-                    const angle = (i * 360) / 8;
-                    const radius = 180;
-                    const x = Math.cos((angle * Math.PI) / 180) * radius;
-                    const y = Math.sin((angle * Math.PI) / 180) * radius;
-                    
-                    return (
-                      <m.line
-                        key={i}
-                        x1="50%"
-                        y1="50%"
-                        x2={`calc(50% + ${x}px)`}
-                        y2={`calc(50% + ${y}px)`}
-                        stroke="rgba(59, 130, 246, 0.3)"
-                        strokeWidth="2"
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ delay: 1.0 + i * 0.05, duration: 0.5 }}
-                      />
-                    );
-                  })}
-                </svg>
-
-                {/* Animated data packets traveling */}
-                {[...Array(8)].map((_, i) => {
-                  const angle = (i * 360) / 8;
-                  const radius = 180;
-                  const x = Math.cos((angle * Math.PI) / 180) * radius;
-                  const y = Math.sin((angle * Math.PI) / 180) * radius;
-                  
-                  return (
-                    <m.div
-                      key={`packet-${i}`}
-                      className="absolute left-1/2 top-1/2 w-2 h-2 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50"
-                      initial={{ x: 0, y: 0, opacity: 0 }}
-                      animate={{
-                        x: [0, x * 0.5, x],
-                        y: [0, y * 0.5, y],
-                        opacity: [0, 1, 0],
-                      }}
-                      transition={{
-                        delay: 1.7 + i * 0.1,
-                        duration: 2,
-                        repeat: Infinity,
-                        repeatDelay: 1,
-                      }}
-                    />
-                  );
-                })}
-              </div>
+              {/* Sender -> QMail server field -> Receiver */}
+              <QmailDelivery className="mb-12" />
             </div>
           </div>
         </section>
@@ -462,17 +371,6 @@ function HowItWorks() {
                         className="w-full sm:w-auto px-8 py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2 mr-4 mb-4"
                       >
                         Claim Your Address
-                        <ArrowRight className="w-5 h-5" />
-                      </m.button>
-                    </Link>
-                    
-                    <Link to="/email-crisis">
-                      <m.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="w-full sm:w-auto px-8 py-4 border-2 border-gray-600 hover:border-blue-500 text-white rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center gap-2"
-                      >
-                        Why We Built This
                         <ArrowRight className="w-5 h-5" />
                       </m.button>
                     </Link>

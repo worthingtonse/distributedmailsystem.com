@@ -1,8 +1,6 @@
-import React, { useRef, useState, useEffect, memo } from "react";
+import React, { useState, useEffect, memo } from "react";
 import {
   motion,
-  useScroll,
-  useTransform,
   LazyMotion,
   domAnimation,
   m,
@@ -16,8 +14,6 @@ import {
   Globe,
   Server,
   CheckCircle2,
-  AlertTriangle,
-  Eye,
   Ban,
   Award,
   FileCheck,
@@ -25,6 +21,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import QmailDelivery from "../components/QmailDelivery";
 
 // Optimized Card Component with React.memo
 const Card = memo(({ children, delay = 0, className = "" }) => {
@@ -157,92 +154,100 @@ const ProgressIndicator = memo(() => {
 
 ProgressIndicator.displayName = "ProgressIndicator";
 
-// Improved Footer component
-const Footer = memo(() => {
+// Custom problem-area icons — each drawn to support its card's point
+const svgBase = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.5,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+};
+
+// Copies fanning out at every hop — surveillance is baked in
+const CopiesIcon = ({ className = "" }) => (
+  <svg className={className} {...svgBase}>
+    <rect x="3" y="3" width="12" height="8.5" rx="1.5" opacity="0.4" />
+    <rect x="6" y="6" width="12" height="8.5" rx="1.5" opacity="0.7" />
+    <rect x="9" y="9" width="12" height="8.5" rx="1.5" />
+    <path d="M9 10l6 4 6-4" />
+  </svg>
+);
+
+// Content locked, but the address lines above stay exposed
+const MetadataIcon = ({ className = "" }) => (
+  <svg className={className} {...svgBase}>
+    <line x1="4" y1="4" x2="15" y2="4" />
+    <line x1="4" y1="7.5" x2="11" y2="7.5" />
+    <rect x="6" y="12" width="12" height="8" rx="1.5" />
+    <path d="M8.5 12v-1.5a3.5 3.5 0 0 1 7 0V12" />
+  </svg>
+);
+
+// A bundle of dynamite with a lit fuse — encryption on a countdown
+const TimebombIcon = ({ className = "" }) => (
+  <svg className={className} {...svgBase}>
+    <rect x="4.5" y="10" width="12" height="11" rx="2" />
+    <path d="M8.5 10v11M12.5 10v11" />
+    <path d="M4.5 13.5h12M4.5 17.5h12" />
+    <path d="M10.5 10c0-2.2 1.2-3 3.2-2.4" />
+    <path d="M13.7 4.4v3.2M12.1 6h3.2M12.6 4.9l2.2 2.2M14.8 4.9l-2.2 2.2" />
+  </svg>
+);
+
+// An envelope paired with a coin — reaching the inbox has a price
+const InboxFeeIcon = ({ className = "" }) => (
+  <svg className={className} {...svgBase}>
+    <rect x="2" y="8" width="12" height="9" rx="1.5" />
+    <path d="M2 9.5l6 4 6-4" />
+    <circle cx="18" cy="9" r="4.5" />
+    <path d="M18 6.5v5" />
+    <path d="M19.6 7.6a1.7 1.7 0 0 0-1.6-.9c-.9 0-1.6.5-1.6 1.2 0 1.7 3.2.9 3.2 2.5 0 .7-.7 1.2-1.6 1.2a1.8 1.8 0 0 1-1.6-.9" />
+  </svg>
+);
+
+// Problem card with an optional ⓘ that reveals an authoritative citation
+const ProblemCard = ({ problem, delay }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = problem.icon;
   return (
-    <footer className="bg-gray-950 border-t border-gray-800">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8 mb-8">
-            <div className="text-center sm:text-left">
-              <h3 className="text-xl font-bold text-white mb-3">QMail</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                The future of secure, decentralized messaging. Own your digital
-                identity.
-              </p>
-            </div>
-
-            <div className="text-center sm:text-left">
-              <h4 className="text-white font-semibold mb-3">Support</h4>
-              <div className="space-y-2">
-                <Link
-                  to="/register"
-                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
-                >
-                  Contact Support
-                </Link>
-                <p className="text-gray-500 text-xs break-all">
-                  Giga~RaidaTech.Customer.Support#0F39
-                </p>
-                <Link
-                  to="/faq"
-                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
-                >
-                  Help Center / FAQ
-                </Link>
-              </div>
-            </div>
-
-            <div className="text-center sm:text-left">
-              <h4 className="text-white font-semibold mb-3">Legal</h4>
-              <div className="space-y-2">
-                <Link
-                  to="/privacy"
-                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-                <Link
-                  to="/terms"
-                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
-                >
-                  Terms of Service
-                </Link>
-              </div>
-            </div>
-
-            <div className="text-center sm:text-left">
-              <h4 className="text-white font-semibold mb-3">Development</h4>
-              <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
-                <p className="text-blue-300 text-xs font-medium mb-1">
-                  Phase I
-                </p>
-                <p className="text-gray-400 text-xs leading-relaxed">
-                  Some features are in development. Join our journey!
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 pt-6">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-              <p className="text-gray-500 text-sm text-center sm:text-left">
-                © 2026 RaidaTech. All rights reserved.
-              </p>
-              <div className="flex items-center gap-4">
-                <AnimatedButton to="/register" variant="outline" size="small">
-                  Get Started
-                </AnimatedButton>
-              </div>
-            </div>
-          </div>
+    <Card delay={delay}>
+      <div className="relative text-center">
+        {problem.citation && (
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-label={`Source for ${problem.title}`}
+            className="absolute top-0 right-0 flex items-center justify-center w-6 h-6 rounded-full border border-gray-600/70 text-gray-400 text-xs font-serif italic leading-none hover:text-white hover:border-blue-500/70 transition-colors"
+          >
+            i
+          </button>
+        )}
+        <div
+          className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${problem.gradient} rounded-2xl mb-6`}
+        >
+          <Icon className="w-10 h-10 text-white" />
         </div>
+        <h3 className="text-xl font-bold text-white mb-4">{problem.title}</h3>
+        <p className="text-gray-400 leading-relaxed">{problem.description}</p>
+        {open && problem.citation && (
+          <div className="mt-4 text-left text-sm bg-gray-950/70 border border-gray-700/60 rounded-xl p-3">
+            <p className="text-gray-300">{problem.citation.text}</p>
+            <a
+              href={problem.citation.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
+            >
+              {problem.citation.source} →
+            </a>
+          </div>
+        )}
       </div>
-    </footer>
+    </Card>
   );
-});
-
-Footer.displayName = "Footer";
+};
 
 function Home() {
   useDocumentMeta({
@@ -251,15 +256,6 @@ function Home() {
       "QMail is quantum-safe, spam-resistant email. Claim your mailbox from $10 with a 30-day money-back window. Get paid to receive mail.",
     path: "/",
   });
-
-  const heroRef = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
-  });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
 
   const scrollToNextSection = () => {
     const element = document.getElementById("problems");
@@ -270,32 +266,52 @@ function Home() {
 
   const problemAreas = [
     {
-      icon: Server,
-      title: "The Server Problem",
+      icon: CopiesIcon,
+      title: "Surveillance Guaranteed",
       description:
-        "If your email lives on a server, it can be subpoenaed, hacked, or scanned.",
+        "A sent email is never just one copy. It lands on your device, your mail server, every relay along the route, the recipient's server, and their device. Once it leaves your outbox, no one can recall it or control who ends up holding a copy.",
       gradient: "from-red-500 to-orange-500",
+      citation: {
+        text: "Edward Snowden's 2013 disclosures revealed programs that tapped directly into the servers of major internet and email providers, collecting user communications at scale.",
+        source: "The Guardian — NSA Prism program (Snowden revelations)",
+        url: "https://www.theguardian.com/world/2013/jun/06/us-tech-giants-nsa-data",
+      },
     },
     {
-      icon: Eye,
+      icon: MetadataIcon,
       title: "Metadata Trails",
       description:
-        "Even if the message is encrypted, \"They\" know who you talked to and when.",
+        "Encryption hides the words, not the envelope. Who you wrote, who wrote you, when, how often, subject lines, and message size all stay exposed — and metadata alone can map your relationships and routines.",
       gradient: "from-orange-500 to-yellow-500",
+      citation: {
+        text: "Encryption protects the content of a message, but metadata — who, whom, and when — is generally not hidden and can reveal a great deal.",
+        source: "EFF — Why Metadata Matters",
+        url: "https://ssd.eff.org/module/why-metadata-matters",
+      },
     },
     {
-      icon: AlertTriangle,
+      icon: TimebombIcon,
       title: "Encryption Shelf Life",
       description:
-        "Modern encryption has a shelf life. \"Harvest now, decrypt later\" is a real threat.",
+        "Today's encryption isn't permanent. An adversary can capture your encrypted mail now and simply store it, waiting for tomorrow's computers to break it. What's secret today may be an open book in a decade.",
       gradient: "from-purple-500 to-pink-500",
+      citation: {
+        text: "Adversaries may steal encrypted data today to decrypt once quantum computers mature — the 'harvest now, decrypt later' threat.",
+        source: "CISA — Post-Quantum Cryptography Initiative",
+        url: "https://www.cisa.gov/quantum",
+      },
     },
     {
-      icon: Ban,
-      title: "No Middle Man",
+      icon: InboxFeeIcon,
+      title: "Spam = Income",
       description:
-        "There is no \"Post Office\" in the middle to tap.",
+        "QMail doesn't magically block spam — it prices it. To reach your inbox, a sender pays your inbox fee. Unwanted mass mail becomes expensive, and you get paid for the attention you give.",
       gradient: "from-cyan-500 to-blue-500",
+      citation: {
+        text: "Requiring senders to pay a cost to send raises the price of bulk unsolicited mail — the economic approach to fighting spam.",
+        source: "Dwork & Naor — Pricing via Processing (1992)",
+        url: "https://www.wisdom.weizmann.ac.il/~naor/PAPERS/pvp.pdf",
+      },
     },
   ];
 
@@ -304,7 +320,7 @@ function Home() {
       icon: Shield,
       title: "Shredded Delivery",
       description:
-        "Messages are shredded, encrypted with AES encryption, dispersed among tens of mail servers including those owned by you, your friends and family.",
+        "Messages are shredded, encrypted with AES encryption, dispersed among tens of mail servers including inexpensive QMail servers owned by you, your friends and family.",
       link: "/register",
       gradient: "from-blue-500 to-cyan-500",
     },
@@ -318,15 +334,89 @@ function Home() {
     },
     {
       icon: Globe,
-      title: "Sovereign Identity",
+      title: "You Own Your Address",
       description:
-        "Your address is tied to a cryptographic key, not a central registrar or DNS provider. You can publish yourself in the Distributed Resource Director (Phase II) so others can find you or not. Own your identity.",
+        "Your address belongs only to you. It's locked to a secret key, not handed out by a company or middleman — so no one can take it, sell it, or shut it down. Later you can list yourself in the public QMail directory (Phase II) so people can find you, or stay private. It's yours to keep.",
       link: "/register",
       gradient: "from-purple-500 to-pink-500",
     },
   ];
 
   const comparisonData = [
+    {
+      feature: "Attachment Limits",
+      traditional: "25MB",
+      qmail: "None",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Upload Speed",
+      traditional: "Slow",
+      qmail: "Ten to 20 times faster",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Download Speed",
+      traditional: "Slow",
+      qmail: "Ten to 20 times faster",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Send Times",
+      traditional: "Many seconds",
+      qmail: "Less than two seconds",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Addresses",
+      traditional: "Are Assigned",
+      qmail: "Based on CloudCoins",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Encryption",
+      traditional: "Vulnerable",
+      qmail: "Quantum Safe",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Editing Sent",
+      traditional: "Not possible",
+      qmail: "Possible before received",
+      implementationNote: true,
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Deleting Sent",
+      traditional: "Not possible",
+      qmail: "Possible before received",
+      implementationNote: true,
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Meta Data",
+      traditional: "All can see To, From, Subject etc",
+      qmail: "None Exposed",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Storage",
+      traditional: "One server",
+      qmail: "Striped on 10 to 32 servers",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Server Locations",
+      traditional: "Data Center",
+      qmail: "Distributed Globally",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Login",
+      traditional: "Username, Password & 2FA",
+      qmail: "Certificate (CloudCoin)",
+      icon: CheckCircle2,
+    },
     {
       feature: "Sender Verification",
       traditional: "None (easily spoofed)",
@@ -337,37 +427,67 @@ function Home() {
       feature: "Message Security",
       traditional: "Plain text or basic encryption",
       qmail: "Quantum-safe, sharded, distributed",
-      icon: Shield,
+      icon: CheckCircle2,
     },
     {
       feature: "Spam Protection",
       traditional: "Unreliable filters",
       qmail: "Economic barriers",
-      icon: Ban,
+      icon: CheckCircle2,
     },
     {
       feature: "Privacy",
       traditional: "Read by servers & ISPs",
       qmail: "End-to-end confidential",
-      icon: Lock,
+      icon: CheckCircle2,
     },
     {
       feature: "Message Size",
       traditional: "Bloated HTML (1MB+)",
       qmail: "Compact binary (10KB)",
-      icon: Zap,
+      icon: CheckCircle2,
     },
     {
       feature: "Control",
       traditional: "Controlled by tech giants",
-      qmail: "You own your mailbox",
-      icon: Globe,
+      qmail: "You own your mailbox and your email server too (optional)",
+      icon: CheckCircle2,
     },
     {
       feature: "Cost Model",
       traditional: "Pay with your data",
       qmail: "Get paid for your attention",
-      icon: DollarSign,
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Set Inbox Fee",
+      traditional: "Not Possible, Major Spam and Phishing",
+      qmail: "Senders must pay",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Set Avatar Symbols",
+      traditional: "Nearly impossible",
+      qmail: "Customizable",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "White List",
+      traditional: "No",
+      qmail: "Remove Inbox Fees for friends",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Black List",
+      traditional: "Difficult Filters",
+      qmail: "Easy",
+      icon: CheckCircle2,
+    },
+    {
+      feature: "Address Revocation",
+      traditional: "Anytime",
+      qmail: "Can't be done",
+      icon: CheckCircle2,
     },
   ];
 
@@ -375,7 +495,7 @@ function Home() {
     "Get a QMail address",
     "Set your Inbox price to get paid for your attention and pay others for their attention too",
     "Run your own QMail server from home (optional) and get paid for it!",
-    "Turbocharge your Influencer Income",
+    "Turbocharge your Influencer Income by setting an inbox fee",
     "Include your entire organization and keep your privacy (Enterprise Solutions)",
     "Marketers: Pay your customers to read your messages",
     "Become a Certified QMail Secure User, QMail Server Administration, QMail Marketing or even a Certified QMail Developer",
@@ -390,9 +510,7 @@ function Home() {
         {/* Hero Section */}
         <m.section
           id="hero"
-          ref={heroRef}
           className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20"
-          style={{ opacity }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-blue-950/30 via-gray-950 to-gray-950" />
 
@@ -403,20 +521,13 @@ function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: "easeOut" }}
               >
+                <QmailDelivery className="mb-10" />
                 <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight mb-8">
-                  Spam-Free Email. <br />
-                  <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                    Private by Design.
-                  </span>
-                  <br />
-                  Get paid to receive mail.
+                  The Most Secure Messaging System in the World
                 </h1>
 
                 <p className="text-lg md:text-xl text-gray-300 mb-6 leading-relaxed">
-                  QMail is an <span className="text-blue-400 font-semibold">open standard</span> for decentralized mail — designed so no single company owns your inbox. Claim a permanent address, cut spam with postage, and keep stronger privacy by default.
-                </p>
-                <p className="text-sm text-blue-300/90 mb-10 font-medium">
-                  Mailboxes from $10 · 30-day money-back on registration · Windows client available now
+                  QMail is an <span className="font-bold">open standard</span> for decentralized mail — designed so no single company owns your inbox. Claim a permanent address, get paid to receive emails, and keep stronger privacy by default.
                 </p>
 
                 <div className="flex flex-col gap-3 justify-center items-center pt-4 w-full max-w-sm mx-auto sm:max-w-none sm:flex-row sm:gap-4">
@@ -551,21 +662,11 @@ function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {problemAreas.map((problem, index) => (
-                <Card key={problem.title} delay={index * 0.1}>
-                  <div className="text-center">
-                    <div
-                      className={`inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r ${problem.gradient} rounded-2xl mb-6`}
-                    >
-                      <problem.icon className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-white mb-4">
-                      {problem.title}
-                    </h3>
-                    <p className="text-gray-400 leading-relaxed">
-                      {problem.description}
-                    </p>
-                  </div>
-                </Card>
+                <ProblemCard
+                  key={problem.title}
+                  problem={problem}
+                  delay={index * 0.1}
+                />
               ))}
             </div>
 
@@ -580,7 +681,7 @@ function Home() {
                 to="/register"
                 className="text-blue-400 hover:text-blue-300 font-semibold text-xl inline-flex items-center gap-2"
               >
-                Traditional Email Can't Be Fixed - Claim Your QMail Address Now
+                AI and Quantum Computers make email dangerous — Switch to QMail Now
               </Link>
             </m.div>
           </div>
@@ -671,7 +772,7 @@ function Home() {
                   <div className="flex flex-wrap justify-center gap-8 pt-8 border-t border-gray-700/50">
                     {[
                       { icon: Shield, text: "Decentralized" },
-                      { icon: FileCheck, text: "Sovereign Identity" },
+                      { icon: FileCheck, text: "Your Own Address" },
                       { icon: Globe, text: "Open Standard" },
                       { icon: Server, text: "Distributed Architecture" },
                     ].map((badge, i) => (
@@ -754,6 +855,11 @@ function Home() {
                     </div>
                     <div className="text-green-400 text-xs md:text-sm flex items-center font-medium">
                       {row.qmail}
+                      {row.implementationNote && (
+                        <span className="ml-1 text-[#ffd800]" aria-label="Feature still being implemented">
+                          *
+                        </span>
+                      )}
                     </div>
                   </m.div>
                 ))}
@@ -822,13 +928,12 @@ function Home() {
 
                   <div className="bg-gray-800/50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 border border-gray-700/50 max-w-3xl mx-auto flex flex-col items-center text-center">
                     <p className="text-xs sm:text-sm lg:text-base xl:text-lg text-gray-300 mb-4 sm:mb-6 px-2">
-                      Send us a QMail at <br className="sm:hidden" />
-                      <Link
-                        to="/register"
-                        className="text-blue-400 hover:text-blue-300 font-mono text-xs sm:text-sm lg:text-base transition-colors break-all"
-                      >
-                        "Giga~RaidaTech.Customer.Support#0F39"
-                      </Link>
+                      QMail addresses look something like these:
+                      <span className="block mt-2 font-mono text-blue-400 text-xs sm:text-sm lg:text-base space-x-4">
+                        <span className="whitespace-nowrap">26.84@giga</span>
+                        <span className="whitespace-nowrap">188.2@byte</span>
+                        <span className="whitespace-nowrap">1.15.245@bit</span>
+                      </span>
                     </p>
                     <AnimatedButton
                       to="/register"
@@ -844,8 +949,6 @@ function Home() {
             </m.div>
           </div>
         </section>
-
-        <Footer />
       </div>
     </LazyMotion>
   );

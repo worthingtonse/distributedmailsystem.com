@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   DollarSign, Users, TrendingUp, Activity,
-  BarChart3, RefreshCw, Lock, ShieldCheck, ArrowRight
+  BarChart3, RefreshCw, Lock, ShieldCheck, ArrowRight,
+  Server, Package, Wallet, KeyRound, AlertTriangle,
+  Trash2, Bug, ExternalLink, Clock, Mail
 } from 'lucide-react';
 
 const ADMIN_KEY_STORAGE = 'qmail_admin_key';
@@ -81,6 +83,33 @@ export default function AdminDashboard() {
     fetchStats(keyInput);
   };
 
+  const deleteWaitlistEntry = async (id) => {
+    if (!window.confirm('Remove this waitlist entry?')) return;
+    await fetch(`${import.meta.env.VITE_BASE_URL || ''}/api/admin/waitlist-delete`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: adminKey, id }),
+    });
+    fetchStats(adminKey);
+  };
+
+  const dismissBug = async (id) => {
+    if (!window.confirm('Dismiss this bug report?')) return;
+    await fetch(`${import.meta.env.VITE_BASE_URL || ''}/api/admin/bug-dismiss`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: adminKey, id }),
+    });
+    fetchStats(adminKey);
+  };
+
+  const clearFunnel = async () => {
+    if (!window.confirm('Permanently delete ALL conversion funnel data? This cannot be undone.')) return;
+    await fetch(`${import.meta.env.VITE_BASE_URL || ''}/api/admin/clear-funnel`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: adminKey }),
+    });
+    fetchStats(adminKey);
+  };
+
   if (!authed) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a] p-4">
@@ -125,7 +154,19 @@ export default function AdminDashboard() {
 
   if (!data) return null;
 
-  const { overview, revenueByInfluencer, eventCounts, recentEvents, recentSales, influencers } = data;
+  const { overview, revenueByInfluencer, eventCounts, recentEvents, recentSales, influencers, operations } = data;
+  const waitlist = data.waitlist || [];
+  const bugs = data.bugs || [];
+
+  // Pre-minted key pool classes, in display order
+  const poolClasses = [
+    { key: 'bit', label: '.Bit' },
+    { key: 'byte', label: '.Byte' },
+    { key: 'kilo', label: '.Kilo' },
+    { key: 'mega', label: '.Mega' },
+    { key: 'giga', label: '.Giga' },
+    { key: 'bonus', label: 'Bonus' },
+  ];
 
   // Funnel events in order
   const funnelSteps = [
@@ -175,14 +216,256 @@ export default function AdminDashboard() {
           <StatCard label="Total Registrations" value={overview.totalRegistrations} icon={Activity} color="pink" />
         </div>
 
+        {/* Operations */}
+        <div className="bg-gray-900/80 border border-gray-700/50 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Server className="w-5 h-5 text-purple-400" />
+              Operations
+            </h2>
+            {operations && (
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${operations.paymentsEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  Payments: {operations.paymentsEnabled ? 'On' : 'Off'}
+                </span>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full ${operations.sandboxMode ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'}`}>
+                  Mode: {operations.sandboxMode ? 'Sandbox' : 'Live'}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {!operations ? (
+            <p className="text-gray-500 text-sm text-center py-8">Operations data unavailable.</p>
+          ) : (
+            <div className="space-y-6">
+
+              {/* Pool stock */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+                  <Package className="w-4 h-4" /> Pre-Minted Key Pools
+                </h3>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                  {poolClasses.map(({ key, label }) => {
+                    const count = operations.pools ? operations.pools[key] : null;
+                    const isZero = count === 0;
+                    const isLow = typeof count === 'number' && count > 0 && count <= 3;
+                    return (
+                      <div key={key} className="bg-black/40 border border-gray-800 rounded-xl p-4 text-center">
+                        <p className="text-gray-500 text-xs uppercase tracking-wider mb-1">{label}</p>
+                        <p className={`text-xl font-black ${isZero ? 'text-red-400' : isLow ? 'text-amber-400' : 'text-white'}`}>
+                          {(count === null || count === undefined) ? '—' : count.toLocaleString()}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                {/* Funding wallet */}
+                <div className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Wallet className="w-4 h-4 text-cyan-400" />
+                    <span className="text-xs text-gray-400 font-medium">Funding Wallet</span>
+                  </div>
+                  {operations.walletBalance ? (
+                    <>
+                      <p className={`text-2xl font-black ${operations.walletBalance.balance < operations.lowBalanceThreshold ? 'text-red-400' : 'text-white'}`}>
+                        {(operations.walletBalance.balance ?? 0).toLocaleString()} CC
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        {(operations.walletBalance.notes ?? 0).toLocaleString()} notes
+                      </p>
+                      {operations.walletBalance.balance < operations.lowBalanceThreshold && (
+                        <p className="text-red-400 text-xs mt-1">below {operations.lowBalanceThreshold.toLocaleString()} CC threshold</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-gray-500 text-sm">unavailable</p>
+                  )}
+                </div>
+
+                {/* Subscriptions */}
+                <div className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-4 h-4 text-yellow-400" />
+                    <span className="text-xs text-gray-400 font-medium">Subscriptions</span>
+                  </div>
+                  <p className="text-2xl font-black text-white">{(operations.subscriptions?.active ?? 0).toLocaleString()}</p>
+                  <p className="text-gray-500 text-xs mt-1">active &middot; ${(operations.subscriptions?.monthlyUSD ?? 0).toLocaleString()}/mo</p>
+                </div>
+
+                {/* Subscriber addresses */}
+                <div className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-pink-400" />
+                    <span className="text-xs text-gray-400 font-medium">Subscriber Addresses</span>
+                  </div>
+                  <p className="text-2xl font-black text-white">{(operations.subscriptions?.addresses ?? 0).toLocaleString()}</p>
+                </div>
+
+                {/* Pending deliveries */}
+                <div className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="w-4 h-4 text-orange-400" />
+                    <span className="text-xs text-gray-400 font-medium">Pending Deliveries</span>
+                  </div>
+                  <p className={`text-2xl font-black ${(operations.subscriptions?.pendingDeliveries ?? 0) > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    {(operations.subscriptions?.pendingDeliveries ?? 0).toLocaleString()}
+                  </p>
+                  <p className="text-gray-500 text-xs mt-1">
+                    Last delivery: {operations.subscriptions?.lastDeliveryAt ? new Date(operations.subscriptions.lastDeliveryAt).toLocaleString() : '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Issued keys */}
+              <div className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <KeyRound className="w-4 h-4 text-purple-400" />
+                  <span className="text-xs text-gray-400 font-medium">Issued Address Keys</span>
+                </div>
+                <div className="flex items-center gap-6 flex-wrap">
+                  <div>
+                    <p className="text-2xl font-black text-white">{(operations.issued?.total ?? 0).toLocaleString()}</p>
+                    <p className="text-gray-500 text-xs mt-1">total issued</p>
+                  </div>
+                  <p className="text-gray-500 text-xs">
+                    Last issued: {operations.issued?.lastIssuedAt ? new Date(operations.issued.lastIssuedAt).toLocaleString() : '—'}
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          )}
+        </div>
+
+        {/* Influencer Waitlist */}
+        <div className="bg-gray-900/80 border border-gray-700/50 rounded-2xl p-6">
+          <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+            <Mail className="w-5 h-5 text-cyan-400" />
+            Influencer Waitlist
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 text-cyan-400">
+              {waitlist.length}
+            </span>
+          </h2>
+          {waitlist.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-gray-400 text-xs uppercase tracking-wider border-b border-gray-800">
+                    <th className="text-left py-3 px-3">Name</th>
+                    <th className="text-left py-3 px-3">Email</th>
+                    <th className="text-left py-3 px-3">Social / Audience</th>
+                    <th className="text-left py-3 px-3">Date</th>
+                    <th className="text-right py-3 px-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-800/50">
+                  {waitlist.map((entry) => (
+                    <tr key={entry.id} className="hover:bg-gray-800/30">
+                      <td className="py-3 px-3 text-white whitespace-nowrap">{entry.name || '—'}</td>
+                      <td className="py-3 px-3 text-gray-300 font-mono select-all">{entry.email || '—'}</td>
+                      <td className="py-3 px-3 text-gray-400 max-w-xs truncate">{entry.social || '—'}</td>
+                      <td className="py-3 px-3 text-gray-500 whitespace-nowrap">
+                        {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '—'}
+                      </td>
+                      <td className="py-3 px-3 text-right">
+                        <button
+                          onClick={() => deleteWaitlistEntry(entry.id)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors text-xs font-medium"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-8">No waitlist signups yet.</p>
+          )}
+        </div>
+
+        {/* Bug Reports */}
+        <div className="bg-gray-900/80 border border-gray-700/50 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Bug className="w-5 h-5 text-red-400" />
+              Bug Reports
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-red-500/20 text-red-400">
+                {bugs.length}
+              </span>
+            </h2>
+            <a
+              href="https://cloudcoin.org/bugs.php"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 hover:text-white hover:border-gray-600 transition-colors text-xs font-medium"
+            >
+              Report a Bug <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          {bugs.length > 0 ? (
+            <div className="space-y-3">
+              {bugs.map((bug) => {
+                const severity = (bug.severity || '').toLowerCase();
+                const severityClasses = severity === 'high'
+                  ? 'bg-red-500/20 text-red-400'
+                  : severity === 'medium'
+                    ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-gray-700/50 text-gray-400';
+                return (
+                  <div key={bug.id} className="bg-black/40 border border-gray-800 rounded-xl p-4">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${severityClasses}`}>
+                        {bug.severity || 'Unknown'}
+                      </span>
+                      <button
+                        onClick={() => dismissBug(bug.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 border border-gray-700 rounded-lg text-gray-400 hover:text-red-400 hover:border-red-500/30 transition-colors text-xs font-medium shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Dismiss
+                      </button>
+                    </div>
+                    <p className="text-white text-sm whitespace-pre-wrap break-words">{bug.description || 'No description provided.'}</p>
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-gray-500">
+                      <span>{bug.name || bug.email ? `${bug.name || 'anonymous'}${bug.email ? ` <${bug.email}>` : ''}` : 'anonymous'}</span>
+                      {bug.appVersion && <span>v{bug.appVersion}</span>}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {bug.ts ? new Date(bug.ts).toLocaleString() : '—'}
+                      </span>
+                      {bug.hasScreenshot && <span>📎 screenshot</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm text-center py-8">No open bug reports.</p>
+          )}
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-8">
 
           {/* Conversion Funnel */}
           <div className="bg-gray-900/80 border border-gray-700/50 rounded-2xl p-6">
-            <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-400" />
-              Conversion Funnel
-            </h2>
+            <div className="flex items-center justify-between mb-6 gap-3">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <BarChart3 className="w-5 h-5 text-blue-400" />
+                Conversion Funnel
+              </h2>
+              <button
+                onClick={clearFunnel}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-colors text-xs font-medium"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear Data
+              </button>
+            </div>
             <div className="space-y-4">
               {funnelSteps.map(step => (
                 <FunnelBar

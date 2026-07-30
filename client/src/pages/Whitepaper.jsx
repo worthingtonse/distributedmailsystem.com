@@ -276,7 +276,9 @@ function Whitepaper() {
   ];
 
   const economicFeatures = [
-    "Recipients set 'tip' prices for unknown senders.",
+    "Recipients set inbox fees for unknown senders.",
+    "Blacklisted contacts are banned from sending to you.",
+    "Influencers can charge a lot of money to receive emails.",
     "Whitelisted contacts (friends/family) bypass payments.",
     "Server operators earn a percentage of transaction fees.",
     "Prohibitive fees filter low-value mass marketing messages.",

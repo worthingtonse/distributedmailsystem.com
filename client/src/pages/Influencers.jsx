@@ -31,9 +31,9 @@ Card.displayName = "Card";
 
 // Earnings Calculator Widget
 const EarningsCalculator = memo(() => {
-  const [followers, setFollowers] = useState(10000);
-  const [clickRate, setClickRate] = useState(0.5);
-  const [inboxFee, setInboxFee] = useState(10);
+  const [followers, setFollowers] = useState(100000);
+  const [clickRate, setClickRate] = useState(5);
+  const [inboxFee, setInboxFee] = useState(40);
 
   const monthlyClicks = Math.round(followers * (clickRate / 100));
   // Assume 10% of clickers convert to buyers
@@ -191,6 +191,62 @@ function Influencers() {
     { text: "Works with any social media platform", icon: Users },
   ];
 
+  const [waitlistForm, setWaitlistForm] = useState({ name: "", email: "", social: "" });
+  const [waitlistState, setWaitlistState] = useState({
+    submitting: false,
+    submitted: false,
+    error: "",
+    message: "",
+  });
+
+  const handleWaitlistChange = (field) => (e) => {
+    const value = e.target.value;
+    setWaitlistForm((f) => ({ ...f, [field]: value }));
+  };
+
+  const handleWaitlistSubmit = async (e) => {
+    e.preventDefault();
+    if (!waitlistForm.email.trim()) {
+      setWaitlistState((s) => ({ ...s, error: "Please enter your email address." }));
+      return;
+    }
+    setWaitlistState({ submitting: true, submitted: false, error: "", message: "" });
+    try {
+      const BASE_URL = import.meta.env.VITE_BASE_URL || "";
+      const res = await fetch(`${BASE_URL}/api/waitlist`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(waitlistForm),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setWaitlistState({
+          submitting: false,
+          submitted: true,
+          error: "",
+          message: data.message || "You're on the list — we'll email you when Phase II opens.",
+        });
+        if (typeof track === "function") {
+          track('influencer_waitlist_submit');
+        }
+      } else {
+        setWaitlistState({
+          submitting: false,
+          submitted: false,
+          error: data.error || "Something went wrong. Please try again.",
+          message: "",
+        });
+      }
+    } catch (err) {
+      setWaitlistState({
+        submitting: false,
+        submitted: false,
+        error: "Something went wrong. Please try again.",
+        message: "",
+      });
+    }
+  };
+
   return (
     <LazyMotion features={domAnimation} strict>
       <div className="min-h-screen pt-20">
@@ -209,7 +265,7 @@ function Influencers() {
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white leading-tight mb-6">
                   Get Paid Every Time{" "}
                   <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                    Someone Emails You
+                    Someone Qmails You
                   </span>
                 </h1>
 
@@ -217,19 +273,25 @@ function Influencers() {
                   Turn your audience into revenue. Share your QLink, and every follower who wants to reach you pays a small fee — you keep 85% (15% platform fee).
                 </p>
 
+                <p className="text-lg md:text-xl text-gray-300 mb-10 leading-relaxed max-w-2xl mx-auto">
+                  QMail uses CloudCoin as a payment system. CloudCoin is the most private digital currency in the world and the most energy efficient. CloudCoin does not require you to log in or worry about private keys. Our group, the Raida Group, sells CloudCoins to your fans and pays you 85% in US dollars.
+                </p>
+
                 <p className="inline-block bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6">
                   Sign-ups open in Phase II — coming soon
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link
-                    to="/register"
-                    onClick={() => track('influencer_cta_click', { location: 'hero' })}
+                  <button
+                    onClick={() => {
+                      track('influencer_cta_click', { location: 'hero' });
+                      document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all active:scale-95"
                   >
                     Learn More &amp; Join Waitlist
                     <ArrowRight className="w-5 h-5" />
-                  </Link>
+                  </button>
                   <button
                     onClick={() => document.getElementById("calculator")?.scrollIntoView({ behavior: "smooth", block: "start" })}
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-gray-600 hover:border-green-500 text-white font-bold rounded-full hover:bg-green-500/10 transition-all"
@@ -329,6 +391,100 @@ function Influencers() {
                 </Card>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Waitlist Capture */}
+        <section id="waitlist" className="py-16 md:py-24 scroll-mt-24 relative bg-gradient-to-b from-transparent via-blue-900/5 to-transparent">
+          <div className="container mx-auto px-4">
+            <m.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              className="max-w-xl mx-auto"
+            >
+              <div className="bg-gray-900/80 backdrop-blur-xl rounded-3xl border border-gray-700/50 p-6 md:p-10">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+                    Join the{" "}
+                    <span className="bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                      Phase II Waitlist
+                    </span>
+                  </h2>
+                  <p className="text-green-300 font-semibold text-lg mb-2">
+                    Claim your <span className="text-white">.epic</span> qmail, free for verified VIPs and Influencers.
+                  </p>
+                  <p className="text-gray-400">
+                    Be the first to get your QLink when influencer payouts go live.
+                  </p>
+                </div>
+
+                {waitlistState.submitted ? (
+                  <div className="text-center py-6">
+                    <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 mb-4">
+                      <CheckCircle2 className="w-7 h-7 text-green-400" />
+                    </div>
+                    <p className="text-white text-lg font-semibold">{waitlistState.message}</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+                    <div>
+                      <label htmlFor="waitlist-name" className="block text-sm font-semibold text-gray-300 mb-2">
+                        Name <span className="text-gray-500 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        id="waitlist-name"
+                        type="text"
+                        value={waitlistForm.name}
+                        onChange={handleWaitlistChange("name")}
+                        placeholder="Your name"
+                        className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="waitlist-email" className="block text-sm font-semibold text-gray-300 mb-2">
+                        Email <span className="text-green-400 font-normal">(required)</span>
+                      </label>
+                      <input
+                        id="waitlist-email"
+                        type="email"
+                        required
+                        value={waitlistForm.email}
+                        onChange={handleWaitlistChange("email")}
+                        placeholder="you@example.com"
+                        className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="waitlist-social" className="block text-sm font-semibold text-gray-300 mb-2">
+                        Your audience / social handle <span className="text-gray-500 font-normal">(optional)</span>
+                      </label>
+                      <input
+                        id="waitlist-social"
+                        type="text"
+                        value={waitlistForm.social}
+                        onChange={handleWaitlistChange("social")}
+                        placeholder="@handle · 50k followers on IG/YouTube/TikTok"
+                        className="w-full px-4 py-3 bg-gray-800/80 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition-all"
+                      />
+                    </div>
+
+                    {waitlistState.error && (
+                      <p className="text-red-400 text-sm font-medium">{waitlistState.error}</p>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={waitlistState.submitting || !waitlistForm.email.trim()}
+                      className="w-full inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-bold rounded-full hover:shadow-lg hover:shadow-green-500/25 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+                    >
+                      {waitlistState.submitting ? "Joining..." : "Join Waitlist"}
+                      {!waitlistState.submitting && <ArrowRight className="w-5 h-5" />}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </m.div>
           </div>
         </section>
 

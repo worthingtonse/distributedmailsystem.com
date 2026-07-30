@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Check, ExternalLink, ShieldCheck, UserPlus, Code, Palette, AtSign } from 'lucide-react';
+import { Copy, Check, ExternalLink, ShieldCheck, UserPlus, Code, Palette, AtSign, Clock } from 'lucide-react';
 
 const AdminLinkGen = () => {
   const [name, setName] = useState('');
@@ -16,6 +16,9 @@ const AdminLinkGen = () => {
   
   //  Include 'addr' in the generated URL
   const generatedUrl = `${baseUrl}?recipient=${encodeURIComponent(name)}&addr=${encodeURIComponent(qmail)}&cost=${cost}&bg=${bgColor.replace('#', '')}&btn=${btnColor.replace('#', '')}`;
+
+  // Influencer payouts require a high-stake .giga or .epic receiver address
+  const addrValid = /@(giga|epic)$/i.test(qmail.trim());
 
   const toTitleCase = (str) => {
     return str.toLowerCase().split(' ').map(word => 
@@ -55,6 +58,18 @@ const AdminLinkGen = () => {
           <p className="text-gray-400 italic">Customize the landing page and generate influencer links</p>
         </div>
 
+        <div className="mb-10 flex items-start gap-4 bg-amber-500/5 border border-amber-500/20 p-6 rounded-2xl shadow-lg">
+          <div className="flex-shrink-0 mt-0.5 text-amber-400">
+            <Clock size={22} />
+          </div>
+          <div>
+            <p className="text-amber-400 font-bold uppercase tracking-widest text-xs mb-1">Coming Soon</p>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              Influencer QLinks launch in Phase II. You can preview and generate your link now, but the influencer payout program isn't active yet. Verified sign-ups and KYC are coming.
+            </p>
+          </div>
+        </div>
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Settings Section */}
           <div className="lg:col-span-2 space-y-6 bg-gray-900/50 backdrop-blur-xl p-8 rounded-3xl border border-gray-800 shadow-2xl">
@@ -79,9 +94,14 @@ const AdminLinkGen = () => {
                   type="text" 
                   value={qmail} 
                   onChange={(e) => setQmail(e.target.value)} 
-                  className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono text-sm" 
-                  placeholder="Mega~Tabeen.Khajawal#F28" 
+                  className="w-full bg-black/50 border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 outline-none transition-all font-mono text-sm"
+                  placeholder="Mega~Tabeen.Khajawal#F28"
                 />
+                {qmail.trim() && !addrValid && (
+                  <p className="mt-2 text-xs text-red-400">
+                    Influencer payouts require a .Giga or .Epic address.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -131,30 +151,30 @@ const AdminLinkGen = () => {
 
           {/* Actions Section */}
           <div className="space-y-4">
-            <button 
-              disabled={!name || !qmail} 
-              onClick={handleCopy} 
+            <button
+              disabled={!name || !addrValid}
+              onClick={handleCopy}
               className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                name && qmail ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                name && addrValid ? 'bg-blue-600/20 border border-blue-500/40 text-blue-400 hover:bg-blue-600/30' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
               }`}
             >
               {copied ? <><Check size={18}/> Copied!</> : <><Copy size={18}/> Copy Direct Link</>}
             </button>
-            <button 
-              disabled={!name || !qmail} 
-              onClick={() => setShowEmbed(!showEmbed)} 
+            <button
+              disabled={!name || !addrValid}
+              onClick={() => setShowEmbed(!showEmbed)}
               className={`w-full py-4 rounded-xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
-                name && qmail ? 'bg-gradient-to-r from-blue-600 to-purple-500 text-white shadow-lg shadow-blue-900/20' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+                name && addrValid ? 'bg-gradient-to-r from-blue-600 to-purple-500 text-white shadow-lg shadow-blue-900/20' : 'bg-gray-800 text-gray-600 cursor-not-allowed'
               }`}
             >
               <Code size={18} /> {showEmbed ? "Hide Embed Code" : "Embed Button"}
             </button>
-            <a 
-              href={name && qmail ? generatedUrl : "#"} 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href={name && addrValid ? generatedUrl : "#"}
+              target="_blank"
+              rel="noreferrer"
               className={`w-full py-3 rounded-xl font-bold text-sm transition-all border flex items-center justify-center gap-2 ${
-                name && qmail ? 'border-gray-700 text-gray-400 hover:bg-white/5' : 'border-gray-800 text-gray-800 pointer-events-none'
+                name && addrValid ? 'border-gray-700 text-gray-400 hover:bg-white/5' : 'border-gray-800 text-gray-800 pointer-events-none'
               }`}
             >
               <ExternalLink size={14} /> Preview Page
@@ -164,7 +184,7 @@ const AdminLinkGen = () => {
 
         {/* Embed Snippet Display */}
         <AnimatePresence>
-          {showEmbed && name && qmail && (
+          {showEmbed && name && addrValid && (
             <motion.div 
               initial={{ opacity: 0, height: 0 }} 
               animate={{ opacity: 1, height: 'auto' }} 

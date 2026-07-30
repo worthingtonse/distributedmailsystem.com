@@ -416,7 +416,7 @@ function Technology() {
               className="mb-12"
             >
               <h2 className="text-3xl font-bold text-white mb-8 border-l-4 border-red-500 pl-4">
-                The Problem: Email is Stuck in the 1990s
+                The Problem: Email is Stuck in the 1980s and was invented in 1982
               </h2>
               <div className="grid md:grid-cols-3 gap-8">
                 <Card className="border-red-500/20">
@@ -655,14 +655,14 @@ function Technology() {
                       <CheckCircle2 className="w-6 h-6 text-cyan-400 flex-shrink-0" />
                       <div>
                         <strong className="text-white">User Registration:</strong>
-                        <p className="text-gray-400">Register immutable Email Addresses (e.g., jane.doe@qmail).</p>
+                        <p className="text-gray-400">Register immutable Email Addresses (e.g., 13.220@bit).</p>
                       </div>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckCircle2 className="w-6 h-6 text-cyan-400 flex-shrink-0" />
                       <div>
                         <strong className="text-white">Server Listing:</strong>
-                        <p className="text-gray-400">Individuals can register their own independent servers to join the grid.</p>
+                        <p className="text-gray-400">Individuals can register their own independent servers to join the grid (Phase Two).</p>
                       </div>
                     </li>
                   </ul>

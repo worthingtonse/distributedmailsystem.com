@@ -34,6 +34,8 @@ export default defineConfig({
     devSourcemap: false,
   },
   build: {
+    outDir: '../server/dist',
+    emptyOutDir: true,
     // Use esbuild for minification (faster than terser, already included with Vite)
     minify: 'esbuild',
     // esbuild minification options

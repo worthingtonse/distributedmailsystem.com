@@ -17,8 +17,93 @@ import {
   AlertTriangle,
   RefreshCw,
   FileText,
+  Gift,
+  ExternalLink,
+  Rocket,
 } from "lucide-react";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+
+// Visual style per address class — matches the color coding used on the
+// registration/success pages (bit=blue, byte=green, kilo=purple, mega=yellow, giga=red)
+const CLASS_STYLES = {
+  bit: { label: "Bit", color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/30" },
+  byte: { label: "Byte", color: "text-green-400", bg: "bg-green-500/10", border: "border-green-500/30" },
+  kilo: { label: "Kilo", color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/30" },
+  mega: { label: "Mega", color: "text-yellow-400", bg: "bg-yellow-500/10", border: "border-yellow-500/30" },
+  giga: { label: "Giga", color: "text-red-400", bg: "bg-red-500/10", border: "border-red-500/30" },
+};
+
+// Small reusable "value + copy button" row used for the qmail address and
+// both locker keys on each address card, plus the CloudCoins locker code.
+const CopyableRow = ({ value, textClass = "" }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/5 p-3">
+      <code className={`flex-1 break-all font-mono ${textClass}`}>{value}</code>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="shrink-0 px-3 py-2 bg-blue-600 rounded-lg font-bold text-[11px] flex items-center gap-1.5 hover:bg-blue-500 transition-all"
+      >
+        {copied ? <Check size={13} /> : <Copy size={13} />}
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </div>
+  );
+};
+
+// One card per fulfilled address: the qmail itself, its class badge, the
+// Mailbox Locker Key, and — when present — the Bonus Coins locker key.
+const AddressCard = ({ addr }) => {
+  const style = CLASS_STYLES[addr.class] || CLASS_STYLES.bit;
+  return (
+    <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 rounded-[2rem] space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
+          <AtSign size={14} /> QMail Address
+        </h3>
+        <div className="flex items-center gap-2">
+          {addr.free && (
+            <span className="px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border bg-green-500/10 border-green-500/30 text-green-400">
+              Free
+            </span>
+          )}
+          <span
+            className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${style.bg} ${style.border} ${style.color}`}
+          >
+            .{style.label}
+          </span>
+        </div>
+      </div>
+      <CopyableRow value={addr.qmail} textClass="text-lg text-white" />
+
+      <div className="pt-4 border-t border-white/10 space-y-2">
+        <h4 className="text-[10px] font-black text-green-400 uppercase tracking-widest flex items-center gap-2">
+          <Key size={14} /> Mailbox Locker Key
+        </h4>
+        <CopyableRow value={addr.lockerKey} textClass="text-sm text-green-300" />
+        <p className="text-[11px] text-gray-500 italic leading-relaxed">
+          Enter this Locker Key in your QMail software to claim your address coin.
+        </p>
+      </div>
+
+      {addr.bonusLockerKey && (
+        <div className="pt-4 border-t border-white/10 space-y-2">
+          <h4 className="text-xs font-black text-yellow-400 flex items-center gap-2 leading-relaxed">
+            <Gift size={14} className="shrink-0" /> Bonus Coins: Put this Locker Key into the
+            Wallet part of your QMail software.
+          </h4>
+          <CopyableRow value={addr.bonusLockerKey} textClass="text-sm text-yellow-300" />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const InfluencerSuccess = () => {
   useDocumentMeta({
@@ -33,25 +118,26 @@ const InfluencerSuccess = () => {
   const [provisionStep, setProvisionStep] = useState(0);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedEmailLocker, setCopiedEmailLocker] = useState(false);
-  const [copiedCloudCoins, setCopiedCloudCoins] = useState(false);
-
-  // Debug: log the state
-  console.log("InfluencerSuccess state:", state);
 
   // Extract data from state
   const userFirstName = state?.userData?.firstName || "User";
-  const userLastName = state?.userData?.lastName || "";
   const recipientName = state?.recipientName || "the influencer";
   const influencerAddress = state?.influencerAddress || "";
   const paymentAmount = state?.paymentAmount || 0;
   const inboxFee = state?.inboxFee || 0;
 
-  // Email data (if they created an address)
+  // New locker-key flow: state.addresses = [{ qmail, class, lockerKey, bonusLockerKey, free }]
+  const addresses = Array.isArray(state?.addresses) && state.addresses.length > 0
+    ? state.addresses
+    : null;
+  const partialError = state?.partialError || null;
+
+  // Legacy single-address flow (kept for backward compatibility)
   const userEmail = state?.email || null;
   const emailLockerCode = state?.emailLockerCode || null;
   const walletDownloadUrl = state?.walletDownloadUrl || null;
 
-  // CloudCoins data
+  // CloudCoins data (always present)
   const cloudCoins = state?.cloudCoins || 0;
   const cloudCoinsLockerCode = state?.cloudCoinsLockerCode || "";
 
@@ -80,6 +166,8 @@ const InfluencerSuccess = () => {
     setter(true);
     setTimeout(() => setter(false), 2000);
   };
+
+  const subscribeAddresses = addresses ? addresses.map((a) => a.qmail) : [];
 
   return (
     <div className="min-h-screen py-24 bg-[#05050a] text-white overflow-hidden relative">
@@ -148,14 +236,36 @@ const InfluencerSuccess = () => {
                 </p>
               </div>
 
+              {/* Payment received but fulfillment incomplete */}
+              {partialError && (
+                <div className="bg-red-500/10 backdrop-blur-xl border border-red-500/40 p-6 rounded-[2.5rem] flex items-start gap-4 shadow-2xl">
+                  <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={22} />
+                  <div>
+                    <p className="text-sm font-black text-red-400 uppercase tracking-widest mb-1">
+                      Your Payment Was Received
+                    </p>
+                    <p className="text-sm text-gray-300 leading-relaxed">
+                      {partialError} Our support team has been notified and will make sure you
+                      receive everything you paid for.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Main Content Grid */}
               <div className="grid lg:grid-cols-2 gap-8">
 
-                {/* Left Column: Email Address & Email Locker (if created) */}
+                {/* Left Column: Addresses (new flow) or legacy single email */}
                 <div className="space-y-6">
-                  {userEmail ? (
+                  {addresses ? (
+                    <div className="grid gap-6">
+                      {addresses.map((addr, i) => (
+                        <AddressCard key={`${addr.qmail}-${i}`} addr={addr} />
+                      ))}
+                    </div>
+                  ) : userEmail ? (
                     <>
-                      {/* Email Address Card */}
+                      {/* Legacy: Email Address Card */}
                       <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem]">
                         <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                           <AtSign size={14} /> Your New QMail Address
@@ -174,7 +284,7 @@ const InfluencerSuccess = () => {
                         </button>
                       </div>
 
-                      {/* Email Locker Code */}
+                      {/* Legacy: Email Locker Code */}
                       <div className="bg-white/5 backdrop-blur-xl border border-purple-500/20 p-6 rounded-[2rem]">
                         <h3 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-4 flex items-center gap-2">
                           <Key size={14} /> Email Locker Code
@@ -196,7 +306,7 @@ const InfluencerSuccess = () => {
                         </p>
                       </div>
 
-                      {/* Preconfigured Wallet Download */}
+                      {/* Legacy: Preconfigured Wallet Download */}
                       {walletDownloadUrl && (
                         <div className="bg-white/5 backdrop-blur-xl border border-blue-500/20 p-8 rounded-[2rem]">
                           <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
@@ -234,11 +344,11 @@ const InfluencerSuccess = () => {
                       )}
                     </>
                   ) : (
-                    /* No email created */
+                    /* No address created */
                     <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2rem]">
                       <div className="text-center py-8">
                         <Mail size={48} className="mx-auto text-gray-600 mb-4" />
-                        <h3 className="text-lg font-bold text-white mb-2">No Email Address Created</h3>
+                        <h3 className="text-lg font-bold text-white mb-2">No QMail Address Created</h3>
                         <p className="text-sm text-gray-500">
                           You chose not to create a QMail address. You can still send messages to {recipientName} using the QMail Client.
                         </p>
@@ -276,20 +386,9 @@ const InfluencerSuccess = () => {
                 <div className="space-y-6">
                   <div className="bg-gradient-to-br from-green-600/10 to-emerald-600/10 backdrop-blur-xl border border-green-500/20 p-8 rounded-[2rem]">
                     <h3 className="text-[10px] font-black text-green-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                      <Coins size={14} /> Your CloudCoins Locker Code
+                      <Coins size={14} /> Your CloudCoins — put this Locker Key into the Wallet part of your QMail software
                     </h3>
-                    <div className="bg-black/40 p-5 rounded-xl border border-white/5 mb-4">
-                      <code className="text-xl md:text-2xl text-green-400 font-mono break-all">
-                        {cloudCoinsLockerCode}
-                      </code>
-                    </div>
-                    <button
-                      onClick={() => handleCopy(cloudCoinsLockerCode, setCopiedCloudCoins)}
-                      className="w-full px-6 py-3 bg-green-600 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-500 transition-all"
-                    >
-                      {copiedCloudCoins ? <Check size={18} /> : <Copy size={18} />}
-                      {copiedCloudCoins ? "Copied!" : "Copy Locker Code"}
-                    </button>
+                    <CopyableRow value={cloudCoinsLockerCode} textClass="text-xl md:text-2xl text-green-400" />
                     <div className="mt-4 p-4 bg-black/30 rounded-xl">
                       <p className="text-sm text-gray-400">
                         <span className="text-white font-bold">{cloudCoins} CloudCoins</span> (${paymentAmount} value)
@@ -312,11 +411,11 @@ const InfluencerSuccess = () => {
                       </div>
                       <div className="flex items-start gap-3 p-3 rounded-xl bg-black/30">
                         <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">2</div>
-                        <p className="text-sm text-gray-300">Enter your Email Locker Code when the program prompts you at the first startup</p>
+                        <p className="text-sm text-gray-300">Enter your Mailbox Locker Key(s) when the program prompts you at the first startup</p>
                       </div>
                       <div className="flex items-start gap-3 p-3 rounded-xl bg-black/30">
                         <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">3</div>
-                        <p className="text-sm text-gray-300">Enter your CloudCoins Locker Code into the wallet part of the QMail Client to download your credits</p>
+                        <p className="text-sm text-gray-300">Enter your CloudCoins Locker Key into the wallet part of the QMail Client to download your credits</p>
                       </div>
                       <div className="flex items-start gap-3 p-3 rounded-xl bg-black/30">
                         <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold shrink-0">4</div>
@@ -332,28 +431,60 @@ const InfluencerSuccess = () => {
                 <div className="flex flex-col items-center gap-6">
                   <div className="text-center">
                     <h3 className="text-white font-bold mb-2 flex items-center justify-center gap-2 uppercase tracking-widest text-sm">
-                      <Download size={18} className="text-blue-400" /> Download QMail Client
+                      <Download size={18} className="text-blue-400" /> Download the QMail Software
                     </h3>
                     <p className="text-sm text-gray-400">
                       Get the desktop client to send your message and manage your CloudCoins.
                     </p>
                   </div>
-                  <div className="flex flex-col items-center gap-3">
-                    <a
-                      href="/downloads/qmail.for.windows.zip"
-                      download
-                      className="bg-white text-black px-8 py-4 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all flex items-center gap-3"
-                    >
-                      <Download size={20} /> Download for Windows
-                    </a>
-                    <p className="text-xs text-gray-500">
-                      Windows 10+ only. Mac and other platforms are coming later.
-                    </p>
-                    <Link to="/download" className="text-xs text-blue-400 hover:text-blue-300 underline">
-                      All platforms / roadmap
-                    </Link>
-                  </div>
+                  <a
+                    href="https://CloudCoinConsortium.com/use.php"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 bg-white text-black px-10 py-5 rounded-2xl font-black uppercase text-sm tracking-widest hover:bg-gray-200 transition-all"
+                  >
+                    <Download size={20} /> Download the QMail Software
+                    <ExternalLink size={16} className="opacity-60" />
+                  </a>
                 </div>
+              </div>
+
+              {/* Subscription upsell */}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 md:p-10 rounded-[2.5rem] shadow-xl text-center">
+                <div className="flex items-center justify-center gap-2 mb-3">
+                  <Rocket className="text-white" size={22} />
+                  <h3 className="font-black text-white uppercase tracking-widest text-sm">
+                    Keep Your Wallet Topped Up
+                  </h3>
+                </div>
+                {subscribeAddresses.length > 0 ? (
+                  <>
+                    <p className="text-sm text-blue-100 max-w-xl mx-auto mb-6 leading-relaxed">
+                      Subscribe for monthly CloudCoins sent right to your mailbox and automatically
+                      put in your wallet — divided between each of your addresses.
+                    </p>
+                    <Link
+                      to={`/subscribe?addresses=${encodeURIComponent(subscribeAddresses.join(","))}`}
+                      state={{ addresses: subscribeAddresses }}
+                      className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 transition-all"
+                    >
+                      See Subscription Plans
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-blue-100 max-w-xl mx-auto mb-6 leading-relaxed">
+                      Subscribe for monthly CloudCoins sent right to your mailbox and
+                      automatically put in your wallet.
+                    </p>
+                    <Link
+                      to="/subscribe"
+                      className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-gray-100 transition-all"
+                    >
+                      See Subscription Plans
+                    </Link>
+                  </>
+                )}
               </div>
 
               {/* Upsell: Become an Influencer */}

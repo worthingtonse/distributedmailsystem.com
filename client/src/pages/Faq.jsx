@@ -93,6 +93,7 @@ const PhaseCard = memo(({ phase, title, status, description, features, delay = 0
   const statusColors = {
     'Current': 'bg-green-500/20 text-green-400 border-green-500/30',
     'Coming Soon': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+    'Partially Completed': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     'Future': 'bg-purple-500/20 text-purple-400 border-purple-500/30'
   }
 
@@ -113,7 +114,7 @@ const PhaseCard = memo(({ phase, title, status, description, features, delay = 0
         
         <div className="space-y-2">
           {features.map((feature, i) => (
-            <div key={i} className="flex items-start gap-2 text-sm text-gray-300">
+            <div key={i} className="flex items-start gap-2 text-sm text-gray-300 text-left">
               <CheckCircle2 className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
               <span>{feature}</span>
             </div>
@@ -313,19 +314,24 @@ function FAQ() {
         'Send striped emails across 5+ servers',
         'Automatically generated email addresses',
         'All standards, protocols, and APIs released',
-        'Developer documentation available'
+        'Developer documentation available',
+        'Attachment sizes restricted'
       ]
     },
     {
       phase: 2,
       title: 'The Security Upgrade',
-      status: 'Coming Soon',
+      status: 'Partially Completed',
       description: 'Advanced quantum-safe security and decentralized directory services.',
       features: [
         'Distributed Key Exchange (quantum-safe)',
         'Distributed Resource Directory',
         'Custom email address registration',
-        'Independent server listing'
+        'Independent server listing',
+        'Influencers get paid in dollars',
+        'Stripe your messages on up to 32 different QMail servers',
+        'Attachment sizes maybe as big as you can afford, including gigabyte-size files',
+        'Estimated completion date: August 2026'
       ]
     },
     {
@@ -337,7 +343,10 @@ function FAQ() {
         'Compact Binary Document Format',
         '65,000+ font support',
         '90% smaller message sizes',
-        'Advanced formatting options'
+        'Advanced formatting options',
+        'Financial services to exchange CloudCoins for dollars',
+        'Ultra-secure file storage added',
+        'Estimated completion date: June 2027'
       ]
     }
   ]
@@ -359,7 +368,7 @@ function FAQ() {
             question: 'Who develops QMail?',
             answer: (
               <div>
-                <p>QMail is developed by the Perfect Money Foundation, an organization dedicated to building distributed information systems that protect user privacy and promote a decentralized internet economy.</p>
+                <p>QMail is developed by the Perfect Money Foundation, the Raida Group, and the CloudCoin Consortium — organizations dedicated to building distributed information systems that protect user privacy and promote a decentralized internet economy.</p>
               </div>
             )
           }
@@ -449,7 +458,7 @@ function FAQ() {
           question: 'Can I send large attachments?',
           answer: (
             <div>
-              <p>Yes. QMail theoretically supports attachments up to several gigabytes. Because server operators are compensated per megabyte stored, there is no economic incentive for them to limit your storage capacity.</p>
+              <p>Yes. QMail supports attachments of unlimited size, depending on the servers that you send it to. A terabyte document spread over 32 different servers is easy to handle. Because server operators are compensated per megabyte stored, there is no economic incentive for them to limit your storage capacity.</p>
             </div>
           )
         }
