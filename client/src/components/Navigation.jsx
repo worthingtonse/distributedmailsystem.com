@@ -5,17 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
   const location = useLocation()
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-    }
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // Close mobile menu when route changes
   useEffect(() => {
@@ -30,7 +21,7 @@ function Navigation() {
     { name: 'Technology', path: '/technology' },
     { name: 'FAQs', path: '/faq' },
     { name: 'Whitepaper', path: '/whitepaper' },
-    { name: 'Tips', path: '/subscribe' },
+    { name: 'Sign Up', path: '/subscribe' },
     { name: 'Downloads', path: '/download' },
     {
       name: 'API',
@@ -65,9 +56,7 @@ function Navigation() {
   }
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        scrolled ? 'bg-gray-900/95 backdrop-blur-xl' : 'bg-black/20 backdrop-blur-md'
-      }`}>
+    <nav className="fixed top-0 left-0 w-full z-50 bg-gray-900/95 backdrop-blur-xl">
     
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         {/* Logo Section */}
@@ -80,18 +69,15 @@ function Navigation() {
             whileTap={{ scale: 0.95 }}
             className="flex items-center space-x-3 cursor-pointer"
           >
-            <motion.svg width="40" height="40" viewBox="0 0 100 100" whileHover={{ rotate: 360 }} transition={{ duration: 0.8 }}>
-              <defs>
-                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#06b6d4" />
-                </linearGradient>
-              </defs>
-              <motion.circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradient)" strokeWidth="3" />
-              <motion.path d="M 50 25 Q 70 25 70 45 Q 70 60 55 65 L 65 75" fill="none" stroke="url(#logoGradient)" strokeWidth="6" strokeLinecap="round" />
-              <motion.circle cx="50" cy="45" r="8" fill="url(#logoGradient)" />
-            </motion.svg>
+            <motion.img
+              src="/Q4.png"
+              alt="QMail"
+              width="40"
+              height="40"
+              whileHover={{ scale: 1.08 }}
+              transition={{ duration: 0.2 }}
+              className="w-10 h-10 rounded-lg object-contain"
+            />
             <div className="flex flex-col">
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
                 QMail

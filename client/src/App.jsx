@@ -12,7 +12,9 @@ const Home = lazy(() => import('./pages/Home.jsx'))
 const HowItWorks = lazy(() => import('./pages/HowItWorks.jsx'))
 const EmailCrisis = lazy(() => import('./pages/EmailCrisis.jsx'))
 const Technology = lazy(() => import('./pages/Technology.jsx'))
-const FAQ = lazy(() => import('./pages/Faq.jsx')) 
+const FAQ = lazy(() => import('./pages/Faq.jsx'))
+const GettingStarted = lazy(() => import('./pages/GettingStarted.jsx'))
+const AboutQmail = lazy(() => import('./pages/AboutQmail.jsx'))
 const Strategy = lazy(() => import('./pages/SalesStrategy.jsx'))
 const Influencers = lazy(() => import('./pages/Influencers.jsx'))
 const VerifiedAccess = lazy(() => import('./pages/VerifiedAccess.jsx'))
@@ -21,11 +23,13 @@ const InfluencerSuccess = lazy(() => import('./pages/InfluencerSuccess.jsx'))
 const AdminLinkGen = lazy(() => import('./pages/AdminLinkGen.jsx'))
 const RegisterAddress = lazy(() => import('./pages/RegisterAddress.jsx'))
 const Subscribe = lazy(() => import('./pages/Subscribe.jsx'))
+const CancelSubscription = lazy(() => import('./pages/CancelSubscription.jsx'))
 const Whitepaper = lazy(() => import('./pages/Whitepaper.jsx'))
 const Downloads = lazy(() => import('./pages/Downloads.jsx'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'))
 const Privacy = lazy(() => import('./pages/Privacy.jsx'))
 const Terms = lazy(() => import('./pages/Terms.jsx'))
+const AcceptableUse = lazy(() => import('./pages/AcceptableUse.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound.jsx'))
 
 /**
@@ -55,6 +59,8 @@ const AnimatedRoutes = () => {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/technology" element={<Technology />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/getting-started" element={<GettingStarted />} />
+            <Route path="/about-qmail" element={<AboutQmail />} />
             <Route path="/influencers" element={<Influencers />} />
             <Route path="/strategy" element={<Strategy />} />
             <Route path="/email-crisis" element={<EmailCrisis />} /> 
@@ -65,12 +71,14 @@ const AnimatedRoutes = () => {
             <Route path="/success-influencer" element={<InfluencerSuccess />} />
             <Route path="/register" element={<RegisterAddress />} />
             <Route path="/subscribe" element={<Subscribe />} />
+            <Route path="/cancel-subscription" element={<CancelSubscription />} />
             <Route path="/whitepaper" element={<Whitepaper />} />
             <Route path="/download" element={<Downloads />} />
 
             {/* Legal */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/acceptable-use" element={<AcceptableUse />} />
 
             {/* Internal Tools */}
             <Route path="/button" element={<AdminLinkGen />} />

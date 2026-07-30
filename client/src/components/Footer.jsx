@@ -25,13 +25,25 @@ function Footer() {
                   Help Center / FAQ
                 </Link>
                 <p className="text-gray-500 text-xs break-all">
-                  Giga~RaidaTech.Customer.Support#0F39
+                  20.123@giga
                 </p>
+                <a
+                  href="mailto:CloudCoin@protonmail.com"
+                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors break-all"
+                >
+                  CloudCoin@protonmail.com
+                </a>
                 <Link
                   to="/register"
                   className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
                 >
                   Claim a QMail Address
+                </Link>
+                <Link
+                  to="/cancel-subscription"
+                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
+                >
+                  Cancel Subscription
                 </Link>
               </div>
             </div>
@@ -50,6 +62,12 @@ function Footer() {
                   className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
                 >
                   Terms of Service
+                </Link>
+                <Link
+                  to="/acceptable-use"
+                  className="text-blue-400 hover:text-blue-300 text-sm block transition-colors"
+                >
+                  Who Should Not Use Qmail
                 </Link>
               </div>
             </div>
